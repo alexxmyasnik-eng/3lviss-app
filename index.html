@@ -1,82 +1,69 @@
-import asyncio
-import json
-import random
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart
-from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3Lviss Lucky Rocket</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 15px; }
+        .ascii-logo { white-space: pre; font-size: 8px; line-height: 1.2; color: #0f0; text-shadow: 0 0 8px #0f0; margin: 10px 0; }
+        .case-card { border: 1px solid #0f0; border-radius: 12px; padding: 15px; background: #111; box-shadow: 0 0 10px #0f0; margin-bottom: 20px; }
+        .case-card h2 { margin: 5px 0; font-size: 18px; }
+        .price { font-size: 20px; color: #fff; margin: 10px 0; }
+        .btn { background: #0f0; color: #000; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 6px; font-size: 16px; text-transform: uppercase; }
+        .btn:active { transform: scale(0.98); background: #0a0; }
+        .game-50-50 { border-color: #ff0; box-shadow: 0 0 10px #ff0; }
+        .game-50-50 h2 { color: #ff0; }
+        .btn-50 { background: #ff0; }
+    </style>
+</head>
+<body>
 
-# Твой токен
-API_TOKEN = '8771521272:AAG0VVjVrR4Ux5ZRF4lSnlrajgLW9pspyf8'
-# Твой ID (чтобы бот присылал тебе уведомления о выводах)
-ADMIN_ID = 123456789  # ЗАМЕНИ НА СВОЙ ID (узнай у @userinfobot)
+    <div class="ascii-logo">
+|‾‾\ |  |   _   ____ 
+|  < |  |  | | /  __/
+|__/ |__|__|_| \__ \ 
+      3 L v i s s
+    </div>
 
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher()
+    <div class="case-card">
+        <h2>🚀 COMMON CASE</h2>
+        <div class="price">444 ★</div>
+        <button class="btn" onclick="sendAction('open_common')">ОТКРЫТЬ</button>
+    </div>
 
-# --- МАТЕМАТИКА ПРОЕКТА ---
-def get_nft_drop():
-    # Шансы для кейса за 444 звезды
-    tier = random.choices(["COMMON", "RARE", "LEGENDARY"], weights=[82, 15, 3], k=1)[0]
-    items = {
-        "COMMON": ["Ice Cream", "Instant Ramen", "Lol Pop"],
-        "RARE": ["Xmas Stocking", "Pool Float"],
-        "LEGENDARY": ["Snoop Cigar", "Chill Flame"]
-    }
-    return tier, random.choice(items[tier])
+    <div class="case-card" style="border-color: #0cf; box-shadow: 0 0 10px #0cf;">
+        <h2 style="color: #0cf;">💎 RARE CASE</h2>
+        <div class="price">1444 ★</div>
+        <button class="btn" style="background: #0cf;" onclick="sendAction('open_rare')">ОТКРЫТЬ</button>
+    </div>
 
-# --- ОБРАБОТКА /START ---
-@dp.message(CommandStart())
-async def cmd_start(message: types.Message):
-    # Ссылка на твой GitHub Pages
-    app_url = "https://alexxmyasnik-eng.github.io/3lviss-app/"
-    
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🚀 ЗАПУСТИТЬ ROCKET (OPEN)", web_app=WebAppInfo(url=app_url))]
-    ])
+    <div class="case-card game-50-50">
+        <h2>🎲 GAME 50/50</h2>
+        <div class="price">100 ★</div>
+        <button class="btn btn-50" onclick="sendAction('play_50_50')">РИСКНУТЬ</button>
+    </div>
 
-    await message.answer(
-        "<b>🚀 3Lviss Lucky Rocket приветствует тебя!</b>\n\n"
-        "Здесь ты можешь выбить топовые NFT-подарки.\n"
-        "Все выигрыши падают в инвентарь приложения.\n\n"
-        "<i>Жми кнопку ниже, чтобы начать!</i>",
-        parse_mode="HTML",
-        reply_markup=markup
-    )
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Разворачиваем приложение
 
-# --- ЛОГИКА ПРИЕМА ДАННЫХ ИЗ MINI APP ---
-@dp.message(F.web_app_data)
-async def handle_webapp_data(message: types.Message):
-    # Разбираем что пришло из JS (index.html)
-    data = json.loads(message.web_app_data.data)
-    action = data.get("action")
-
-    if action == "open_case":
-        tier, nft = get_nft_drop()
-        # В будущем тут будет проверка баланса и запись в БД
-        await message.answer(
-            f"📦 <b>Кейс открыт!</b>\n"
-            f"Твой выигрыш: <code>{nft}</code> ({tier})\n\n"
-            f"Подарок добавлен в инвентарь. Чтобы вывести его, напиши /withdraw",
-            parse_mode="HTML"
-        )
-        
-    elif action == "play_50_50":
-        win = random.choice([True, False])
-        if win:
-            await message.answer("🔥 <b>ПОБЕДА!</b> Ты удвоил ставку!")
-        else:
-            await message.answer("💀 <b>ПРОИГРЫШ.</b> Попробуй еще раз, удача рядом!")
-
-# --- КОМАНДА ДЛЯ ВЫВОДА (РУЧНОЙ КОНТРОЛЬ) ---
-@dp.message(F.text == "/withdraw")
-async def request_withdraw(message: types.Message):
-    await message.answer("⏳ <b>Заявка создана!</b>\nОжидайте, 3Lviss отправит подарок вручную.")
-    # Отправляем уведомление тебе (админу)
-    await bot.send_message(ADMIN_ID, f"🔔 <b>НОВЫЙ ВЫВОД!</b>\nЮзер: @{message.from_user.username}\nID: {message.from_user.id}")
-
-async def main():
-    print("🚀 Рокета 3Lviss запущена и ждет покупателей!")
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        function sendAction(actionType) {
+            // Подтверждение перед действием
+            let text = actionType.includes('open') ? "Открыть кейс?" : "Поставить 100 звезд?";
+            
+            tg.showConfirm(text, (confirmed) => {
+                if (confirmed) {
+                    // Отправляем данные боту
+                    tg.sendData(JSON.stringify({
+                        action: actionType,
+                        user_id: tg.initDataUnsafe.user.id
+                    }));
+                    tg.close(); // Закрываем приложение после нажатия
+                }
+            });
+        }
+    </script>
+</body>
+</html>
