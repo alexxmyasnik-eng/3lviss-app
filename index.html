@@ -3,76 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3Lviss Lucky Rocket</title>
+    <title>3Lviss HUB</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #0f0; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
-        .ascii-logo { white-space: pre; font-size: 8px; line-height: 1.2; color: #0f0; margin: 10px 0; }
-        .roulette-wrapper { position: relative; width: 100%; height: 180px; margin: 20px 0; border-top: 2px solid #0f0; border-bottom: 2px solid #0f0; overflow: hidden; background: #111; }
-        .pointer { position: absolute; left: 50%; top: 0; width: 4px; height: 100%; background: red; z-index: 10; }
-        .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; transition: transform 5s cubic-bezier(0.1, 0, 0, 1); }
-        .item { min-width: 130px; height: 100%; border-right: 1px solid #222; display: flex; align-items: center; justify-content: center; flex-direction: column; font-size: 11px; }
-        .item img { max-width: 80px; max-height: 80px; margin-bottom: 5px; }
-        .btn { background: #0f0; color: #000; padding: 15px 30px; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        body { background: #000; color: #0f0; font-family: sans-serif; margin: 0; padding-bottom: 70px; }
+        .tab-content { display: none; padding: 15px; }
+        .active { display: block; }
+        
+        /* Меню внизу */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #0f0; }
+        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #0f0; font-size: 12px; flex-direction: column; cursor: pointer; }
+        .nav-item.active-tab { background: #0f0; color: #000; }
+
+        /* Кейсы */
+        .roulette-wrapper { position: relative; width: 100%; height: 150px; background: #111; border: 1px solid #0f0; overflow: hidden; margin: 20px 0; }
+        .tape { display: flex; position: absolute; transition: transform 5s cubic-bezier(0.1, 0, 0, 1); }
+        .item-card { min-width: 100px; height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #333; }
+        .item-card img { width: 60px; }
+
+        /* Инвентарь */
+        .inventory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .inv-card { background: #111; border: 1px solid #333; padding: 10px; border-radius: 8px; }
+        .btn-sell { background: #ff0; color: #000; border: none; padding: 5px; width: 100%; margin-top: 5px; font-weight: bold; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <div class="ascii-logo">
-|‾‾\ |  |   _   ____ 
-|  < |  |  | | /  __/
-|__/ |__|__|_| \__ \ 
-      3 L v i s s
+    <div id="cases" class="tab-content active">
+        <h3>🚀 КЕЙСЫ</h3>
+        <div class="roulette-wrapper">
+            <div id="tape" class="tape"></div>
+        </div>
+        <button class="btn-sell" style="background:#0f0; height: 50px;" onclick="startSpin()">КРУТИТЬ (444 ★)</button>
     </div>
 
-    <div class="roulette-wrapper">
-        <div class="pointer"></div>
-        <div id="tape" class="tape"></div>
+    <div id="inventory" class="tab-content">
+        <h3>🎒 ТВОЙ ИНВЕНТАРЬ</h3>
+        <div class="inventory-grid" id="inv-grid">
+            <p>Пока тут пусто...</p>
+        </div>
     </div>
 
-    <button id="spinBtn" class="btn" onclick="startSpin()">КРУТИТЬ КЕЙС</button>
+    <div class="nav-bar">
+        <div class="nav-item active-tab" onclick="openTab('cases', this)">🎰 Кейсы</div>
+        <div class="nav-item" onclick="openTab('inventory', this)">🎒 Склад</div>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const tape = document.getElementById('tape');
+        function openTab(name, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-tab'));
+            document.getElementById(name).classList.add('active');
+            el.classList.add('active-tab');
+        }
+
         const itemsList = [
-            { name: "Ice Cream", img: "1.png" },
-            { name: "Xmas Stocking", img: "2.png" },
-            { name: "Snoop Cigar", img: "3.png" }
+            { name: "Ice Cream", img: "1.png", rarity: "common" },
+            { name: "Xmas Stocking", img: "2.png", rarity: "rare" },
+            { name: "Snoop Cigar", img: "3.png", rarity: "legendary" }
         ];
 
-        // Заполняем ленту заранее
-        for (let i = 0; i < 70; i++) {
-            const item = itemsList[i % itemsList.length];
+        // Инициализация ленты
+        const tape = document.getElementById('tape');
+        for(let i=0; i<60; i++) {
+            const item = itemsList[i % 3];
             const div = document.createElement('div');
-            div.className = 'item';
+            div.className = 'item-card';
             div.innerHTML = `<img src="${item.img}"><span>${item.name}</span>`;
             tape.appendChild(div);
         }
 
         function startSpin() {
-            const spinBtn = document.getElementById('spinBtn');
-            spinBtn.disabled = true;
-            spinBtn.innerText = "ПОЕХАЛИ...";
-
-            const itemWidth = 130;
-            const stopIndex = 55; // На каком предмете остановимся
-            const offset = -(stopIndex * itemWidth) + (window.innerWidth / 2) - (itemWidth / 2);
-            
-            // Запуск анимации
+            const stopIndex = 50;
+            const offset = -(stopIndex * 100) + (window.innerWidth/2) - 50;
             tape.style.transform = `translateX(${offset}px)`;
 
             setTimeout(() => {
-                const winItem = itemsList[stopIndex % itemsList.length].name;
-                tg.showAlert(`🎉 Вы выбили: ${winItem}`);
+                const win = itemsList[stopIndex % 3];
+                tg.showAlert(`🎉 Выпало: ${win.name}`);
                 
-                // Отправка данных боту
-                setTimeout(() => {
-                    tg.sendData(JSON.stringify({ action: "open_common", item: winItem }));
-                }, 1000);
+                // Добавляем в инвентарь на экране
+                const grid = document.getElementById('inv-grid');
+                if(grid.innerHTML.includes('пусто')) grid.innerHTML = '';
+                grid.innerHTML += `
+                    <div class="inv-card">
+                        <img src="${win.img}" style="width:50px">
+                        <div>${win.name}</div>
+                        <button class="btn-sell" onclick="sellItem(this, '${win.name}')">ПРОДАТЬ (200★)</button>
+                    </div>
+                `;
+
+                // Сообщаем боту
+                tg.sendData(JSON.stringify({ action: "save_item", item: win.name, rarity: win.rarity }));
             }, 5500);
+        }
+
+        function sellItem(btn, name) {
+            tg.showConfirm(`Продать ${name} за 200 звезд?`, (ok) => {
+                if(ok) {
+                    btn.parentElement.remove();
+                    tg.sendData(JSON.stringify({ action: "sell_item", item_name: name }));
+                }
+            });
         }
     </script>
 </body>
