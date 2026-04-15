@@ -7,37 +7,38 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding-top: 60px; overflow: hidden; -webkit-user-select: none; }
-        
-        /* ШАПКА */
         .header { position: fixed; top: 0; width: 100%; height: 55px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid #0f0; box-sizing: border-box; z-index: 1000; }
         .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #0f0; background: #222; }
-        .username { font-size: 13px; font-weight: bold; color: #fff; }
+        .avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #0f0; background: #222; object-fit: cover; }
         .balance-top { color: #0f0; font-weight: bold; font-size: 15px; }
 
-        .tab-content { display: none; padding: 10px; text-align: center; }
+        .tab-content { display: none; padding: 10px; text-align: center; height: calc(100vh - 120px); overflow-y: auto; }
         .active { display: block; }
         
         /* РУЛЕТКА */
-        .roulette-wrapper { position: relative; width: 100%; height: 180px; background: #0a0a0a; border-top: 1px solid #222; border-bottom: 1px solid #222; overflow: hidden; margin-top: 40px; }
+        .roulette-wrapper { position: relative; width: 100%; height: 180px; background: #0a0a0a; border-top: 1px solid #222; border-bottom: 1px solid #222; overflow: hidden; margin-top: 20px; }
         .pointer { position: absolute; left: 50%; top: 0; width: 3px; height: 100%; background: #ff0000; z-index: 100; box-shadow: 0 0 15px #ff0000; transform: translateX(-50%); }
         .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; will-change: transform; }
-        
         .item-card { min-width: 130px; height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; box-sizing: border-box; background: #0f0f0f; }
         .item-card img { width: 80px; height: 80px; object-fit: contain; }
-        .item-card span { font-size: 11px; margin-top: 10px; color: #444; text-transform: uppercase; transition: 0.3s; }
+        .item-card span { font-size: 11px; margin-top: 10px; color: #444; text-transform: uppercase; }
 
-        /* КНОПКИ */
-        .controls { margin-top: 40px; padding: 0 25px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
-        .main-btn { width: 100%; max-width: 320px; height: 55px; border: none; border-radius: 14px; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        .spin-btn { background: #0f0; color: #000; }
-        
+        /* СКЛАД */
+        .inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+        .inv-item { background: #111; border: 1px solid #0f0; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 0 10px rgba(0,255,0,0.1); }
+        .inv-item img { width: 70px; height: 70px; margin-bottom: 8px; }
+        .inv-item span { font-size: 12px; color: #fff; font-weight: bold; }
+
+        .controls { margin-top: 30px; padding: 0 25px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+        .main-btn { width: 100%; max-width: 320px; height: 50px; border: none; border-radius: 14px; font-weight: 800; font-size: 16px; cursor: pointer; text-transform: uppercase; }
+        .spin-btn { background: #0f0; color: #000; box-shadow: 0 0 15px rgba(0,255,0,0.3); }
         #choice-btns { display: none; width: 100%; max-width: 320px; gap: 12px; }
         .keep-btn { background: #222; color: #fff; border: 1px solid #444; }
         .sell-btn { background: #f00; color: #fff; }
 
+        /* НАВИГАЦИЯ */
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 65px; background: #111; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-size: 10px; font-weight: bold; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #444; font-size: 10px; font-weight: bold; gap: 4px; }
         .nav-item.active-tab { color: #0f0; }
     </style>
 </head>
@@ -57,7 +58,7 @@
             <div id="tape" class="tape"></div>
         </div>
         <div class="controls">
-            <button id="spinBtn" class="main-btn spin-btn" onclick="startSpin()">КРУТИТЬ КЕЙС</button>
+            <button id="spinBtn" class="main-btn spin-btn" onclick="startSpin()">ОТКРЫТЬ ЗА 444 ★</button>
             <div id="choice-btns">
                 <button class="main-btn keep-btn" onclick="handleChoice('keep')">ОСТАВИТЬ</button>
                 <button class="main-btn sell-btn" onclick="handleChoice('sell')">ПРОДАТЬ ЗА 200 ★</button>
@@ -65,103 +66,18 @@
         </div>
     </div>
 
+    <div id="upgrades" class="tab-content">
+        <h2 style="color: #555; margin-top: 80px;">⚡ АПГРЕЙДЫ</h2>
+        <p style="color: #888;">Скоро здесь можно будет улучшать подарки</p>
+    </div>
+
     <div id="inventory" class="tab-content">
-        <h3 style="color:#0f0">🎒 СКЛАД</h3>
-        <div id="inv-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+        <h3 style="color:#0f0">🎒 ТВОЙ СКЛАД</h3>
+        <div id="inv-grid" class="inv-grid"></div>
     </div>
 
     <div class="nav-bar">
         <div class="nav-item active-tab" onclick="openTab('cases', this)">🎰 КЕЙСЫ</div>
+        <div class="nav-item" onclick="openTab('upgrades', this)">⚡ АПГРЕЙДЫ</div>
         <div class="nav-item" onclick="openTab('inventory', this)">🎒 СКЛАД</div>
     </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('user-nick').innerText = user.username ? `@${user.username}` : user.first_name;
-            if (user.photo_url) {
-                const img = document.getElementById('user-photo');
-                img.src = user.photo_url; img.style.display = 'block';
-            }
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        let balance = parseInt(urlParams.get('balance')) || 0;
-        document.getElementById('balance-val').innerText = `${balance} ★`;
-
-        const items = [
-            { name: "Ice Cream", img: "1.png" },
-            { name: "Xmas Stocking", img: "2.png" },
-            { name: "Snoop Cigar", img: "3.png" }
-        ];
-
-        const tape = document.getElementById('tape');
-        const itemWidth = 130;
-        let winItem = null;
-
-        function fillTape() {
-            tape.innerHTML = '';
-            for(let i=0; i<100; i++) {
-                const item = items[Math.floor(Math.random() * items.length)];
-                const div = document.createElement('div');
-                div.className = 'item-card';
-                div.innerHTML = `<img src="${item.img}"><span style="opacity:0.2">???</span>`;
-                tape.appendChild(div);
-            }
-        }
-        fillTape();
-
-        function startSpin() {
-            if(balance < 444) { tg.showAlert("Недостаточно звезд!"); return; }
-
-            balance -= 444;
-            document.getElementById('balance-val').innerText = `${balance} ★`;
-            tg.sendData(JSON.stringify({ action: "spin_pay" }));
-
-            document.getElementById('spinBtn').style.display = 'none';
-            tape.style.transition = "none";
-            tape.style.transform = "translateX(0)";
-
-            setTimeout(() => {
-                const stopIndex = 75; 
-                winItem = items[Math.floor(Math.random() * items.length)];
-                const winDiv = tape.children[stopIndex];
-                winDiv.innerHTML = `<img src="${winItem.img}"><span id="win-txt" style="opacity:0">${winItem.name}</span>`;
-
-                tape.style.transition = "transform 7s cubic-bezier(0.15, 0, 0.15, 1)";
-                const offset = -(stopIndex * itemWidth) + (window.innerWidth / 2) - (itemWidth / 2);
-                tape.style.transform = `translateX(${offset}px)`;
-
-                setTimeout(() => {
-                    const txt = document.getElementById('win-txt');
-                    txt.style.opacity = "1"; txt.style.color = "#0f0";
-                    document.getElementById('choice-btns').style.display = 'flex';
-                }, 7000);
-            }, 50);
-        }
-
-        function handleChoice(type) {
-            if(type === 'keep') {
-                tg.sendData(JSON.stringify({ action: "save_only", item: winItem.name }));
-            } else {
-                balance += 200;
-                tg.sendData(JSON.stringify({ action: "sell_only", item: winItem.name }));
-            }
-            document.getElementById('balance-val').innerText = `${balance} ★`;
-            document.getElementById('choice-btns').style.display = 'none';
-            document.getElementById('spinBtn').style.display = 'block';
-            fillTape();
-        }
-
-        function openTab(name, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-tab'));
-            document.getElementById(name).classList.add('active');
-            el.classList.add('active-tab');
-        }
-    </script>
-</body>
-</html>
