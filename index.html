@@ -6,16 +6,75 @@
     <title>3Lviss Lucky Rocket</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 15px; }
+        body { background: #000; color: #0f0; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
+        
+        /* ASCII Логотип */
         .ascii-logo { white-space: pre; font-size: 8px; line-height: 1.2; color: #0f0; text-shadow: 0 0 8px #0f0; margin: 10px 0; }
-        .case-card { border: 1px solid #0f0; border-radius: 12px; padding: 15px; background: #111; box-shadow: 0 0 10px #0f0; margin-bottom: 20px; }
-        .case-card h2 { margin: 5px 0; font-size: 18px; }
+
+        /* Окно рулетки */
+        .roulette-wrapper {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            margin: 20px 0;
+            border-top: 2px solid #0f0;
+            border-bottom: 2px solid #0f0;
+            overflow: hidden;
+            background: #111;
+        }
+
+        /* Красная линия-указатель по центру */
+        .pointer {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: red;
+            z-index: 10;
+            box-shadow: 0 0 10px red;
+        }
+
+        /* Сама лента с предметами */
+        .tape {
+            display: flex;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            transition: transform 5s cubic-bezier(0.1, 0, 0, 1); /* Плавное замедление как в CS */
+        }
+
+        /* Карточка предмета */
+        .item {
+            min-width: 130px;
+            height: 100%;
+            border-right: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 11px;
+            background: linear-gradient(to bottom, #111, #222);
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .item img {
+            max-width: 80px;
+            max-height: 80px;
+            margin-bottom: 5px;
+            object-fit: contain;
+        }
+
+        /* Цвета редкости */
+        .common { border-bottom: 5px solid gray; }
+        .rare { border-bottom: 5px solid #0cf; }
+        .legendary { border-bottom: 5px solid #f0f; }
+
         .price { font-size: 20px; color: #fff; margin: 10px 0; }
-        .btn { background: #0f0; color: #000; border: none; padding: 12px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 6px; font-size: 16px; text-transform: uppercase; }
-        .btn:active { transform: scale(0.98); background: #0a0; }
-        .game-50-50 { border-color: #ff0; box-shadow: 0 0 10px #ff0; }
-        .game-50-50 h2 { color: #ff0; }
-        .btn-50 { background: #ff0; }
+        .btn { background: #0f0; color: #000; padding: 15px 30px; border: none; font-weight: bold; border-radius: 5px; margin-top: 10px; cursor: pointer; }
+        .btn:disabled { background: #555; }
     </style>
 </head>
 <body>
@@ -27,43 +86,62 @@
       3 L v i s s
     </div>
 
-    <div class="case-card">
-        <h2>🚀 COMMON CASE</h2>
-        <div class="price">444 ★</div>
-        <button class="btn" onclick="sendAction('open_common')">ОТКРЫТЬ</button>
+    <div class="roulette-wrapper">
+        <div class="pointer"></div>
+        <div id="tape" class="tape">
+            </div>
     </div>
 
-    <div class="case-card" style="border-color: #0cf; box-shadow: 0 0 10px #0cf;">
-        <h2 style="color: #0cf;">💎 RARE CASE</h2>
-        <div class="price">1444 ★</div>
-        <button class="btn" style="background: #0cf;" onclick="sendAction('open_rare')">ОТКРЫТЬ</button>
-    </div>
-
-    <div class="case-card game-50-50">
-        <h2>🎲 GAME 50/50</h2>
-        <div class="price">100 ★</div>
-        <button class="btn btn-50" onclick="sendAction('play_50_50')">РИСКНУТЬ</button>
-    </div>
+    <div class="price">444 ★</div>
+    <button id="spinBtn" class="btn" onclick="startSpin()">КРУТИТЬ КЕЙС</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем приложение
+        const tape = document.getElementById('tape');
+        
+        // --- ДАННЫЕ О ПРЕДМЕТАХ И КАРТИНКАХ ---
+        const itemsList = [
+            { name: "Ice Cream", rarity: "common", img: "1.png" },
+            { name: "Instant Ramen", rarity: "common", img: "1.png" },
+            { name: "Xmas Stocking", rarity: "rare", img: "2.png" },
+            { name: "Pool Float", rarity: "rare", img: "2.png" },
+            { name: "Snoop Cigar", rarity: "legendary", img: "3.png" },
+            { name: "Chill Flame", rarity: "legendary", img: "3.png" }
+        ];
 
-        function sendAction(actionType) {
-            // Подтверждение перед действием
-            let text = actionType.includes('open') ? "Открыть кейс?" : "Поставить 100 звезд?";
-            
-            tg.showConfirm(text, (confirmed) => {
-                if (confirmed) {
-                    // Отправляем данные боту
-                    tg.sendData(JSON.stringify({
-                        action: actionType,
-                        user_id: tg.initDataUnsafe.user.id
-                    }));
-                    tg.close(); // Закрываем приложение после нажатия
-                }
-            });
+        // Создаем 70 предметов для ленты (для длины анимации)
+        const tapeLength = 70;
+        for (let i = 0; i < tapeLength; i++) {
+            const randItem = itemsList[Math.floor(Math.random() * itemsList.length)];
+            const div = document.createElement('div');
+            div.className = `item ${randItem.rarity}`;
+            div.innerHTML = `
+                <img src="${randItem.img}" alt="${randItem.name}">
+                <span>${randItem.name}</span>
+            `;
+            tape.appendChild(div);
         }
-    </script>
-</body>
-</html>
+
+        function startSpin() {
+            // Подтверждение перед действием
+            tg.showConfirm("Открыть кейс за 444 звезды?", (confirmed) => {
+                if (confirmed) {
+                    document.getElementById('spinBtn').disabled = true;
+                    
+                    // --- ВАЖНО: Математика прокрутки (CS2 Style) ---
+                    const itemWidth = 130;
+                    const stopIndex = 60; // На каком предмете остановимся (в конце ленты)
+                    
+                    // Добавляем рандомное смещение внутри карточки, чтобы стрелка не попадала в центр
+                    const innerCardOffset = (Math.random() * (itemWidth - 20)) + 10;
+                    
+                    const offset = -(stopIndex * itemWidth) + (window.innerWidth / 2) - innerCardOffset;
+                    tape.style.transform = `translateX(${offset}px)`;
+
+                    // Когда анимация закончится (5.5 сек)
+                    setTimeout(() => {
+                        // Определяем, какой предмет находится под стрелкой
+                        const winDiv = tape.children[stopIndex];
+                        const winItemName = winDiv.querySelector('span').innerText;
+                        
+                        tg.showAlert(`🎉 Поздравляем!
