@@ -8,7 +8,6 @@
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 60px; overflow: hidden; -webkit-user-select: none; }
         .header { position: fixed; top: 0; width: 100%; height: 55px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; z-index: 1000; box-sizing: border-box; }
-        .user-info { display: flex; align-items: center; gap: 8px; }
         .avatar { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #0f0; object-fit: cover; background: #222; }
         .balance-top { color: #0f0; font-weight: bold; }
         .tab-content { display: none; text-align: center; padding: 10px; height: calc(100vh - 120px); overflow-y: auto; }
@@ -18,12 +17,11 @@
         .roulette-wrapper { position: relative; width: 100%; height: 160px; background: #0a0a0a; border: 1px solid #222; overflow: hidden; margin-top: 10px; }
         .pointer { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: #f00; z-index: 10; transform: translateX(-50%); }
         .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; }
-        .item-card { min-width: 130px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; box-sizing: border-box; }
+        .item-card { min-width: 130px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; }
         .item-card img { width: 70px; height: 70px; }
         .main-btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; background: #0f0; color: #000; margin-top: 15px; }
         .choice-group { display: none; gap: 10px; margin-top: 15px; }
-        .choice-btn { flex: 1; height: 50px; border-radius: 12px; border: none; color: #fff; font-weight: bold; }
-        .inv-item { background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; text-align: left; transition: 0.3s; }
+        .inv-item { background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; text-align: left; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #222; }
         .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-size: 12px; font-weight: bold; }
         .nav-item.active-tab { color: #0f0; }
@@ -32,7 +30,7 @@
 <body>
 
     <div class="header">
-        <div class="user-info">
+        <div style="display:flex; align-items:center; gap:8px;">
             <img id="user-p" class="avatar" style="display:none;">
             <span id="user-n">@User</span>
         </div>
@@ -51,8 +49,8 @@
         <div class="roulette-wrapper"><div class="pointer"></div><div id="tape" class="tape"></div></div>
         <button id="spinBtn" class="main-btn" onclick="startSpin()">КРУТИТЬ</button>
         <div id="choice-btns" class="choice-group">
-            <button class="choice-btn" style="background:#333" onclick="handleChoice('keep')">ОСТАВИТЬ</button>
-            <button class="choice-btn" style="background:#f00" onclick="handleChoice('sell')">ПРОДАТЬ</button>
+            <button style="flex:1; background:#333; color:#fff; border-radius:12px; border:none; height:50px; font-weight:bold;" onclick="handleChoice('keep')">ОСТАВИТЬ</button>
+            <button style="flex:1; background:#f00; color:#fff; border-radius:12px; border:none; height:50px; font-weight:bold;" onclick="handleChoice('sell')">ПРОДАТЬ</button>
         </div>
     </div>
 
@@ -66,7 +64,21 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
+
+        // --- ЛОГИКА БАЛАНСА (ЗАЩИТА ОТ ОБНОВЛЕНИЯ) ---
+        let urlParams = new URLSearchParams(window.location.search);
+        let balance = parseInt(localStorage.getItem('user_balance'));
+        
+        // Если зашли через кнопку старт или баланс сбит - берем из ссылки
+        if (isNaN(balance) || urlParams.get('bal')) {
+            balance = parseInt(urlParams.get('bal')) || 1000;
+        }
+        
+        function updateBalDisplay() {
+            document.getElementById('balance-val').innerText = balance + " ★";
+            localStorage.setItem('user_balance', balance);
+        }
+        updateBalDisplay();
 
         const u = tg.initDataUnsafe?.user;
         if(u) {
@@ -77,9 +89,6 @@
             }
         }
 
-        let balance = parseInt(new URLSearchParams(window.location.search).get('balance')) || 0;
-        document.getElementById('balance-val').innerText = balance + " ★";
-
         const items = [
             { name: "Ice Cream", img: "1.png" },
             { name: "Gift Box", img: "2.png" },
@@ -87,9 +96,7 @@
         ];
 
         let myInv = JSON.parse(localStorage.getItem('myInv')) || [];
-        let currentPrice = 0;
-        let isSpinning = false;
-        let winItem = null;
+        let currentPrice = 0, isSpinning = false, winItem = null;
 
         function openCase(p) {
             if(isSpinning) return;
@@ -103,28 +110,24 @@
                 const it = items[Math.floor(Math.random()*items.length)];
                 tape.innerHTML += `<div class="item-card"><img src="${it.img}"></div>`;
             }
-            document.getElementById('spinBtn').innerText = "ОТКРЫТЬ ЗА " + p;
             document.getElementById('spinBtn').style.display = 'block';
             document.getElementById('choice-btns').style.display = 'none';
         }
 
         function startSpin() {
-            if (balance < currentPrice || isSpinning) {
-                if(balance < currentPrice) tg.showAlert("Мало звезд!");
-                return;
-            }
-            
+            if (balance < currentPrice || isSpinning) return;
             isSpinning = true;
             balance -= currentPrice;
-            document.getElementById('balance-val').innerText = balance + " ★";
+            updateBalDisplay();
             
+            tg.sendData(JSON.stringify({action: "spin", price: currentPrice}));
+
             const stopIdx = 60;
             winItem = {...items[Math.floor(Math.random()*items.length)]};
             
-            // Мгновенная фиксация дропа
+            // Сразу на склад
             myInv.push(winItem);
             localStorage.setItem('myInv', JSON.stringify(myInv));
-            tg.sendData(JSON.stringify({action: "spin", price: currentPrice}));
 
             const tape = document.getElementById('tape');
             tape.children[stopIdx].innerHTML = `<img src="${winItem.img}"><br><b>${winItem.name}</b>`;
@@ -146,14 +149,12 @@
             if(type === 'sell') {
                 myInv.pop();
                 localStorage.setItem('myInv', JSON.stringify(myInv));
-                let sellP = Math.floor(currentPrice * 0.5);
-                balance += sellP;
-                document.getElementById('balance-val').innerText = balance + " ★";
-                tg.sendData(JSON.stringify({action: "sell", price: sellP}));
+                balance += Math.floor(currentPrice * 0.5);
+                updateBalDisplay();
+                tg.sendData(JSON.stringify({action: "sell", price: Math.floor(currentPrice * 0.5)}));
             } else {
                 tg.sendData(JSON.stringify({action: "save", item: winItem.name}));
             }
-            winItem = null;
             openTab('shop');
         }
 
@@ -163,22 +164,13 @@
             myInv.forEach((it, idx) => {
                 const isPending = it.status === 'pending';
                 list.innerHTML += `
-                <div class="inv-item" style="flex-direction: column; align-items: stretch; gap: 10px; ${isPending ? 'filter: grayscale(1); opacity: 0.6;' : ''}">
-                    <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <img src="${it.img}" width="35"> 
-                            <b>${it.name}</b>
-                        </div>
-                        ${isPending ? '<span style="color:#ffa500; font-size:10px;">ОЖИДАНИЕ...</span>' : ''}
+                <div class="inv-item" style="${isPending ? 'filter: grayscale(1); opacity: 0.6;' : ''}">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="${it.img}" width="35"> 
+                        <b>${it.name}</b>
                     </div>
-                    <div style="display:flex; gap:5px;">
-                        ${isPending ? 
-                            '<div style="flex:1; background:#222; color:#666; text-align:center; padding:10px; border-radius:8px; font-size:12px;">ЗАЯВКА ПОДАНА</div>' 
-                            : 
-                            `<button style="flex:1; background:#007bff; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold;" onclick="sendWithdraw(${idx})">ВЫВОД</button>
-                             <button style="flex:1; background:#444; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold;" onclick="sellFromInv(${idx})">ПРОДАТЬ</button>`
-                        }
-                    </div>
+                    ${isPending ? '<small>В ОЖИДАНИИ</small>' : 
+                    `<button style="background:#007bff; color:#fff; border:none; padding:8px; border-radius:8px;" onclick="sendWithdraw(${idx})">ВЫВОД</button>`}
                 </div>`;
             });
         }
@@ -187,22 +179,11 @@
             myInv[idx].status = 'pending';
             localStorage.setItem('myInv', JSON.stringify(myInv));
             tg.sendData(JSON.stringify({action: "withdraw", item: myInv[idx].name}));
-            tg.showAlert("Заявка принята! Ожидайте выдачи подарка.");
-            renderInv();
-        }
-
-        function sellFromInv(idx) {
-            let p = 100;
-            balance += p;
-            document.getElementById('balance-val').innerText = balance + " ★";
-            tg.sendData(JSON.stringify({action: "sell", price: p}));
-            myInv.splice(idx, 1);
-            localStorage.setItem('myInv', JSON.stringify(myInv));
+            tg.showAlert("Заявка на вывод отправлена админу!");
             renderInv();
         }
 
         function openTab(id) {
-            if(isSpinning && id === 'inventory') isSpinning = false;
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-tab'));
             document.getElementById(id).classList.add('active');
