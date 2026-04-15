@@ -6,52 +6,88 @@
     <title>3Lviss HUB</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #0f0; font-family: sans-serif; margin: 0; padding-bottom: 70px; }
-        .tab-content { display: none; padding: 15px; }
+        body { background: #000; color: #0f0; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
+        .tab-content { display: none; padding: 15px; text-align: center; }
         .active { display: block; }
         
         /* Меню внизу */
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #0f0; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #0f0; font-size: 12px; flex-direction: column; cursor: pointer; }
-        .nav-item.active-tab { background: #0f0; color: #000; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 65px; background: #111; display: flex; border-top: 1px solid #0f0; z-index: 100; }
+        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #0f0; font-size: 11px; flex-direction: column; cursor: pointer; transition: 0.3s; }
+        .nav-item.active-tab { background: #0f0; color: #000; font-weight: bold; }
 
-        /* Кейсы */
-        .roulette-wrapper { position: relative; width: 100%; height: 150px; background: #111; border: 1px solid #0f0; overflow: hidden; margin: 20px 0; }
-        .tape { display: flex; position: absolute; transition: transform 5s cubic-bezier(0.1, 0, 0, 1); }
-        .item-card { min-width: 100px; height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #333; }
-        .item-card img { width: 60px; }
+        /* Рулетка */
+        .roulette-wrapper { position: relative; width: 100%; height: 160px; background: #111; border: 1px solid #0f0; overflow: hidden; margin: 20px 0; }
+        .pointer { position: absolute; left: 50%; top: 0; width: 4px; height: 100%; background: red; z-index: 10; box-shadow: 0 0 10px red; }
+        .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; }
+        
+        .item-card { min-width: 130px; height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #222; background: linear-gradient(180deg, #111, #1a1a1a); }
+        .item-card img { width: 70px; height: 70px; object-fit: contain; }
+        .item-card span { font-size: 10px; margin-top: 8px; color: #aaa; }
+
+        /* Редкость */
+        .common { border-bottom: 4px solid #888; }
+        .rare { border-bottom: 4px solid #00d4ff; }
+        .legendary { border-bottom: 4px solid #ff00ff; }
 
         /* Инвентарь */
         .inventory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .inv-card { background: #111; border: 1px solid #333; padding: 10px; border-radius: 8px; }
-        .btn-sell { background: #ff0; color: #000; border: none; padding: 5px; width: 100%; margin-top: 5px; font-weight: bold; border-radius: 4px; }
+        .inv-card { background: #111; border: 1px solid #333; padding: 10px; border-radius: 8px; font-size: 12px; }
+        
+        .btn { background: #0f0; color: #000; border: none; padding: 15px 30px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 90%; font-size: 16px; margin: 10px 0; }
+        .btn:disabled { background: #333; color: #666; }
+        .btn-sell { background: #ffea00; color: #000; border: none; padding: 8px; width: 100%; margin-top: 8px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="cases" class="tab-content active">
-        <h3>🚀 КЕЙСЫ</h3>
+        <h2 style="text-shadow: 0 0 10px #0f0;">3LVISS LUCKY CASE</h2>
         <div class="roulette-wrapper">
+            <div class="pointer"></div>
             <div id="tape" class="tape"></div>
         </div>
-        <button class="btn-sell" style="background:#0f0; height: 50px;" onclick="startSpin()">КРУТИТЬ (444 ★)</button>
+        <div id="balance-display" style="margin-bottom: 10px;">Баланс: -- ★</div>
+        <button id="spinBtn" class="btn" onclick="startSpin()">КРУТИТЬ (444 ★)</button>
     </div>
 
     <div id="inventory" class="tab-content">
-        <h3>🎒 ТВОЙ ИНВЕНТАРЬ</h3>
+        <h2>🎒 МОЙ СКЛАД</h2>
         <div class="inventory-grid" id="inv-grid">
-            <p>Пока тут пусто...</p>
+            <p style="grid-column: 1/3; color: #555;">Тут пока ничего нет...</p>
         </div>
     </div>
 
     <div class="nav-bar">
-        <div class="nav-item active-tab" onclick="openTab('cases', this)">🎰 Кейсы</div>
-        <div class="nav-item" onclick="openTab('inventory', this)">🎒 Склад</div>
+        <div id="nav-cases" class="nav-item active-tab" onclick="openTab('cases', this)">🎰 КЕЙСЫ</div>
+        <div id="nav-inv" class="nav-item" onclick="openTab('inventory', this)">🎒 СКЛАД</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentBalance = parseInt(urlParams.get('balance')) || 0;
+        document.getElementById('balance-display').innerText = `Баланс: ${currentBalance} ★`;
+
+        const itemsList = [
+            { name: "Ice Cream", img: "1.png", rarity: "common" },
+            { name: "Xmas Stocking", img: "2.png", rarity: "rare" },
+            { name: "Snoop Cigar", img: "3.png", rarity: "legendary" }
+        ];
+
+        const tape = document.getElementById('tape');
+        function fillTape() {
+            tape.innerHTML = '';
+            for(let i=0; i<80; i++) {
+                const item = itemsList[Math.floor(Math.random() * itemsList.length)];
+                const div = document.createElement('div');
+                div.className = `item-card ${item.rarity}`;
+                div.innerHTML = `<img src="${item.img}"><span>${item.name}</span>`;
+                tape.appendChild(div);
+            }
+        }
+        fillTape();
 
         function openTab(name, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -60,54 +96,63 @@
             el.classList.add('active-tab');
         }
 
-        const itemsList = [
-            { name: "Ice Cream", img: "1.png", rarity: "common" },
-            { name: "Xmas Stocking", img: "2.png", rarity: "rare" },
-            { name: "Snoop Cigar", img: "3.png", rarity: "legendary" }
-        ];
-
-        // Инициализация ленты
-        const tape = document.getElementById('tape');
-        for(let i=0; i<60; i++) {
-            const item = itemsList[i % 3];
-            const div = document.createElement('div');
-            div.className = 'item-card';
-            div.innerHTML = `<img src="${item.img}"><span>${item.name}</span>`;
-            tape.appendChild(div);
-        }
-
         function startSpin() {
-            const stopIndex = 50;
-            const offset = -(stopIndex * 100) + (window.innerWidth/2) - 50;
-            tape.style.transform = `translateX(${offset}px)`;
+            if (currentBalance < 444) {
+                tg.showPopup({ title: 'Мало звёзд!', message: 'Пополни баланс, чтобы крутить.', buttons: [{type: 'ok', text: 'Понял'}] });
+                return;
+            }
+
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = true;
+
+            // Сброс позиции
+            tape.style.transition = "none";
+            tape.style.transform = "translateX(0)";
 
             setTimeout(() => {
-                const win = itemsList[stopIndex % 3];
-                tg.showAlert(`🎉 Выпало: ${win.name}`);
+                const itemWidth = 130;
+                const stopIndex = 60 + Math.floor(Math.random() * 5);
                 
-                // Добавляем в инвентарь на экране
-                const grid = document.getElementById('inv-grid');
-                if(grid.innerHTML.includes('пусто')) grid.innerHTML = '';
-                grid.innerHTML += `
-                    <div class="inv-card">
-                        <img src="${win.img}" style="width:50px">
-                        <div>${win.name}</div>
-                        <button class="btn-sell" onclick="sellItem(this, '${win.name}')">ПРОДАТЬ (200★)</button>
-                    </div>
-                `;
+                // Рандом шансов (75% / 20% / 5%)
+                const rand = Math.random() * 100;
+                let winRarity = rand < 75 ? "common" : (rand < 95 ? "rare" : "legendary");
+                const possible = itemsList.filter(i => i.rarity === winRarity);
+                const winItem = possible[Math.floor(Math.random() * possible.length)];
 
-                // Сообщаем боту
-                tg.sendData(JSON.stringify({ action: "save_item", item: win.name, rarity: win.rarity }));
-            }, 5500);
-        }
+                // Подмена на стоп-карточке
+                const winDiv = tape.children[stopIndex];
+                winDiv.className = `item-card ${winRarity}`;
+                winDiv.innerHTML = `<img src="${winItem.img}"><span>${winItem.name}</span>`;
 
-        function sellItem(btn, name) {
-            tg.showConfirm(`Продать ${name} за 200 звезд?`, (ok) => {
-                if(ok) {
-                    btn.parentElement.remove();
-                    tg.sendData(JSON.stringify({ action: "sell_item", item_name: name }));
-                }
-            });
+                tape.style.transition = "transform 5s cubic-bezier(0.1, 0, 0, 1)";
+                const offset = -(stopIndex * itemWidth) + (window.innerWidth / 2) - (itemWidth / 2);
+                tape.style.transform = `translateX(${offset}px)`;
+
+                setTimeout(() => {
+                    tg.showPopup({
+                        title: '🎁 ВЫИГРЫШ!',
+                        message: `Выпало: ${winItem.name}\nЧто сделаем?`,
+                        buttons: [
+                            {id: 'keep', type: 'default', text: 'Оставить'},
+                            {id: 'sell', type: 'destructive', text: 'Продать за 200★'}
+                        ]
+                    }, (btnId) => {
+                        if (btnId === 'sell') {
+                            tg.sendData(JSON.stringify({ action: "sell_instant", item: winItem.name }));
+                        } else {
+                            tg.sendData(JSON.stringify({ action: "save_item", item: winItem.name, rarity: winRarity }));
+                            // Добавляем в визуал инвентаря
+                            const grid = document.getElementById('inv-grid');
+                            if(grid.innerText.includes('пусто')) grid.innerHTML = '';
+                            grid.innerHTML += `<div class="inv-card"><img src="${winItem.img}" style="width:40px"><br>${winItem.name}</div>`;
+                        }
+                        currentBalance -= 444;
+                        if(btnId === 'sell') currentBalance += 200;
+                        document.getElementById('balance-display').innerText = `Баланс: ${currentBalance} ★`;
+                        spinBtn.disabled = false;
+                    });
+                }, 5500);
+            }, 50);
         }
     </script>
 </body>
