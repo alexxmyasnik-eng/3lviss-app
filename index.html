@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3Lviss Lucky Rocket</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; text-align: center; margin: 0; padding: 20px; }
+        .banner { width: 100%; border-radius: 10px; border: 1px solid #0f0; margin-bottom: 20px; }
+        .ascii-logo { white-space: pre; font-size: 8px; line-height: 1; margin: 20px 0; color: #0f0; text-shadow: 0 0 5px #0f0; }
+        .case-card { border: 1px solid #0f0; border-radius: 15px; padding: 20px; background: #111; box-shadow: 0 0 15px #0f0; margin-bottom: 20px; }
+        .btn { background: #0f0; color: #000; border: none; padding: 15px; font-weight: bold; width: 100%; cursor: pointer; border-radius: 8px; font-size: 16px; }
+        .btn:active { background: #0a0; transform: scale(0.98); }
+        .stats { font-size: 12px; color: #888; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="ascii-logo">
+|‾‾\ |  |   _   ____ 
+|  < |  |  | | /  __/
+|__/ |__|__|_| \__ \ 
+      3 L v i s s
+    </div>
+
+    <img src="https://raw.githubusercontent.com/alexxmyasnik-eng/3lviss-app/main/banner.webp" class="banner" alt="3Lviss Shop">
+
+    <div class="case-card">
+        <h2>📦 COMMON CASE</h2>
+        <p>Цена: 444 ★</p>
+        <button class="btn" onclick="openCase('common')">ОТКРЫТЬ КЕЙС</button>
+        <div class="stats">Шанс на Rare: 15% | Legendary: 3%</div>
+    </div>
+
+    <div class="case-card" style="border-color: #ff0; box-shadow: 0 0 15px #ff0;">
+        <h2 style="color: #ff0;">🎲 ИГРА 50/50</h2>
+        <p>Ставка: 100 ★</p>
+        <button class="btn" style="background: #ff0;" onclick="playGame()">РИСКНУТЬ</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        function openCase(type) {
+            tg.showConfirm(`Открыть ${type} кейс за 444 звезды?`, (confirmed) => {
+                if (confirmed) {
+                    tg.sendData(JSON.stringify({action: "open_case", type: type}));
+                }
+            });
+        }
+
+        function playGame() {
+            tg.sendData(JSON.stringify({action: "play_50_50", bet: 100}));
+        }
+    </script>
+</body>
+</html>
