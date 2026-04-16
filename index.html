@@ -8,6 +8,8 @@
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 60px; overflow: hidden; -webkit-user-select: none; }
         .header { position: fixed; top: 0; width: 100%; height: 55px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; z-index: 1000; box-sizing: border-box; }
+        .user-info { display: flex; align-items: center; gap: 8px; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #0f0; background: #222; object-fit: cover; }
         .balance-top { color: #0f0; font-weight: bold; font-size: 18px; }
         .tab-content { display: none; text-align: center; padding: 10px; height: calc(100vh - 120px); overflow-y: auto; }
         .active { display: block; }
@@ -29,7 +31,10 @@
 <body>
 
     <div class="header">
-        <span id="user-n">@User</span>
+        <div class="user-info">
+            <img id="user-p" class="avatar" style="display:none;">
+            <span id="user-n">Загрузка...</span>
+        </div>
         <div class="balance-top" id="balance-val">0 ★</div>
     </div>
 
@@ -59,10 +64,23 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.ready();
         tg.expand();
 
+        // Отображение данных профиля
+        const u = tg.initDataUnsafe?.user;
+        if(u) {
+            document.getElementById('user-n').innerText = u.username ? '@'+u.username : u.first_name;
+            if(u.photo_url) {
+                const p = document.getElementById('user-p');
+                p.src = u.photo_url;
+                p.style.display = 'block';
+            }
+        } else {
+            document.getElementById('user-n').innerText = "Игрок";
+        }
+
         let urlParams = new URLSearchParams(window.location.search);
-        // Приоритет всегда тому, что передал бот в ссылке!
         let balance = parseInt(urlParams.get('bal')) || parseInt(localStorage.getItem('user_balance')) || 0;
 
         function updateBal() {
@@ -98,73 +116,11 @@
 
         function startSpin() {
             if (balance < currentPrice || isSpinning) {
-                if(balance < currentPrice) tg.showAlert("Недостаточно звезд!");
+                if(balance < currentPrice) tg.showAlert("Мало звезд!");
                 return;
             }
             isSpinning = true;
             balance -= currentPrice;
             updateBal();
             
-            // СРАЗУ отправляем боту инфу, что звезды потрачены
-            tg.sendData(JSON.stringify({action: "spin", price: currentPrice}));
-
-            const stopIdx = 60;
-            winItem = {...items[Math.floor(Math.random()*items.length)]};
-            
-            const tape = document.getElementById('tape');
-            tape.children[stopIdx].innerHTML = `<img src="${winItem.img}"><br><b>${winItem.name}</b>`;
-            document.getElementById('spinBtn').style.display = 'none';
-            
-            setTimeout(() => {
-                tape.style.transition = "transform 6s cubic-bezier(0.15, 0, 0.15, 1)";
-                const offset = -(stopIdx * 130) + (window.innerWidth / 2) - 65;
-                tape.style.transform = `translateX(${offset}px)`;
-            }, 50);
-
-            setTimeout(() => {
-                document.getElementById('choice-btns').style.display = 'flex';
-                isSpinning = false;
-            }, 6500);
-        }
-
-        function handleChoice(type) {
-            if(type === 'sell') {
-                let sellPrice = Math.floor(currentPrice * 0.5);
-                balance += sellPrice;
-                updateBal();
-                tg.sendData(JSON.stringify({action: "sell", price: sellPrice}));
-            } else {
-                myInv.push(winItem);
-                localStorage.setItem('myInv', JSON.stringify(myInv));
-            }
-            openTab('shop');
-        }
-
-        function renderInv() {
-            const list = document.getElementById('inv-list');
-            list.innerHTML = myInv.length ? '' : '<p style="color:#444;">Пусто</p>';
-            myInv.forEach((it, idx) => {
-                list.innerHTML += `
-                <div class="inv-item">
-                    <span>${it.name}</span>
-                    <button onclick="sendWithdraw(${idx})" style="background:#007bff; color:#fff; border:none; padding:5px 10px; border-radius:5px;">ВЫВОД</button>
-                </div>`;
-            });
-        }
-
-        function sendWithdraw(idx) {
-            tg.sendData(JSON.stringify({action: "withdraw", item: myInv[idx].name}));
-            myInv.splice(idx, 1);
-            localStorage.setItem('myInv', JSON.stringify(myInv));
-            renderInv();
-            tg.showAlert("Заявка отправлена!");
-        }
-
-        function openTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id === 'inventory') renderInv();
-        }
-    </script>
-</body>
-</html>
+            tg.send
