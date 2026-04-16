@@ -15,14 +15,11 @@
         .active { display: block; }
         .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .case-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 12px; cursor: pointer; }
-        
-        /* РУЛЕТКА */
         .roulette-wrapper { position: relative; width: 100%; height: 160px; background: #0a0a0a; border: 1px solid #222; overflow: hidden; margin-top: 10px; border-radius: 12px;}
         .pointer { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: #f00; z-index: 10; transform: translateX(-50%); box-shadow: 0 0 10px rgba(255,0,0,0.8);}
         .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; }
         .item-card { min-width: 130px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; }
         .item-card img { width: 70px; height: 70px; margin-bottom: 10px;}
-        
         .main-btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; background: #0f0; color: #000; margin-top: 15px; }
         .choice-group { display: none; gap: 10px; margin-top: 15px; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #222; }
@@ -69,7 +66,6 @@
         tg.ready();
         tg.expand();
 
-        // 1. Аватарка и Имя
         const u = tg.initDataUnsafe?.user;
         if(u) {
             document.getElementById('user-n').innerText = u.username ? '@'+u.username : u.first_name;
@@ -80,22 +76,18 @@
             }
         }
 
-        // 2. БРОНЯ ОТ ОБНОВЛЕНИЯ СТРАНИЦЫ (Звезды не вернутся!)
+        // БРОНЕБОЙНАЯ ЛОГИКА БАЛАНСА
         const params = new URLSearchParams(window.location.search);
-        const urlBal = parseInt(params.get('bal'));
-        const urlT = params.get('t'); 
+        const gAmt = parseInt(params.get('g_amt')) || 0;
+        const gId = parseInt(params.get('g_id')) || 0;
 
-        let lastT = localStorage.getItem('last_t');
-        let balance = 0;
+        let balance = parseInt(localStorage.getItem('user_balance')) || 0;
+        let savedGId = parseInt(localStorage.getItem('saved_g_id')) || 0;
 
-        if (urlT && urlT !== lastT) {
-            // Зашли по новой ссылке из бота
-            balance = urlBal;
-            localStorage.setItem('last_t', urlT);
-            localStorage.setItem('user_balance', balance);
-        } else {
-            // Просто обновили страницу (F5 или свайп) - берем реальный остаток!
-            balance = parseInt(localStorage.getItem('user_balance')) || 0;
+        // Если админ сделал перевод (ID перевода больше, чем мы помним)
+        if (gId > savedGId) {
+            balance += gAmt;
+            localStorage.setItem('saved_g_id', gId); // Запоминаем, что забрали этот перевод
         }
 
         function updateBal() {
@@ -104,7 +96,7 @@
         }
         updateBal();
 
-        // 3. Твои картинки и предметы!
+        // Твои предметы
         const items = [
             { name: "Telegram Premium", img: "1.png" },
             { name: "TON Coin", img: "2.png" },
@@ -122,7 +114,6 @@
             tape.style.transition = "none";
             tape.style.transform = "translateX(0)";
             tape.innerHTML = '';
-            // Генерируем 80 картинок для ленты
             for(let i=0; i<80; i++) {
                 const it = items[Math.floor(Math.random()*items.length)];
                 tape.innerHTML += `<div class="item-card"><img src="${it.img}"></div>`;
@@ -135,13 +126,10 @@
             if (balance < currentPrice) return tg.showAlert("Мало звезд!");
             isSpinning = true;
             
-            // Списываем баланс и сохраняем локально!
+            // Списываем баланс раз и навсегда
             balance -= currentPrice;
             updateBal();
             
-            // Отправляем боту, чтобы списал в базе
-            tg.sendData(JSON.stringify({action: "spin", price: currentPrice}));
-
             const stopIdx = 65;
             winItem = {...items[Math.floor(Math.random()*items.length)]};
             
@@ -166,7 +154,6 @@
                 let sellPrice = Math.floor(currentPrice * 0.5);
                 balance += sellPrice;
                 updateBal();
-                tg.sendData(JSON.stringify({action: "sell", price: sellPrice}));
             } else {
                 myInv.push(winItem);
                 localStorage.setItem('myInv', JSON.stringify(myInv));
@@ -174,7 +161,6 @@
             openTab('shop');
         }
 
-        // 4. Склад и Вывод (С отправкой админу)
         function renderInv() {
             const list = document.getElementById('inv-list');
             list.innerHTML = myInv.length ? '' : '<p style="color:#444;">Пусто</p>';
@@ -189,9 +175,24 @@
             });
         }
 
+        // ПРЯМАЯ ОТПРАВКА СООБЩЕНИЯ АДМИНУ
         function sendWithdraw(idx) {
-            // Отправляем боту название предмета
-            tg.sendData(JSON.stringify({action: "withdraw", item: myInv[idx].name}));
+            const item = myInv[idx].name;
+            const uname = u ? (u.username ? '@' + u.username : u.first_name) : "Игрок";
+            const uid = u ? u.id : "Неизвестно";
+            
+            // Чтобы всё работало без серверов, сайт сам шлет тебе сообщение через API Телеграма
+            const token = "8771521272:AAG0VVjVrR4Ux5ZRF4lSnlrajgLW9pspyf8";
+            const adminId = "780434845";
+            const text = `🚨 <b>НОВАЯ ЗАЯВКА НА ВЫВОД!</b>\n\n👤 Игрок: ${uname}\n🆔 ID: <code>${uid}</code>\n🎁 Предмет: <b>${item}</b>`;
+            
+            const url = `https://api.telegram.org/bot${token}/sendMessage`;
+            fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: adminId, text: text, parse_mode: "HTML" })
+            });
+
             myInv.splice(idx, 1);
             localStorage.setItem('myInv', JSON.stringify(myInv));
             renderInv();
