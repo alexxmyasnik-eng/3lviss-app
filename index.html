@@ -1,102 +1,96 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3Lviss HUB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 70px; overflow: hidden; }
-        .header { position: fixed; top: 0; width: 100%; height: 60px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; z-index: 1000; box-sizing: border-box; }
-        #notif { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; background: #1a1a1a; border: 1px solid #0f0; border-radius: 10px; padding: 15px; z-index: 9999; transition: 0.5s; box-shadow: 0 0 15px #0f0; }
-        #notif.show { top: 15px; }
-        .tab { display: none; text-align: center; }
-        .active { display: block; }
-        .card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; margin: 10px; }
-        .btn { width: 90%; height: 45px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #222; }
-        .nav-btn { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; }
-        .nav-btn.active-nav { color: #0f0; }
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 60px; text-align: center; }
+        .header { position: fixed; top: 0; width: 100%; height: 55px; background: #111; display: flex; align-items: center; justify-content: space-around; border-bottom: 2px solid #0f0; z-index: 10; }
+        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 85%; background: #1a1a1a; border: 1px solid #0f0; padding: 15px; border-radius: 12px; transition: 0.6s; z-index: 100; box-shadow: 0 0 20px #0f0; }
+        #toast.active { top: 15px; }
+        .case-card { background: #111; border: 1px solid #333; margin: 15px; padding: 15px; border-radius: 15px; }
+        .btn { width: 85%; height: 45px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin: 5px; }
     </style>
 </head>
 <body>
-
-    <div id="notif">
-        <div style="color: #0f0; font-size: 12px;">СИСТЕМА</div>
-        <div id="notif-msg" style="font-weight: bold;">Баланс пополнен!</div>
-    </div>
-
+    <div id="toast"><b>★ БАЛАНС ПОПОЛНЕН!</b><br><span id="toast-amt"></span></div>
+    
     <div class="header">
-        <div id="user-name" style="font-weight: bold;">...</div>
-        <div id="user-bal" style="color: #0f0; font-weight: bold; font-size: 18px;">0 ★</div>
+        <div id="u-name" style="font-weight:bold">...</div>
+        <div id="u-bal" style="color:#0f0; font-size: 18px;">0 ★</div>
     </div>
 
-    <div id="shop" class="tab active">
-        <div style="padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div class="card" onclick="openCase(222, 'LITE')"><b>LITE</b><br><span style="color:#0f0">222 ★</span></div>
-            <div class="card" onclick="openCase(888, 'ELITE')"><b>ELITE</b><br><span style="color:#0f0">888 ★</span></div>
+    <div id="page-shop">
+        <div class="case-card">
+            <img src="case1.png" width="80"><br><b>КЕЙС LITE</b><br>Цена: 222 ★<br>
+            <button class="btn" style="background:#0f0;color:#000" onclick="buy(222, 'Нож')">ОТКРЫТЬ</button>
         </div>
+        <div class="case-card">
+            <img src="case2.png" width="80"><br><b>КЕЙС ELITE</b><br>Цена: 888 ★<br>
+            <button class="btn" style="background:#0f0;color:#000" onclick="buy(888, 'Перчатки')">ОТКРЫТЬ</button>
+        </div>
+        <button class="btn" style="background:#222;color:#fff" onclick="tab('inv')">МОЙ СКЛАД</button>
     </div>
 
-    <div id="inv" class="tab">
-        <div id="inv-list" style="padding-top: 20px;">Загрузка склада...</div>
-    </div>
-
-    <div class="nav">
-        <div class="nav-btn active-nav" id="btn-shop" onclick="toTab('shop')">КЕЙСЫ</div>
-        <div class="nav-btn" id="btn-inv" onclick="toTab('inv')">СКЛАД</div>
+    <div id="page-inv" style="display:none">
+        <h3>ВАШ СКЛАД</h3>
+        <div id="inv-items"></div>
+        <button class="btn" style="background:#222;color:#fff" onclick="tab('shop')">НАЗАД</button>
     </div>
 
     <script>
-        // Твоя ссылка из скриншота
-        const API_URL = "https://king-legibly-mouse.ngrok-free.dev";
+        const API = "https://king-legibly-mouse.ngrok-free.dev"; // ПРОВЕРЬ ССЫЛКУ!
         const tg = window.Telegram.WebApp;
         const uid = new URLSearchParams(window.location.search).get('uid');
         let lastGId = -1;
 
         async function sync() {
-            if(!uid) return;
             try {
-                const r = await fetch(`${API_URL}/get_data?uid=${uid}`);
+                const r = await fetch(`${API}/get_data?uid=${uid}`);
                 const d = await r.json();
+                
+                document.getElementById('u-bal').innerText = d.bal + " ★";
+                document.getElementById('u-name').innerText = tg.initDataUnsafe?.user?.first_name || "Игрок";
 
-                // Проверка плашки
                 if (lastGId !== -1 && d.g_id > lastGId) {
-                    const n = document.getElementById('notif');
-                    document.getElementById('notif-msg').innerText = `+${d.g_amt} ★ зачислено!`;
-                    n.classList.add('show');
-                    setTimeout(() => n.classList.remove('show'), 4000);
+                    const t = document.getElementById('toast');
+                    document.getElementById('toast-amt').innerText = "+" + d.g_amt + " звезд зачислено!";
+                    t.classList.add('active');
+                    setTimeout(() => t.classList.remove('active'), 4000);
                 }
                 lastGId = d.g_id;
 
-                // Обновление экрана
-                document.getElementById('user-bal').innerText = d.balance + " ★";
-                
-                const list = document.getElementById('inv-list');
-                list.innerHTML = d.inventory.length ? "" : "Склад пуст";
-                d.inventory.forEach(i => {
-                    list.innerHTML += `
-                        <div class="card">
-                            <b>${i.name}</b><br>
-                            <button class="btn" style="background:#0066ff; color:#fff;" onclick="withdraw(${i.id}, '${i.name}')">ВЫВОД</button>
-                        </div>`;
+                let h = "";
+                d.inv.forEach(item => {
+                    h += `<div class="case-card"><b>${item}</b><br><button class="btn" style="background:#00f;color:#fff" onclick="wd('${item}')">ВЫВОД</button></div>`;
                 });
-            } catch(e) {
-                console.log("Ошибка связи с сервером");
-            }
+                document.getElementById('inv-items').innerHTML = h || "На складе пока пусто";
+            } catch(e) {}
         }
 
-        async function withdraw(id, name) {
-            await fetch(`${API_URL}/action`, {
-                method: 'POST',
-                body: JSON.stringify({uid, action: "withdraw", inv_id: id, item_name: name})
-            });
-            alert("Заявка отправлена!");
+        async function buy(cost, name) {
+            const bal = parseInt(document.getElementById('u-bal').innerText);
+            if(bal < cost) return alert("Недостаточно звезд!");
+            await fetch(`${API}/action`, {method:'POST', body:JSON.stringify({uid, act:'open', cost})});
+            await fetch(`${API}/action`, {method:'POST', body:JSON.stringify({uid, act:'save', n:name})});
+            alert("Вы выбили: " + name);
             sync();
         }
 
-        function toTab(name) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
-            document.getElementById(name).classList.add('active');
-            document.getElementById('btn
+        async function wd(name) {
+            await fetch(`${API}/action`, {method:'POST', body:JSON.stringify({uid, act:'wd', n:name})});
+            alert("Заявка на вывод отправлена!");
+            sync();
+        }
+
+        function tab(t) {
+            document.getElementById('page-shop').style.display = t==='shop'?'block':'none';
+            document.getElementById('page-inv').style.display = t==='inv'?'block':'none';
+        }
+
+        setInterval(sync, 3000); 
+        sync(); tg.expand();
+    </script>
+</body>
+</html>
