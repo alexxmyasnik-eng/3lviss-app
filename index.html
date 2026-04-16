@@ -103,9 +103,11 @@
         async function loadData() {
             if(!uid) return;
             try {
-                const r = await fetch(`${API_URL}/get_data?uid=${uid}`);
+                // ВАЖНОЕ ИСПРАВЛЕНИЕ: _=Date.now() сбрасывает агрессивный кэш Telegram
+                const r = await fetch(`${API_URL}/get_data?uid=${uid}&_=${Date.now()}`, { cache: "no-store" });
                 const d = await r.json();
                 
+                // Проверяем, было ли пополнение (по ID транзакции)
                 if (lastGId !== -1 && d.g_id > lastGId) showToast(d.g_amt);
                 lastGId = d.g_id;
                 
@@ -126,10 +128,12 @@
                         </div>
                     </div>`;
                 });
-            } catch(e) {}
+            } catch(e) {
+                console.error("Ошибка загрузки данных:", e);
+            }
         }
-        // Ускорено обновление до 1.5 сек для быстрого появления плашки
-        setInterval(loadData, 1500); loadData();
+        // Опрос каждую 1 секунду
+        setInterval(loadData, 1000); loadData();
 
         const loot = [
             { name: "Premium", img: "1.png", price: 150 },
@@ -140,7 +144,7 @@
 
         function openCase(cost, name) {
             if(balance < cost) return tg.showAlert("Недостаточно звезд на балансе!");
-            if(isSpinning) return; // Блокировка, если рулетка уже крутится
+            if(isSpinning) return; 
             
             caseCost = cost;
             currentDrop = null;
@@ -177,7 +181,7 @@
             tape.children[winIdx].innerHTML = `<img src="${currentDrop.img}" style="width:70px;">`;
             const offset = -(winIdx * 130) + (window.innerWidth / 2 - 65);
             
-            // Анимация
+            // Анимация 5 секунд
             tape.style.transition = "transform 5s cubic-bezier(0.15, 0, 0.15, 1)";
             tape.style.transform = `translateX(${offset}px)`;
             
@@ -186,14 +190,14 @@
             }, 5000);
         }
 
-        // Вынесено в отдельную функцию, чтобы можно было "скипнуть" анимацию
+        // Завершение анимации (Обычное или Скип)
         function finishSpin() {
+            if(!isSpinning) return; // Защита от двойного вызова
             isSpinning = false;
             const tape = document.getElementById('tape');
             const winIdx = 50;
             const offset = -(winIdx * 130) + (window.innerWidth / 2 - 65);
             
-            // Моментально ставим ленту на выигрыш, если анимация была пропущена
             tape.style.transition = "none";
             tape.style.transform = `translateX(${offset}px)`;
 
@@ -207,7 +211,7 @@
         async function saveItem() {
             if(!currentDrop) return;
             const itemToSave = currentDrop;
-            currentDrop = null; // Очищаем, чтобы избежать дублей
+            currentDrop = null; 
             await fetch(`${API_URL}/action`, { method: 'POST', body: JSON.stringify({uid, action: "save", item: itemToSave}) });
             toTab('shop');
             loadData();
@@ -238,10 +242,10 @@
             if (isSpinning) {
                 clearTimeout(spinTimeout);
                 finishSpin();
-                return; // Не переключаем вкладку, заставляем пользователя посмотреть дроп
+                return; // Остаемся на экране выигрыша
             }
             
-            // АВТО-СОХРАНЕНИЕ ПРЕДМЕТА: если пользователь ушел с экрана выигрыша, не нажав кнопку
+            // АВТО-СОХРАНЕНИЕ
             if (currentDrop && document.getElementById('post-game').style.display === 'block' && id !== 'game') {
                 saveItem(); 
             }
