@@ -1,126 +1,114 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3Lviss Lucky Rocket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3Lviss Lucky Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 60px; overflow: hidden; -webkit-user-select: none; }
-        .header { position: fixed; top: 0; width: 100%; height: 55px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; z-index: 1000; box-sizing: border-box; }
-        .user-info { display: flex; align-items: center; gap: 8px; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #0f0; background: #222; object-fit: cover; }
-        .balance-top { color: #0f0; font-weight: bold; font-size: 18px; }
-        .tab-content { display: none; text-align: center; padding: 10px; height: calc(100vh - 120px); overflow-y: auto; }
-        .active { display: block; }
-        .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .case-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 12px; cursor: pointer; }
-        .roulette-wrapper { position: relative; width: 100%; height: 160px; background: #0a0a0a; border: 1px solid #222; overflow: hidden; margin-top: 10px; }
-        .pointer { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: #f00; z-index: 10; transform: translateX(-50%); }
-        .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; }
-        .item-card { min-width: 130px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; }
-        .item-card img { width: 70px; height: 70px; }
-        .main-btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; background: #0f0; color: #000; margin-top: 15px; }
-        .choice-group { display: none; gap: 10px; margin-top: 15px; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-size: 12px; font-weight: bold; }
-        .nav-item.active-tab { color: #0f0; }
-        .inv-item { background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        body { background: #0b0b0b; color: #fff; font-family: sans-serif; margin: 0; padding: 15px; text-align: center; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f0; padding-bottom: 10px; margin-bottom: 20px; }
+        .balance { color: #0f0; font-size: 20px; font-weight: bold; }
+        .case-card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 20px; margin: 10px 0; cursor: pointer; }
+        .btn { background: #0f0; color: #000; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; margin-top: 10px; }
+        .nav { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; background: #111; border-top: 1px solid #222; }
+        .nav-btn { flex: 1; padding: 15px; color: #888; text-decoration: none; font-size: 14px; }
+        .nav-btn.active { color: #0f0; }
+        .inv-item { background: #1a1a1a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        #roulette { display: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="user-info">
-            <img id="user-p" class="avatar" style="display:none;">
-            <span id="user-n">Загрузка...</span>
-        </div>
-        <div class="balance-top" id="balance-val">0 ★</div>
+        <span id="name">Игрок</span>
+        <span class="balance" id="bal">0 ★</span>
     </div>
 
-    <div id="shop" class="tab-content active">
-        <div class="case-grid">
-            <div class="case-card" onclick="openCase(222)">Lite<br><span style="color:#0f0">222 ★</span></div>
-            <div class="case-card" onclick="openCase(444)">Lucky<br><span style="color:#0f0">444 ★</span></div>
-            <div class="case-card" onclick="openCase(888)">Elite<br><span style="color:#0f0">888 ★</span></div>
-        </div>
+    <div id="cases">
+        <div class="case-card" onclick="openCase(222)">Кейс LITE — 222 ★</div>
+        <div class="case-card" onclick="openCase(555)">Кейс ELITE — 555 ★</div>
     </div>
 
-    <div id="roulette-screen" class="tab-content">
-        <div class="roulette-wrapper"><div class="pointer"></div><div id="tape" class="tape"></div></div>
-        <button id="spinBtn" class="main-btn" onclick="startSpin()">КРУТИТЬ</button>
-        <div id="choice-btns" class="choice-group">
-            <button style="flex:1; background:#333; color:#fff; border-radius:12px; height:50px; border:none;" onclick="handleChoice('keep')">ОСТАВИТЬ</button>
-            <button style="flex:1; background:#f00; color:#fff; border-radius:12px; height:50px; border:none;" onclick="handleChoice('sell')">ПРОДАТЬ</button>
-        </div>
+    <div id="roulette">
+        <h2 id="win-text">Крутим...</h2>
+        <button class="btn" id="take-btn" onclick="saveItem()">В ИНВЕНТАРЬ</button>
     </div>
 
-    <div id="inventory" class="tab-content"><div id="inv-list"></div></div>
+    <div id="inv-screen" style="display:none;">
+        <h3>Твой Склад</h3>
+        <div id="list"></div>
+    </div>
 
-    <div class="nav-bar">
-        <div class="nav-item active-tab" id="n-shop" onclick="openTab('shop')">КЕЙСЫ</div>
-        <div class="nav-item" id="n-inv" onclick="openTab('inventory')">СКЛАД</div>
+    <div class="nav">
+        <div class="nav-btn active" onclick="show('cases')">МАГАЗИН</div>
+        <div class="nav-btn" onclick="show('inv-screen')">СКЛАД</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
         tg.expand();
+        const uid = new URLSearchParams(window.location.search).get('uid');
+        let balance = 0;
+        let inventory = [];
+        let currentItem = "";
 
-        // Отображение данных профиля
-        const u = tg.initDataUnsafe?.user;
-        if(u) {
-            document.getElementById('user-n').innerText = u.username ? '@'+u.username : u.first_name;
-            if(u.photo_url) {
-                const p = document.getElementById('user-p');
-                p.src = u.photo_url;
-                p.style.display = 'block';
-            }
-        } else {
-            document.getElementById('user-n').innerText = "Игрок";
-        }
+        // Приветствие
+        document.getElementById('name').innerText = tg.initDataUnsafe.user?.first_name || "Миша";
 
-        let urlParams = new URLSearchParams(window.location.search);
-        let balance = parseInt(urlParams.get('bal')) || parseInt(localStorage.getItem('user_balance')) || 0;
-
-        function updateBal() {
-            document.getElementById('balance-val').innerText = balance + " ★";
-            localStorage.setItem('user_balance', balance);
-        }
-        updateBal();
-
-        const items = [
-            { name: "Ice Cream", img: "1.png" },
-            { name: "Gift Box", img: "2.png" },
-            { name: "Snoop Cigar", img: "3.png" }
-        ];
-
-        let myInv = JSON.parse(localStorage.getItem('myInv')) || [];
-        let currentPrice = 0, isSpinning = false, winItem = null;
-
-        function openCase(p) {
-            if(isSpinning) return;
-            currentPrice = p;
-            openTab('roulette-screen');
-            const tape = document.getElementById('tape');
-            tape.style.transition = "none";
-            tape.style.transform = "translateX(0)";
-            tape.innerHTML = '';
-            for(let i=0; i<80; i++) {
-                const it = items[Math.floor(Math.random()*items.length)];
-                tape.innerHTML += `<div class="item-card"><img src="${it.img}"></div>`;
-            }
-            document.getElementById('spinBtn').style.display = 'block';
-            document.getElementById('choice-btns').style.display = 'none';
-        }
-
-        function startSpin() {
-            if (balance < currentPrice || isSpinning) {
-                if(balance < currentPrice) tg.showAlert("Мало звезд!");
-                return;
-            }
-            isSpinning = true;
-            balance -= currentPrice;
-            updateBal();
+        function openCase(price) {
+            if (balance < price) return alert("Мало звезд!");
+            balance -= price;
+            updateUI();
+            tg.sendData(JSON.stringify({action: 'spin', price: price}));
             
-            tg.send
+            document.getElementById('cases').style.display = 'none';
+            document.getElementById('roulette').style.display = 'block';
+            
+            const wins = ["Ice Cream", "Gift Box", "Telegram Premium", "TON"];
+            currentItem = wins[Math.floor(Math.random()*wins.length)];
+            document.getElementById('win-text').innerText = "Выпало: " + currentItem;
+        }
+
+        function saveItem() {
+            inventory.push(currentItem);
+            tg.sendData(JSON.stringify({action: 'save', item: currentItem}));
+            show('cases');
+        }
+
+        function withdraw(item) {
+            tg.sendData(JSON.stringify({action: 'withdraw', item: item}));
+            alert("Заявка отправлена админу!");
+            inventory = inventory.filter(i => i !== item);
+            renderInv();
+        }
+
+        function show(id) {
+            document.getElementById('cases').style.display = 'none';
+            document.getElementById('inv-screen').style.display = 'none';
+            document.getElementById('roulette').style.display = 'none';
+            document.getElementById(id).style.display = 'block';
+            if(id === 'inv-screen') renderInv();
+        }
+
+        function renderInv() {
+            const container = document.getElementById('list');
+            container.innerHTML = inventory.map(i => `
+                <div class="inv-item">
+                    <span>${i}</span>
+                    <button onclick="withdraw('${i}')" style="background:#007bff; color:#fff; border:none; padding:5px; border-radius:5px;">ВЫВОД</button>
+                </div>
+            `).join('');
+        }
+
+        function updateUI() {
+            document.getElementById('bal').innerText = balance + " ★";
+        }
+        
+        // ВАЖНО: Тут мы могли бы делать запрос к API за данными, но для начала 
+        // просто берем баланс из ссылки при старте.
+        balance = parseInt(new URLSearchParams(window.location.search).get('bal')) || 0;
+        updateUI();
+    </script>
+</body>
+</html>
