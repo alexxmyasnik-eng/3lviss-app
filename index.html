@@ -2,261 +2,108 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3Lviss Lucky Rocket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3Lviss HUB</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 60px; overflow: hidden; }
-        .header { position: fixed; top: 0; width: 100%; height: 60px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; z-index: 1000; box-sizing: border-box; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; background: #333; border: 1px solid #0f0; overflow: hidden; }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .balance-top { color: #0f0; font-weight: bold; font-size: 18px; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 70px; overflow: hidden; }
+        .header { position: fixed; top: 0; width: 100%; height: 65px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; box-sizing: border-box; z-index: 1000; }
+        .bal-box { background: #1a1a1a; padding: 5px 12px; border-radius: 20px; border: 1px solid #333; color: #0f0; font-weight: bold; }
         
-        .tab-content { display: none; text-align: center; height: calc(100vh - 120px); overflow-y: auto; padding-bottom: 20px; }
+        /* КРАСИВАЯ ПЛАШКА */
+        #notification {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; background: #1a1a1a; border-left: 5px solid #0f0;
+            border-radius: 8px; padding: 15px; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 9999; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #notification.show { top: 15px; }
+        .notif-icon { background: #0f0; color: #000; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .tab { display: none; text-align: center; height: 80vh; overflow-y: auto; }
         .active { display: block; }
-        .item-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; margin: 10px; display: flex; flex-direction: column; align-items: center; }
-        .item-card img { width: 80px; height: 80px; margin-bottom: 10px; }
-        
-        /* ПЛАШКА УВЕДОМЛЕНИЯ О ПОПОЛНЕНИИ */
-        #toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); width: 90%; background: #1a1a1a; border: 1px solid #0f0; border-radius: 12px; padding: 15px; z-index: 3000; transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 15px; }
-        #toast.show { bottom: 80px; }
-        
-        .btn { height: 45px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin: 5px; }
-        .btn-full { width: 90%; }
-        .nav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-weight: bold; cursor: pointer; }
-        .active-tab { color: #0f0; }
+        .card { background: #111; border: 1px solid #333; border-radius: 15px; padding: 20px; margin: 10px; }
+        .btn { width: 90%; height: 50px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; margin: 10px 0; cursor: pointer; }
     </style>
 </head>
 <body>
+
+    <div id="notification">
+        <div class="notif-icon">★</div>
+        <div>
+            <div style="font-size: 12px; color: #888;">ПОПОЛНЕНИЕ</div>
+            <div id="notif-text" style="font-weight: bold;">+500 звезд зачислено!</div>
+        </div>
+    </div>
+
     <div class="header">
-        <div class="user-info">
-            <div class="avatar" id="avatar"><img src="https://img.icons8.com/ios-filled/50/00ff00/user-male-circle.png"></div>
-            <div id="nickname" style="font-weight:bold; font-size:14px;">Загрузка...</div>
-        </div>
-        <div class="balance-top" id="bal">0 ★</div>
+        <div id="user-name" style="font-weight: bold;">Загрузка...</div>
+        <div class="bal-box" id="balance-display">0 ★</div>
     </div>
-    <div id="toast">
-        <div style="background:#0f0; width:40px; height:40px; border-radius:50%; color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px;">★</div>
-        <div style="text-align: left;">
-            <div style="font-size:12px; color:#aaa; margin-bottom: 3px;">СИСТЕМА</div>
-            <div id="toast-msg" style="font-weight:bold; font-size:15px;">Ваш баланс пополнен!</div>
+
+    <div id="shop" class="tab active">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px;">
+            <div class="card" onclick="openCase(222, 'LITE')"><b>LITE</b><br><span style="color:#0f0">222 ★</span></div>
+            <div class="card" onclick="openCase(888, 'ELITE')"><b>ELITE</b><br><span style="color:#0f0">888 ★</span></div>
         </div>
     </div>
-    
-    <div id="shop" class="tab-content active">
-        <div style="padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div class="item-card" onclick="openCase(222, 'Lite')"><b>Lite</b><span style="color:#0f0">222 ★</span></div>
-            <div class="item-card" onclick="openCase(444, 'Lucky')"><b>Lucky</b><span style="color:#0f0">444 ★</span></div>
-            <div class="item-card" onclick="openCase(888, 'Elite')"><b>Elite</b><span style="color:#0f0">888 ★</span></div>
-        </div>
-    </div>
-    
-    <div id="game" class="tab-content">
-        <h2 id="g-title">Кейс</h2>
-        <div style="height:150px; overflow:hidden; position:relative; background:#0a0a0a; border:1px solid #222; margin: 20px 0;">
-            <div style="position:absolute; left:50%; width:2px; height:100%; background:red; z-index:10;"></div>
-            <div id="tape" style="display:flex; transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);"></div>
-        </div>
-        <div id="drop-info" style="display:none; margin-bottom: 20px;">
-            <img id="drop-img" src="" style="width:100px;">
-            <h3 id="drop-name" style="margin:5px 0;">Предмет</h3>
-            <p id="drop-price" style="color:#0f0;">0 ★</p>
-        </div>
-        <button id="spinBtn" class="btn btn-full" style="background:#0f0; color:#000;" onclick="startSpin()">ОТКРЫТЬ</button>
-        <div id="post-game" style="display:none;">
-            <button class="btn btn-full" style="background:#333; color:#fff;" onclick="saveItem()">НА СКЛАД</button>
-            <button class="btn btn-full" style="background:#f00; color:#fff;" onclick="sellInstant()">ПРОДАТЬ ЗА ЗВЕЗДЫ</button>
-        </div>
-    </div>
-    
-    <div id="inv" class="tab-content">
-        <div id="inv-list"></div>
-    </div>
-    
-    <div class="nav">
-        <div class="nav-item active-tab" id="n-shop" onclick="toTab('shop')">КЕЙСЫ</div>
-        <div class="nav-item" id="n-inv" onclick="toTab('inv')">СКЛАД</div>
+
+    <div id="inv" class="tab">
+        <div id="inv-list" style="padding-top: 20px;"></div>
     </div>
 
     <script>
         const API_URL = "https://king-legibly-mouse.ngrok-free.dev"; 
         const tg = window.Telegram.WebApp;
         const uid = new URLSearchParams(window.location.search).get('uid');
-        
-        let balance = 0, currentDrop = null, lastGId = -1;
-        let isSpinning = false;
-        let spinTimeout;
+        let currentBalance = 0, lastGiveId = -1;
 
-        const user = tg.initDataUnsafe?.user;
-        document.getElementById('nickname').innerText = user ? (user.first_name + (user.last_name ? " " + user.last_name : "")) : "Player";
-        if(user?.photo_url) document.querySelector('#avatar img').src = user.photo_url;
-
-        function showToast(amt) {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-msg').innerHTML = `Ваш баланс пополнен на <span style="color:#0f0">+${amt} ★</span>`;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 4000);
-        }
-
-        async function loadData() {
-            if(!uid) return;
+        // ПОЛУЧЕНИЕ ДАННЫХ В РЕАЛЬНОМ ВРЕМЕНИ
+        async function sync() {
             try {
-                // ВАЖНОЕ ИСПРАВЛЕНИЕ: _=Date.now() сбрасывает агрессивный кэш Telegram
-                const r = await fetch(`${API_URL}/get_data?uid=${uid}&_=${Date.now()}`, { cache: "no-store" });
-                const d = await r.json();
+                const res = await fetch(`${API_URL}/get_data?uid=${uid}`);
+                const data = await res.json();
                 
-                // Проверяем, было ли пополнение (по ID транзакции)
-                if (lastGId !== -1 && d.g_id > lastGId) showToast(d.g_amt);
-                lastGId = d.g_id;
-                
-                balance = d.balance;
-                document.getElementById('bal').innerText = balance + " ★";
-                
-                const list = document.getElementById('inv-list');
-                list.innerHTML = d.inventory.length ? "" : "<p style='margin-top:50px;'>Склад пуст</p>";
-                d.inventory.forEach(i => {
-                    list.innerHTML += `
-                    <div class="item-card">
-                        <img src="${i.img}">
-                        <b>${i.name}</b>
-                        <span style="color:#0f0">${i.price} ★</span>
-                        <div style="display:flex; width:100%; gap:10px; margin-top:10px;">
-                            <button class="btn" style="background:#f00; color:#fff; flex:1;" onclick="sellItem(${i.id}, ${i.price})">ПРОДАТЬ</button>
-                            <button class="btn" style="background:#0066ff; color:#fff; flex:1;" onclick="withdrawItem(${i.id}, '${i.name}')">ВЫВОД</button>
-                        </div>
-                    </div>`;
-                });
-            } catch(e) {
-                console.error("Ошибка загрузки данных:", e);
-            }
-        }
-        // Опрос каждую 1 секунду
-        setInterval(loadData, 1000); loadData();
-
-        const loot = [
-            { name: "Premium", img: "1.png", price: 150 },
-            { name: "TON Coin", img: "2.png", price: 600 },
-            { name: "Snoop Cigar", img: "3.png", price: 1000 }
-        ];
-        let caseCost = 0;
-
-        function openCase(cost, name) {
-            if(balance < cost) return tg.showAlert("Недостаточно звезд на балансе!");
-            if(isSpinning) return; 
-            
-            caseCost = cost;
-            currentDrop = null;
-            document.getElementById('g-title').innerText = name;
-            
-            // Настраиваем кнопку с ценой
-            document.getElementById('spinBtn').innerText = `ОТКРЫТЬ ЗА ${cost} ★`;
-            
-            const tape = document.getElementById('tape');
-            tape.style.transition = "none"; 
-            tape.style.transform = "translateX(0)";
-            tape.innerHTML = "";
-            for(let i=0; i<60; i++) {
-                const item = loot[Math.floor(Math.random()*loot.length)];
-                tape.innerHTML += `<div style="min-width:130px; text-align:center;"><img src="${item.img}" style="width:70px;"></div>`;
-            }
-            toTab('game');
-            document.getElementById('drop-info').style.display = 'none';
-            document.getElementById('spinBtn').style.display = 'block';
-            document.getElementById('post-game').style.display = 'none';
+                // Проверка нового пополнения (плашка)
+                if (lastGiveId !== -1 && data.give_id > lastGiveId) {
+                    showPopUp(data.g_amt);
+                }
+                lastGiveId = data.give_id;
+                currentBalance = data.balance;
+                document.getElementById('balance-display').innerText = currentBalance + " ★";
+                renderInventory(data.inventory);
+            } catch(e) {}
         }
 
-        async function startSpin() {
-            if(isSpinning || balance < caseCost) return;
-            isSpinning = true;
-            document.getElementById('spinBtn').style.display = 'none';
-            
-            await fetch(`${API_URL}/action`, { method: 'POST', body: JSON.stringify({uid, action: "open", cost: caseCost}) });
-            loadData();
-            
-            const tape = document.getElementById('tape');
-            currentDrop = loot[Math.floor(Math.random()*loot.length)];
-            const winIdx = 50;
-            tape.children[winIdx].innerHTML = `<img src="${currentDrop.img}" style="width:70px;">`;
-            const offset = -(winIdx * 130) + (window.innerWidth / 2 - 65);
-            
-            // Анимация 5 секунд
-            tape.style.transition = "transform 5s cubic-bezier(0.15, 0, 0.15, 1)";
-            tape.style.transform = `translateX(${offset}px)`;
-            
-            spinTimeout = setTimeout(() => {
-                finishSpin();
-            }, 5000);
+        function showPopUp(amt) {
+            const el = document.getElementById('notification');
+            document.getElementById('notif-text').innerText = `+${amt} звезд зачислено!`;
+            el.classList.add('show');
+            // Звук уведомления (по желанию можно добавить)
+            setTimeout(() => el.classList.remove('show'), 4000);
         }
 
-        // Завершение анимации (Обычное или Скип)
-        function finishSpin() {
-            if(!isSpinning) return; // Защита от двойного вызова
-            isSpinning = false;
-            const tape = document.getElementById('tape');
-            const winIdx = 50;
-            const offset = -(winIdx * 130) + (window.innerWidth / 2 - 65);
-            
-            tape.style.transition = "none";
-            tape.style.transform = `translateX(${offset}px)`;
-
-            document.getElementById('drop-img').src = currentDrop.img;
-            document.getElementById('drop-name').innerText = currentDrop.name;
-            document.getElementById('drop-price').innerText = currentDrop.price + " ★";
-            document.getElementById('drop-info').style.display = 'block';
-            document.getElementById('post-game').style.display = 'block';
+        function renderInventory(items) {
+            const list = document.getElementById('inv-list');
+            list.innerHTML = items.length ? "" : "Склад пуст";
+            items.forEach(i => {
+                list.innerHTML += `<div class="card">
+                    <b>${i.name}</b><br>
+                    <button class="btn" style="background:#00f; color:#fff;" onclick="withdraw(${i.id}, '${i.name}')">ВЫВОД</button>
+                </div>`;
+            });
         }
 
-        async function saveItem() {
-            if(!currentDrop) return;
-            const itemToSave = currentDrop;
-            currentDrop = null; 
-            await fetch(`${API_URL}/action`, { method: 'POST', body: JSON.stringify({uid, action: "save", item: itemToSave}) });
-            toTab('shop');
-            loadData();
+        async function withdraw(id, name) {
+            await fetch(`${API_URL}/action`, {method:'POST', body: JSON.stringify({uid, action:"withdraw", inv_id:id, item_name:name})});
+            alert("Заявка на вывод отправлена админу!");
+            sync();
         }
 
-        async function sellInstant() {
-            if(!currentDrop) return;
-            const priceToAdd = currentDrop.price;
-            currentDrop = null;
-            await fetch(`${API_URL}/action`, { method: 'POST', body: JSON.stringify({uid, action: "sell_instant", price: priceToAdd}) });
-            toTab('shop');
-            loadData();
+        // Локальные функции переключения табов
+        function toTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(name).classList.add('active');
         }
 
-        async function sellItem(id, price) {
-            await fetch(`${API_URL}/action`, { method: 'POST', body: JSON.stringify({uid, action: "sell", inv_id: id, price}) });
-            loadData();
-        }
-
-        async function withdrawItem(id, name) {
-            tg.showAlert(`Заявка на вывод предмета "${name}" отправлена! Администратор скоро свяжется с вами.`);
-            await fetch(`${API_URL}/action`, { method: 'POST', body: JSON.stringify({uid, action: "withdraw", inv_id: id, item_name: name}) });
-            loadData();
-        }
-
-        function toTab(id) {
-            // ЛОГИКА СКИПА АНИМАЦИИ
-            if (isSpinning) {
-                clearTimeout(spinTimeout);
-                finishSpin();
-                return; // Остаемся на экране выигрыша
-            }
-            
-            // АВТО-СОХРАНЕНИЕ
-            if (currentDrop && document.getElementById('post-game').style.display === 'block' && id !== 'game') {
-                saveItem(); 
-            }
-
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-tab'));
-            document.getElementById(id).classList.add('active');
-            if(id !== 'game') document.getElementById('n-' + id).classList.add('active-tab');
-        }
-
-        tg.expand();
-    </script>
-</body>
-</html>
+        document.getElementById('user-name').innerText = tg.init
