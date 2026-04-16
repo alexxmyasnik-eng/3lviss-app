@@ -3,58 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3Lviss Hub</title>
+    <title>3Lviss Lucky Rocket</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 60px; overflow: hidden; -webkit-user-select: none; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 60px; overflow: hidden; -webkit-user-select: none; }
         .header { position: fixed; top: 0; width: 100%; height: 55px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; z-index: 1000; box-sizing: border-box; }
         .user-info { display: flex; align-items: center; gap: 8px; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #0f0; object-fit: cover; display: none; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #0f0; object-fit: cover; }
         .balance-top { color: #0f0; font-weight: bold; font-size: 18px; }
+
+        /* УВЕДОМЛЕНИЕ О ПОПОЛНЕНИИ (MRKT STYLE) */
+        #topup-toast { 
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); 
+            width: 90%; background: #1a1a1a; border: 1px solid #0f0; border-radius: 12px; 
+            padding: 12px; display: flex; align-items: center; gap: 10px; z-index: 3000; 
+            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        #topup-toast.show { bottom: 80px; }
+
         .tab-content { display: none; text-align: center; padding: 10px; height: calc(100vh - 120px); overflow-y: auto; }
         .active { display: block; }
-        .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .case-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 12px; cursor: pointer; }
-        .roulette-wrapper { position: relative; width: 100%; height: 160px; background: #0a0a0a; border: 1px solid #222; overflow: hidden; margin-top: 10px; border-radius: 12px;}
-        .pointer { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: #f00; z-index: 10; transform: translateX(-50%); box-shadow: 0 0 10px rgba(255,0,0,0.8);}
-        .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; }
-        .item-card { min-width: 130px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; }
-        .item-card img { width: 70px; height: 70px; margin-bottom: 10px;}
-        .main-btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; background: #0f0; color: #000; margin-top: 15px; }
-        .choice-group { display: none; gap: 10px; margin-top: 15px; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; border-top: 1px solid #222; }
-        .nav-item { flex: 1; display: flex; align-items: center; justify-content: center; color: #444; font-size: 12px; font-weight: bold; }
+
+        /* КЕЙСЫ */
+        .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
+        .case-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; cursor: pointer; transition: 0.2s; }
+        .case-card:active { transform: scale(0.95); border-color: #0f0; }
+
+        /* РУЛЕТКА */
+        .roulette-wrapper { position: relative; width: 100%; height: 160px; background: #0a0a0a; border: 1px solid #222; overflow: hidden; margin-top: 20px; border-radius: 12px; }
+        .pointer { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: #f00; z-index: 10; transform: translateX(-50%); box-shadow: 0 0 10px rgba(255,0,0,0.8); }
+        .tape { display: flex; position: absolute; left: 0; top: 0; height: 100%; will-change: transform; }
+        .item-card { min-width: 130px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a1a1a; box-sizing: border-box; }
+        .item-card img { width: 70px; height: 70px; object-fit: contain; }
+
+        .main-btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; background: #0f0; color: #000; margin-top: 20px; }
+        .choice-group { display: none; gap: 10px; margin-top: 20px; }
+
+        /* НАВИГАЦИЯ */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: 65px; background: #111; display: flex; border-top: 1px solid #222; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #444; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
         .nav-item.active-tab { color: #0f0; }
-        .inv-item { background: #111; border: 1px solid #333; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+
+        /* СКЛАД */
+        .inv-item { background: #111; border: 1px solid #333; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="user-info">
-            <img id="user-p" class="avatar">
-            <span id="user-n">Игрок</span>
+            <img id="user-p" class="avatar" src="">
+            <span id="user-n">Загрузка...</span>
         </div>
         <div class="balance-top" id="balance-val">0 ★</div>
     </div>
 
+    <div id="topup-toast">
+        <div style="background:#0f0; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold;">★</div>
+        <div>
+            <div style="font-size:12px; color:#aaa;">Пополнение</div>
+            <div id="toast-text" style="font-weight:bold; color:#fff;">+0 ★</div>
+        </div>
+    </div>
+
     <div id="shop" class="tab-content active">
         <div class="case-grid">
-            <div class="case-card" onclick="openCase(222)">Кейс Lite<br><span style="color:#0f0">222 ★</span></div>
-            <div class="case-card" onclick="openCase(444)">Кейс Lucky<br><span style="color:#0f0">444 ★</span></div>
+            <div class="case-card" onclick="prepareCase(222, 'Lite')"><b>Lite Case</b><br><span style="color:#0f0">222 ★</span></div>
+            <div class="case-card" onclick="prepareCase(444, 'Lucky')"><b>Lucky Case</b><br><span style="color:#0f0">444 ★</span></div>
         </div>
     </div>
 
     <div id="roulette-screen" class="tab-content">
-        <div class="roulette-wrapper"><div class="pointer"></div><div id="tape" class="tape"></div></div>
-        <button id="spinBtn" class="main-btn" onclick="startSpin()">КРУТИТЬ</button>
+        <h3 id="case-title">Кейс</h3>
+        <div class="roulette-wrapper">
+            <div class="pointer"></div>
+            <div id="tape" class="tape"></div>
+        </div>
+        <button id="spinBtn" class="main-btn" onclick="startSpin()">ОТКРЫТЬ</button>
         <div id="choice-btns" class="choice-group">
             <button style="flex:1; background:#333; color:#fff; border-radius:12px; height:50px; border:none;" onclick="handleChoice('keep')">НА СКЛАД</button>
-            <button style="flex:1; background:#f00; color:#fff; border-radius:12px; height:50px; border:none;" onclick="handleChoice('sell')">ПРОДАТЬ</button>
+            <button style="flex:1; background:#f00; color:#fff; border-radius:12px; height:50px; border:none;" onclick="handleChoice('sell')">ПРОДАТЬ (50%)</button>
         </div>
     </div>
 
-    <div id="inventory" class="tab-content"><div id="inv-list"></div></div>
+    <div id="inventory" class="tab-content">
+        <div id="inv-list"></div>
+    </div>
 
     <div class="nav-bar">
         <div class="nav-item active-tab" id="n-shop" onclick="openTab('shop')">КЕЙСЫ</div>
@@ -66,128 +101,165 @@
         tg.ready();
         tg.expand();
 
-        const u = tg.initDataUnsafe?.user;
-        if(u) {
-            document.getElementById('user-n').innerText = u.username ? '@'+u.username : u.first_name;
-            if(u.photo_url) {
-                const p = document.getElementById('user-p');
-                p.src = u.photo_url;
-                p.style.display = 'block';
-            }
-        }
+        // 1. ПРЕДМЕТЫ И ШАНСЫ (Чем выше weight, тем чаще падает)
+        const items = [
+            { id: 1, name: "Premium 1m", img: "1.png", weight: 50 },
+            { id: 2, name: "TON Coin", img: "2.png", weight: 30 },
+            { id: 3, name: "Snoop Cigar", img: "3.png", weight: 20 }
+        ];
 
-        // БРОНЕБОЙНАЯ ЛОГИКА БАЛАНСА
+        let balance = parseInt(localStorage.getItem('user_balance')) || 0;
+        let myInv = JSON.parse(localStorage.getItem('myInv')) || [];
+        let savedGId = parseInt(localStorage.getItem('saved_g_id')) || 0;
+
+        // 2. СИСТЕМА УВЕДОМЛЕНИЙ И GIVE
         const params = new URLSearchParams(window.location.search);
         const gAmt = parseInt(params.get('g_amt')) || 0;
         const gId = parseInt(params.get('g_id')) || 0;
 
-        let balance = parseInt(localStorage.getItem('user_balance')) || 0;
-        let savedGId = parseInt(localStorage.getItem('saved_g_id')) || 0;
-
-        // Если админ сделал перевод (ID перевода больше, чем мы помним)
         if (gId > savedGId) {
             balance += gAmt;
-            localStorage.setItem('saved_g_id', gId); // Запоминаем, что забрали этот перевод
-        }
-
-        function updateBal() {
-            document.getElementById('balance-val').innerText = balance + " ★";
+            localStorage.setItem('saved_g_id', gId);
             localStorage.setItem('user_balance', balance);
+            showToast(gAmt);
         }
-        updateBal();
 
-        // Твои предметы
-        const items = [
-            { name: "Telegram Premium", img: "1.png" },
-            { name: "TON Coin", img: "2.png" },
-            { name: "Snoop Cigar", img: "3.png" }
-        ];
+        function showToast(amt) {
+            const toast = document.getElementById('topup-toast');
+            document.getElementById('toast-text').innerText = `+${amt} ★`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
 
-        let myInv = JSON.parse(localStorage.getItem('myInv')) || [];
-        let currentPrice = 0, isSpinning = false, winItem = null;
+        function updateBalDisplay() {
+            document.getElementById('balance-val').innerText = balance + " ★";
+        }
+        updateBalDisplay();
 
-        function openCase(p) {
+        // Данные юзера
+        const u = tg.initDataUnsafe?.user;
+        if(u) {
+            document.getElementById('user-n').innerText = u.username ? '@'+u.username : u.first_name;
+            if(u.photo_url) document.getElementById('user-p').src = u.photo_url;
+        }
+
+        let currentPrice = 0, winItem = null, isSpinning = false;
+
+        function prepareCase(price, title) {
             if(isSpinning) return;
-            currentPrice = p;
+            currentPrice = price;
+            document.getElementById('case-title').innerText = title;
             openTab('roulette-screen');
+            
+            // Генерируем ленту
             const tape = document.getElementById('tape');
             tape.style.transition = "none";
             tape.style.transform = "translateX(0)";
             tape.innerHTML = '';
+            
+            // Заполняем ленту случайными предметами для вида
             for(let i=0; i<80; i++) {
-                const it = items[Math.floor(Math.random()*items.length)];
-                tape.innerHTML += `<div class="item-card"><img src="${it.img}"></div>`;
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                tape.innerHTML += `<div class="item-card"><img src="${randomItem.img}"></div>`;
             }
+            
             document.getElementById('spinBtn').style.display = 'block';
             document.getElementById('choice-btns').style.display = 'none';
         }
 
+        function getRandomItemByWeight() {
+            let totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+            let randomNum = Math.random() * totalWeight;
+            for (let item of items) {
+                if (randomNum < item.weight) return item;
+                randomNum -= item.weight;
+            }
+            return items[0];
+        }
+
         function startSpin() {
-            if (balance < currentPrice) return tg.showAlert("Мало звезд!");
+            if (balance < currentPrice) return tg.showAlert("Недостаточно звезд!");
+            if (isSpinning) return;
+
             isSpinning = true;
-            
-            // Списываем баланс раз и навсегда
             balance -= currentPrice;
-            updateBal();
+            updateBalDisplay();
+            localStorage.setItem('user_balance', balance);
+
+            // 3. ФОНОВОЕ ОПРЕДЕЛЕНИЕ ПРИЗА
+            winItem = getRandomItemByWeight();
             
-            const stopIdx = 65;
-            winItem = {...items[Math.floor(Math.random()*items.length)]};
-            
+            // СРАЗУ КЛАДЕМ В ИНВЕНТАРЬ (скрыто)
+            // Но чтобы не было дублей при нажатии "На склад", мы просто помечаем его как "в ожидании"
+            // В этой версии мы просто пушим его сразу, чтобы он был виден в Sklad
+            myInv.push({...winItem, confirmed: false}); 
+            localStorage.setItem('myInv', JSON.stringify(myInv));
+
             const tape = document.getElementById('tape');
-            tape.children[stopIdx].innerHTML = `<img src="${winItem.img}"><br><b>${winItem.name}</b>`;
-            document.getElementById('spinBtn').style.display = 'none';
+            const stopIdx = 60; // На каком элементе остановимся
             
+            // Ставим наш выигрышный предмет ровно в индекс остановки
+            tape.children[stopIdx].innerHTML = `<img src="${winItem.img}">`;
+
+            // 4. ИДЕАЛЬНАЯ АНИМАЦИЯ
+            // 130 - ширина карточки. 
+            // (stopIdx * 130) - расстояние до начала приза.
+            // window.innerWidth / 2 - середина экрана.
+            // 65 - половина карточки, чтобы стрелка была по центру предмета.
+            const centerOffset = (window.innerWidth / 2) - 65;
+            const finalPosition = -(stopIdx * 130) + centerOffset;
+
             setTimeout(() => {
-                tape.style.transition = "transform 6s cubic-bezier(0.15, 0, 0.15, 1)";
-                const offset = -(stopIdx * 130) + (window.innerWidth / 2) - 65;
-                tape.style.transform = `translateX(${offset}px)`;
+                tape.style.transition = "transform 5s cubic-bezier(0.15, 0, 0.15, 1)";
+                tape.style.transform = `translateX(${finalPosition}px)`;
             }, 50);
 
             setTimeout(() => {
-                document.getElementById('choice-btns').style.display = 'flex';
                 isSpinning = false;
-            }, 6500);
+                document.getElementById('choice-btns').style.display = 'flex';
+                // Подтверждаем предмет в инвентаре (чтобы не исчез при обновлении)
+                const lastItem = myInv[myInv.length - 1];
+                if(lastItem) lastItem.confirmed = true;
+                localStorage.setItem('myInv', JSON.stringify(myInv));
+            }, 5500);
         }
 
         function handleChoice(type) {
             if(type === 'sell') {
-                let sellPrice = Math.floor(currentPrice * 0.5);
-                balance += sellPrice;
-                updateBal();
-            } else {
-                myInv.push(winItem);
+                balance += Math.floor(currentPrice * 0.5);
+                updateBalDisplay();
+                localStorage.setItem('user_balance', balance);
+                myInv.pop(); // Удаляем последний предмет, так как продали
                 localStorage.setItem('myInv', JSON.stringify(myInv));
             }
             openTab('shop');
         }
 
-        function renderInv() {
+        function renderInventory() {
             const list = document.getElementById('inv-list');
-            list.innerHTML = myInv.length ? '' : '<p style="color:#444;">Пусто</p>';
+            list.innerHTML = myInv.length ? '' : '<p style="color:#666; margin-top:50px;">На складе пока пусто</p>';
             myInv.forEach((it, idx) => {
                 list.innerHTML += `
                 <div class="inv-item">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${it.img}" width="35"> <b>${it.name}</b>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <img src="${it.img}" width="40">
+                        <div>
+                            <div style="font-weight:bold;">${it.name}</div>
+                            <div style="font-size:10px; color:#0f0;">READY</div>
+                        </div>
                     </div>
-                    <button onclick="sendWithdraw(${idx})" style="background:#007bff; color:#fff; border:none; padding:8px; border-radius:8px;">ВЫВОД</button>
+                    <button onclick="sendWithdraw(${idx})" style="background:#007bff; color:#fff; border:none; padding:10px 15px; border-radius:10px; font-weight:bold;">ВЫВОД</button>
                 </div>`;
             });
         }
 
-        // ПРЯМАЯ ОТПРАВКА СООБЩЕНИЯ АДМИНУ
         function sendWithdraw(idx) {
             const item = myInv[idx].name;
-            const uname = u ? (u.username ? '@' + u.username : u.first_name) : "Игрок";
-            const uid = u ? u.id : "Неизвестно";
-            
-            // Чтобы всё работало без серверов, сайт сам шлет тебе сообщение через API Телеграма
-            const token = "8771521272:AAG0VVjVrR4Ux5ZRF4lSnlrajgLW9pspyf8";
-            const adminId = "780434845";
-            const text = `🚨 <b>НОВАЯ ЗАЯВКА НА ВЫВОД!</b>\n\n👤 Игрок: ${uname}\n🆔 ID: <code>${uid}</code>\n🎁 Предмет: <b>${item}</b>`;
-            
-            const url = `https://api.telegram.org/bot${token}/sendMessage`;
-            fetch(url, {
+            const adminId = "780434845"; 
+            const botToken = "8771521272:AAG0VVjVrR4Ux5ZRF4lSnlrajgLW9pspyf8";
+            const text = `🚀 <b>ЗАЯВКА НА ВЫВОД</b>\n\n👤 Игрок: ${document.getElementById('user-n').innerText}\n🆔 ID: <code>${u?.id || '?' }</code>\n🎁 Предмет: <b>${item}</b>`;
+
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ chat_id: adminId, text: text, parse_mode: "HTML" })
@@ -195,19 +267,16 @@
 
             myInv.splice(idx, 1);
             localStorage.setItem('myInv', JSON.stringify(myInv));
-            renderInv();
-            tg.showAlert("Заявка на вывод отправлена админу!");
+            renderInventory();
+            tg.showAlert("Заявка отправлена! Админ свяжется с тобой.");
         }
 
         function openTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-tab'));
             document.getElementById(id).classList.add('active');
-            if(id === 'shop') document.getElementById('n-shop').classList.add('active-tab');
-            if(id === 'inventory') {
-                document.getElementById('n-inv').classList.add('active-tab');
-                renderInv();
-            }
+            document.getElementById('n-' + (id === 'roulette-screen' ? 'shop' : id.substring(0,3))).classList.add('active-tab');
+            if(id === 'inventory') renderInventory();
         }
     </script>
 </body>
