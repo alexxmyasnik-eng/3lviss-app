@@ -1,0 +1,133 @@
+/* Основные стили */
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #121212; /* Темный фон */
+    color: #ffffff; /* Белый текст */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 480px; /* Типичная ширина для мобильных приложений */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #1a1a1a;
+    border-radius: 15px; /* Скругление углов для красоты */
+    overflow: hidden; /* Скрываем все, что выходит за рамки */
+}
+
+/* 1. Верхний блок: Профиль */
+.user-profile {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: #242424;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 12px;
+}
+
+.username {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* 2. Основной контент: Кейс */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.case-container {
+    text-align: center;
+}
+
+.case-icon {
+    margin-bottom: 10px;
+    animation: float 3s ease-in-out infinite; /* Анимация парения */
+}
+
+.case-price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #FFD700; /* Золотой цвет для звезд */
+}
+
+.case-contents {
+    margin-top: 20px;
+    background-color: #242424;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: left;
+}
+
+.case-contents p {
+    margin: 0 0 10px 0;
+    font-weight: 500;
+    color: #b0b0b0;
+}
+.case-contents ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.case-contents li {
+    padding: 4px 0;
+}
+
+.action-button {
+    margin-top: 25px;
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(45deg, #8E2DE2, #4A00E0);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.action-button:active {
+    transform: scale(0.98); /* Эффект нажатия */
+}
+
+/* 3. Нижнее меню */
+.bottom-nav {
+    display: flex;
+    border-top: 1px solid #333;
+}
+
+.nav-button {
+    flex-grow: 1;
+    padding: 15px 0;
+    background: none;
+    border: none;
+    color: #8e8e93;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.nav-button.active {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Анимация для иконки */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
