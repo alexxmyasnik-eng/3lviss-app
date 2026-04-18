@@ -1,9 +1,14 @@
-const BACKEND_URL = 'http://192.168.1.89:5000'; // Убедитесь, что IP-адрес верный!
+// --- ВАЖНАЯ НАСТРОЙКА ---
+// Ваш новый публичный адрес от ngrok!
+const BACKEND_URL = 'https://king-legibly-mouse.ngrok-free.dev';
+// -------------------------
+
 
 document.addEventListener('DOMContentLoaded', function() {
     const tg = window.Telegram.WebApp;
     tg.ready();
 
+    // Элементы страницы
     const homeScreen = document.getElementById('home-screen'),
           caseDetailScreen = document.getElementById('case-detail-screen'),
           backButton = document.getElementById('back-button'),
@@ -15,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentUser = null;
     let currentUserId = null;
 
+    // Функция для получения данных с нашего Python-сервера через ngrok
     async function fetchUserData() {
         const user = tg.initDataUnsafe.user;
         if (!user) {
@@ -22,11 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         currentUserId = user.id;
+        // Добавляем имя в запрос, чтобы сервер мог его использовать для новых пользователей
         const url = `${BACKEND_URL}/api/get_user_data?user_id=${currentUserId}&name=${user.first_name}`;
         
         try {
             const response = await fetch(url);
-            if (!response.ok) throw new Error('Ошибка сети');
+            if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
             
             const data = await response.json();
             currentUser = data;
@@ -39,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Ошибка подключения к серверу:', error);
-            tg.showAlert('Ошибка подключения к серверу.');
+            tg.showAlert('Ошибка подключения к серверу. Убедитесь, что ngrok и Python-сервер запущены на компьютере.');
         }
     }
 
@@ -49,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- ОБНОВЛЕННАЯ ЛОГИКА ОТКРЫТИЯ КЕЙСА ---
+    // Функция открытия кейса, которая обращается к серверу
     async function processCaseOpening(cost) {
         if (!currentUser) return;
 
