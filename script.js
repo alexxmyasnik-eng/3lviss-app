@@ -1,14 +1,27 @@
 // --- ВАЖНАЯ НАСТРОЙКА ---
-// Ваш новый публичный адрес от ngrok!
-const BACKEND_URL = 'https://king-legibly-mouse.ngrok-free.dev';
+// Вставьте сюда актуальный адрес, который выдает NGROK
+const BACKEND_URL = 'https://<ВАШ_АДРЕС_NGROK>.ngrok-free.dev';
 // -------------------------
 
 
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // ----- СИСТЕМА ОТЛАДКИ -----
+    const debugConsole = document.getElementById('debug-console');
+    function logToScreen(message) {
+        const now = new Date();
+        const time = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+        debugConsole.innerHTML += `<div>[${time}] ${message}</div>`;
+        console.log(message);
+    }
+    
+    logToScreen('Приложение запущено.');
+    logToScreen(`Целевой URL: ${BACKEND_URL}`);
+
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    // Элементы страницы
+    // ----- ЭЛЕМЕНТЫ СТРАНИЦЫ -----
     const homeScreen = document.getElementById('home-screen'),
           caseDetailScreen = document.getElementById('case-detail-screen'),
           backButton = document.getElementById('back-button'),
@@ -20,33 +33,41 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentUser = null;
     let currentUserId = null;
 
-    // Функция для получения данных с нашего Python-сервера через ngrok
+    // ----- ОСНОВНАЯ ЛОГИКА -----
     async function fetchUserData() {
         const user = tg.initDataUnsafe.user;
         if (!user) {
+            logToScreen('Не в Telegram. Включен тестовый режим.');
             usernameElement.textContent = "Тестовый режим"; return;
         }
 
         currentUserId = user.id;
-        // Добавляем имя в запрос, чтобы сервер мог его использовать для новых пользователей
         const url = `${BACKEND_URL}/api/get_user_data?user_id=${currentUserId}&name=${user.first_name}`;
         
+        logToScreen(`Запрашиваю данные с: ${url}`);
+
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
+            const response = await fetch(url, { cache: 'no-cache' });
+            logToScreen(`Ответ от сервера получен. Статус: ${response.status}`);
+
+            if (!response.ok) {
+                throw new Error(`Статус ответа: ${response.status}`);
+            }
             
             const data = await response.json();
+            logToScreen('JSON успешно разобран.');
             currentUser = data;
             
             updateBalanceDisplay();
-            // Отображаем аватарку, если ссылка на нее пришла с сервера
             if (currentUser.photo_url) {
                 userAvatarElement.src = currentUser.photo_url;
             }
 
         } catch (error) {
-            console.error('Ошибка подключения к серверу:', error);
-            tg.showAlert('Ошибка подключения к серверу. Убедитесь, что ngrok и Python-сервер запущены на компьютере.');
+            logToScreen('!!! КРИТИЧЕСКАЯ ОШИБКА FETCH !!!');
+            logToScreen(error.toString());
+            logToScreen(`Тип ошибки: ${error.name}`);
+            tg.showAlert('Ошибка подключения. Смотри детали в углу экрана.');
         }
     }
 
@@ -56,39 +77,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Функция открытия кейса, которая обращается к серверу
     async function processCaseOpening(cost) {
         if (!currentUser) return;
-
-        openCaseButton.disabled = true; // Блокируем кнопку на время запроса
+        openCaseButton.disabled = true;
         openCaseButton.textContent = "Открываем...";
-
         try {
             const response = await fetch(`${BACKEND_URL}/api/open_case`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: currentUserId, cost: cost })
             });
-
             const result = await response.json();
-
             if (result.success) {
-                // Успех! Обновляем баланс из ответа сервера
                 currentUser.balance = result.new_balance;
                 updateBalanceDisplay();
                 tg.HapticFeedback.notificationOccurred('success');
                 alert(`Выпал предмет: ${result.prize}`);
             } else {
-                // Ошибка от сервера (например, нехватка денег)
                 tg.HapticFeedback.notificationOccurred('error');
                 alert(`Ошибка: ${result.error}`);
             }
-
         } catch (error) {
-            console.error('Ошибка при открытии кейса:', error);
+            logToScreen('!!! ОШИБКА ОТКРЫТИЯ КЕЙСА !!!');
+            logToScreen(error.toString());
             tg.showAlert('Не удалось выполнить операцию.');
         } finally {
-            openCaseButton.disabled = false; // Разблокируем кнопку
+            openCaseButton.disabled = false;
             openCaseButton.textContent = `Открыть за ${cost} ⭐`;
         }
     }
