@@ -1,86 +1,81 @@
+// --- ВАЖНАЯ НАСТРОЙКА ---
+// Вставьте сюда IP-адрес вашего компьютера из консоли Python
+const BACKEND_URL = 'http://192.168.1.89:5000';
+// -------------------------
+
+
 document.addEventListener('DOMContentLoaded', function() {
     
-    // ----- ИНИЦИАЛИЗАЦИЯ TELEGRAM -----
-    // Получаем доступ к API, предоставленному telegram-web-app.js
     const tg = window.Telegram.WebApp;
-    // Говорим Telegram, что наше приложение готово к показу
     tg.ready();
 
-    // ----- ЭЛЕМЕНТЫ СТРАНИЦЫ -----
+    // Элементы страницы
     const homeScreen = document.getElementById('home-screen');
     const caseDetailScreen = document.getElementById('case-detail-screen');
     const backButton = document.getElementById('back-button');
     const caseCards = document.querySelectorAll('.case-card');
     const openCaseButton = document.querySelector('#case-detail-screen .action-button');
-    
-    // Элементы профиля, которые мы будем обновлять
     const userAvatarElement = document.querySelector('.user-profile .avatar');
     const usernameElement = document.querySelector('.user-profile .username');
 
-    // ----- ИМИТАЦИЯ БЭКЕНДА И ДАННЫХ -----
+    let currentUser = null; // Здесь будут храниться данные о пользователе
+    let currentUserId = null;
 
-    // "Фальшивая" база данных, которая будет хранить балансы
-    let fakeDatabase = {}; 
-
-    // Получаем реальные данные пользователя от Telegram
-    // initDataUnsafe содержит информацию о пользователе, открывшем приложение
-    const user = tg.initDataUnsafe.user;
-    
-    let currentUser;
-    let CURRENT_USER_ID;
-
-    if (user) {
-        // Если данные пользователя есть (мы в Telegram)
-        CURRENT_USER_ID = user.id.toString();
-        
-        // Проверяем, есть ли этот пользователь в нашей "базе"
-        if (!fakeDatabase[CURRENT_USER_ID]) {
-            // Если нет, создаем для него запись с начальным балансом
-            fakeDatabase[CURRENT_USER_ID] = {
-                name: user.first_name, // Берем имя из Telegram
-                balance: 1000 // Стартовый баланс для новых игроков
-            };
+    // Функция для получения данных с нашего Python-сервера
+    async function fetchUserData() {
+        if (!tg.initDataUnsafe.user) {
+            usernameElement.textContent = "Тестовый режим (вне Telegram)";
+            return;
         }
-        currentUser = fakeDatabase[CURRENT_USER_ID];
+
+        currentUserId = tg.initDataUnsafe.user.id;
+        const url = `${BACKEND_URL}/api/get_user_data?user_id=${currentUserId}`;
         
-        // Обновляем аватарку и имя на странице
-        usernameElement.textContent = currentUser.name;
-        // Telegram не дает прямую ссылку на аватар, поэтому пока оставляем заглушку.
-        // Чтобы получить фото, нужен более сложный запрос к вашему Python-серверу.
-        // Мы сделаем это на следующем шаге.
-        // userAvatarElement.src = user.photo_url || 'https://via.placeholder.com/48';
+        try {
+            // Отправляем запрос на наш Python-сервер
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`Ошибка сети: ${response.status}`);
+            }
 
-    } else {
-        // Если мы открыли страницу в обычном браузере (не в Telegram)
-        usernameElement.textContent = "Тестовый режим";
-        // Создаем тестового пользователя для отладки
-        CURRENT_USER_ID = 'test_user';
-        if (!fakeDatabase[CURRENT_USER_ID]) {
-            fakeDatabase[CURRENT_USER_ID] = { name: 'Тестер', balance: 500 };
-        }
-        currentUser = fakeDatabase[CURRENT_USER_ID];
-    }
-
-    // Функция для обновления отображения баланса
-    function updateBalanceDisplay() {
-        // Теперь баланс показывается вместе с именем
-        usernameElement.textContent = `${currentUser.name} | ${currentUser.balance} ⭐`;
-    }
-
-    // "Мозги": функция открытия кейса
-    function processCaseOpening(cost) {
-        if (currentUser.balance >= cost) {
-            currentUser.balance -= cost;
+            // Получаем данные в формате JSON
+            const data = await response.json();
+            currentUser = data; // Сохраняем данные
+            
+            // Обновляем интерфейс
             updateBalanceDisplay();
-            tg.HapticFeedback.notificationOccurred('success'); // Приятная вибрация при успехе
+
+        } catch (error) {
+            // Если сервер не доступен, показываем ошибку
+            console.error('Не удалось подключиться к серверу:', error);
+            usernameElement.textContent = "Ошибка подключения к серверу";
+            tg.showAlert('Не удалось подключиться к серверу. Убедитесь, что вы в одной Wi-Fi сети с компьютером, на котором запущен сервер.');
+        }
+    }
+
+    function updateBalanceDisplay() {
+        if (currentUser) {
+            usernameElement.textContent = `${currentUser.name} | ${currentUser.balance} ⭐`;
+        }
+    }
+
+    // "Мозги" теперь тоже обращаются к серверу (мы сделаем это на след. шаге)
+    function processCaseOpening(cost) {
+        // Пока оставляем старую логику, но с новыми данными
+        if (currentUser.balance >= cost) {
+            // В будущем здесь будет запрос к серверу на списание
+            currentUser.balance -= cost; 
+            updateBalanceDisplay();
+            tg.HapticFeedback.notificationOccurred('success');
             alert(`Кейс открыт! Остаток: ${currentUser.balance} ⭐`);
         } else {
-            tg.HapticFeedback.notificationOccurred('error'); // Вибрация при ошибке
+            tg.HapticFeedback.notificationOccurred('error');
             alert(`Ошибка! Недостаточно средств. Нужно: ${cost} ⭐`);
         }
     }
 
-    // ----- ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ -----
+    // --- Логика интерфейса ---
     function showScreen(screenToShow) {
         homeScreen.classList.remove('active'); caseDetailScreen.classList.remove('active');
         screenToShow.classList.add('active');
@@ -92,8 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
         processCaseOpening(caseCost);
     });
 
-    // ----- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАПУСКЕ -----
-    updateBalanceDisplay(); 
-
+    // --- Запускаем все при старте ---
+    fetchUserData();
 });
-
