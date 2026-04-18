@@ -5,92 +5,149 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-top: 60px; text-align: center; }
-        .header { position: fixed; top: 0; width: 100%; height: 55px; background: #111; display: flex; align-items: center; justify-content: space-around; border-bottom: 2px solid #0f0; z-index: 10; }
-        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 85%; background: #1a1a1a; border: 1px solid #0f0; padding: 15px; border-radius: 12px; transition: 0.6s; z-index: 100; box-shadow: 0 0 20px #0f0; }
+        body { background: #000; color: #fff; font-family: 'Roboto', sans-serif; margin: 0; padding-top: 65px; overflow-x: hidden; }
+        .header { position: fixed; top: 0; width: 100%; height: 60px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 2px solid #0f0; box-sizing: border-box; z-index: 1000; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #0f0; }
+        
+        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; background: #1a1a1a; border: 1px solid #0f0; border-radius: 12px; padding: 15px; transition: 0.5s; z-index: 9999; box-shadow: 0 0 20px rgba(0,255,0,0.3); }
         #toast.active { top: 15px; }
-        .case-card { background: #111; border: 1px solid #333; margin: 15px; padding: 15px; border-radius: 15px; }
-        .btn { width: 85%; height: 45px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin: 5px; }
+
+        .roulette-container { position: relative; width: 300px; height: 100px; border: 2px solid #333; margin: 20px auto; overflow: hidden; background: #050505; display: none; }
+        .pointer { position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: 4px; height: 100%; background: #0f0; z-index: 5; }
+        .strip { display: flex; position: absolute; left: 0; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
+        .item { min-width: 80px; height: 100px; display: flex; align-items: center; justify-content: center; background: #111; border: 1px solid #222; font-size: 10px; }
+
+        .case-card { background: #111; border: 1px solid #333; margin: 15px; padding: 20px; border-radius: 20px; text-align: center; }
+        .btn { width: 100%; height: 50px; border-radius: 12px; border: none; font-weight: bold; font-size: 16px; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="toast"><b>★ БАЛАНС ПОПОЛНЕН!</b><br><span id="toast-amt"></span></div>
-    
+
+    <div id="toast"><b>💰 Пополнение!</b><br><span id="toast-text"></span></div>
+
     <div class="header">
-        <div id="u-name" style="font-weight:bold">...</div>
-        <div id="u-bal" style="color:#0f0; font-size: 18px;">0 ★</div>
+        <div class="user-info">
+            <img id="user-avatar" class="avatar" src="">
+            <span id="user-nickname" style="font-weight: bold;">Загрузка...</span>
+        </div>
+        <div id="balance" style="color:#0f0; font-weight: bold;">0 ★</div>
     </div>
 
-    <div id="page-shop">
+    <div id="main-view">
         <div class="case-card">
-            <img src="case1.png" width="80"><br><b>КЕЙС LITE</b><br>Цена: 222 ★<br>
-            <button class="btn" style="background:#0f0;color:#000" onclick="buy(222, 'Нож')">ОТКРЫТЬ</button>
+            <img src="1.png" width="100"><br><b>КЕЙС LITE</b><br><span style="color:#0f0">222 ★</span>
+            <button class="btn" style="background:#0f0; color:#000;" onclick="openCase(222)">ОТКРЫТЬ</button>
         </div>
         <div class="case-card">
-            <img src="case2.png" width="80"><br><b>КЕЙС ELITE</b><br>Цена: 888 ★<br>
-            <button class="btn" style="background:#0f0;color:#000" onclick="buy(888, 'Перчатки')">ОТКРЫТЬ</button>
+            <img src="2.png" width="100"><br><b>КЕЙС PRO</b><br><span style="color:#0f0">444 ★</span>
+            <button class="btn" style="background:#0f0; color:#000;" onclick="openCase(444)">ОТКРЫТЬ</button>
         </div>
-        <button class="btn" style="background:#222;color:#fff" onclick="tab('inv')">МОЙ СКЛАД</button>
+        <div class="case-card">
+            <img src="3.png" width="100"><br><b>КЕЙС ELITE</b><br><span style="color:#0f0">888 ★</span>
+            <button class="btn" style="background:#0f0; color:#000;" onclick="openCase(888)">ОТКРЫТЬ</button>
+        </div>
+        <button class="btn" style="background:#222; color:#fff;" onclick="showInventory()">📦 СКЛАД</button>
     </div>
 
-    <div id="page-inv" style="display:none">
-        <h3>ВАШ СКЛАД</h3>
-        <div id="inv-items"></div>
-        <button class="btn" style="background:#222;color:#fff" onclick="tab('shop')">НАЗАД</button>
+    <div class="roulette-container" id="roulette">
+        <div class="pointer"></div>
+        <div class="strip" id="strip"></div>
+    </div>
+
+    <div id="inv-view" style="display:none; padding: 15px;">
+        <h3>Ваш склад</h3>
+        <div id="inv-list"></div>
+        <button class="btn" style="background:#222; color:#fff;" onclick="showMain()">НАЗАД</button>
     </div>
 
     <script>
-        const API = "https://king-legibly-mouse.ngrok-free.dev"; // ПРОВЕРЬ ССЫЛКУ!
         const tg = window.Telegram.WebApp;
         const uid = new URLSearchParams(window.location.search).get('uid');
-        let lastGId = -1;
+        const API_URL = "https://king-legibly-mouse.ngrok-free.dev";
+        let lastUpdateId = -1;
 
         async function sync() {
             try {
-                const r = await fetch(`${API}/get_data?uid=${uid}`);
-                const d = await r.json();
+                const res = await fetch(`${API_URL}/get_data?uid=${uid}`);
+                const data = await res.json();
                 
-                document.getElementById('u-bal').innerText = d.bal + " ★";
-                document.getElementById('u-name').innerText = tg.initDataUnsafe?.user?.first_name || "Игрок";
-
-                if (lastGId !== -1 && d.g_id > lastGId) {
-                    const t = document.getElementById('toast');
-                    document.getElementById('toast-amt').innerText = "+" + d.g_amt + " звезд зачислено!";
-                    t.classList.add('active');
-                    setTimeout(() => t.classList.remove('active'), 4000);
+                document.getElementById('balance').innerText = data.balance + " ★";
+                
+                if (lastUpdateId !== -1 && data.update_id > lastUpdateId) {
+                    showToast(data.added_amount);
                 }
-                lastGId = d.g_id;
-
-                let h = "";
-                d.inv.forEach(item => {
-                    h += `<div class="case-card"><b>${item}</b><br><button class="btn" style="background:#00f;color:#fff" onclick="wd('${item}')">ВЫВОД</button></div>`;
-                });
-                document.getElementById('inv-items').innerHTML = h || "На складе пока пусто";
+                lastUpdateId = data.update_id;
+                renderInventory(data.inventory);
             } catch(e) {}
         }
 
-        async function buy(cost, name) {
-            const bal = parseInt(document.getElementById('u-bal').innerText);
-            if(bal < cost) return alert("Недостаточно звезд!");
-            await fetch(`${API}/action`, {method:'POST', body:JSON.stringify({uid, act:'open', cost})});
-            await fetch(`${API}/action`, {method:'POST', body:JSON.stringify({uid, act:'save', n:name})});
-            alert("Вы выбили: " + name);
+        function showToast(amt) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = `+${amt} звезд зачислено на ваш баланс!`;
+            t.classList.add('active');
+            setTimeout(() => t.classList.remove('active'), 4000);
+        }
+
+        async function openCase(cost) {
+            const res = await fetch(`${API_URL}/action`, {
+                method: 'POST',
+                body: JSON.stringify({uid, action: "open_case", cost})
+            });
+            const data = await res.json();
+            if(data.status === "ok") startRoulette(data.item);
+        }
+
+        function startRoulette(winItem) {
+            const r = document.getElementById('roulette');
+            const s = document.getElementById('strip');
+            r.style.display = 'block';
+            s.innerHTML = "";
+            for(let i=0; i<40; i++) s.innerHTML += `<div class="item">Item ${i}</div>`;
+            s.children[35].innerText = winItem;
+            s.children[35].style.background = "#0f0";
+            s.children[35].style.color = "#000";
+            
+            s.style.transition = "none";
+            s.style.transform = "translateX(0)";
+            setTimeout(() => {
+                s.style.transition = "transform 4s cubic-bezier(0.1, 0, 0.1, 1)";
+                s.style.transform = "translateX(-2750px)";
+            }, 50);
+            
+            setTimeout(() => {
+                alert("Вы выбили: " + winItem);
+                r.style.display = 'none';
+                sync();
+            }, 4500);
+        }
+
+        async function withdraw(item) {
+            await fetch(`${API_URL}/action`, {
+                method: 'POST',
+                body: JSON.stringify({uid, action: "withdraw", item})
+            });
+            alert("Заявка на вывод отправлена админу!");
             sync();
         }
 
-        async function wd(name) {
-            await fetch(`${API}/action`, {method:'POST', body:JSON.stringify({uid, act:'wd', n:name})});
-            alert("Заявка на вывод отправлена!");
-            sync();
+        function renderInventory(items) {
+            const list = document.getElementById('inv-list');
+            list.innerHTML = items.length ? "" : "Склад пуст";
+            items.forEach(i => {
+                list.innerHTML += `<div class="case-card"><b>${i}</b><br><button class="btn" style="background:#00f; color:#fff;" onclick="withdraw('${i}')">ВЫВОД</button></div>`;
+            });
         }
 
-        function tab(t) {
-            document.getElementById('page-shop').style.display = t==='shop'?'block':'none';
-            document.getElementById('page-inv').style.display = t==='inv'?'block':'none';
-        }
+        function showInventory() { document.getElementById('main-view').style.display='none'; document.getElementById('inv-view').style.display='block'; }
+        function showMain() { document.getElementById('inv-view').style.display='none'; document.getElementById('main-view').style.display='block'; }
 
-        setInterval(sync, 3000); 
-        sync(); tg.expand();
+        // Инфо о пользователе
+        document.getElementById('user-nickname').innerText = tg.initDataUnsafe?.user?.username || "Player";
+        if(tg.initDataUnsafe?.user?.photo_url) document.getElementById('user-avatar').src = tg.initDataUnsafe.user.photo_url;
+        
+        setInterval(sync, 3000); sync();
+        tg.expand();
     </script>
 </body>
 </html>
