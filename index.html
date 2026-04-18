@@ -9,22 +9,42 @@
 <body>
 
     <div class="app-container">
-        <!-- 1. Верхний блок: Информация о пользователе -->
+        <!-- Верхний блок: Информация о пользователе (остается всегда) -->
         <header class="user-profile">
             <img src="https://via.placeholder.com/48" alt="User Avatar" class="avatar">
             <span class="username">Имя Пользователя</span>
         </header>
 
-        <!-- 2. Основной контент: Кейс -->
-        <main class="main-content">
+        <!-- ЭКРАН 1: СПИСОК КЕЙСОВ (ВИДЕН ПО УМОЛЧАНИЮ) -->
+        <main id="home-screen" class="screen active">
+            <div class="cases-grid">
+                <!-- Карточка первого кейса -->
+                <div class="case-card" data-case-id="1">
+                    <div class="case-icon">
+                        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M85 35H15C12.2386 35 10 37.2386 10 40V80C10 82.7614 12.2386 85 15 85H85C87.7614 85 90 82.7614 90 80V40C90 37.2386 87.7614 35 85 35Z" fill="url(#paint0_linear_case1)"/><path d="M85 20H15C12.2386 20 10 22.2386 10 25V35H90V25C90 22.2386 87.7614 20 85 20Z" fill="url(#paint1_linear_case1)"/><path d="M50 45C48.8954 45 48 45.8954 48 47V53C48 54.1046 48.8954 55 50 55C51.1046 55 52 54.1046 52 53V47C52 45.8954 51.1046 45 50 45Z" fill="#FFD700"/><defs><linearGradient id="paint0_linear_case1" x1="50" y1="35" x2="50" y2="85" gradientUnits="userSpaceOnUse"><stop stop-color="#8E2DE2"/><stop offset="1" stop-color="#4A00E0"/></linearGradient><linearGradient id="paint1_linear_case1" x1="50" y1="20" x2="50" y2="35" gradientUnits="userSpaceOnUse"><stop stop-color="#A450E5"/><stop offset="1" stop-color="#6A10E0"/></linearGradient></defs></svg>
+                    </div>
+                    <div class="case-price">222 ⭐</div>
+                </div>
+                
+                <!-- Карточка второго кейса (для примера) -->
+                <div class="case-card" data-case-id="2">
+                     <div class="case-icon">
+                        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M85 35H15C12.2386 35 10 37.2386 10 40V80C10 82.7614 12.2386 85 15 85H85C87.7614 85 90 82.7614 90 80V40C90 37.2386 87.7614 35 85 35Z" fill="url(#paint0_linear_case2)"/><path d="M85 20H15C12.2386 20 10 22.2386 10 25V35H90V25C90 22.2386 87.7614 20 85 20Z" fill="url(#paint1_linear_case2)"/><path d="M50 50L50 50Z" stroke="#CD7F32" stroke-width="4" stroke-linecap="round"/><path d="M50 45C48.8954 45 48 45.8954 48 47V53C48 54.1046 48.8954 55 50 55C51.1046 55 52 54.1046 52 53V47C52 45.8954 51.1046 45 50 45Z" fill="#CD7F32"/><defs><linearGradient id="paint0_linear_case2" x1="50" y1="35" x2="50" y2="85" gradientUnits="userSpaceOnUse"><stop stop-color="#434343"/><stop offset="1" stop-color="#000000"/></linearGradient><linearGradient id="paint1_linear_case2" x1="50" y1="20" x2="50" y2="35" gradientUnits="userSpaceOnUse"><stop stop-color="#656565"/><stop offset="1" stop-color="#222222"/></linearGradient></defs></svg>
+                    </div>
+                    <div class="case-price">50 ⭐</div>
+                </div>
+                
+            </div>
+        </main>
+        
+        <!-- ЭКРАН 2: ДЕТАЛИ КЕЙСА (СКРЫТ ПО УМОЛЧАНИЮ) -->
+        <main id="case-detail-screen" class="screen">
+            <button id="back-button">← Назад</button>
             <div class="case-container">
-                <!-- Иконка кейса (SVG-код) -->
                 <div class="case-icon">
-                    <svg width="128" height="128" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M85 35H15C12.2386 35 10 37.2386 10 40V80C10 82.7614 12.2386 85 15 85H85C87.7614 85 90 82.7614 90 80V40C90 37.2386 87.7614 35 85 35Z" fill="url(#paint0_linear_101_2)"/><path d="M85 20H15C12.2386 20 10 22.2386 10 25V35H90V25C90 22.2386 87.7614 20 85 20Z" fill="url(#paint1_linear_101_2)"/><path d="M50 45C48.8954 45 48 45.8954 48 47V53C48 54.1046 48.8954 55 50 55C51.1046 55 52 54.1046 52 53V47C52 45.8954 51.1046 45 50 45Z" fill="#FFD700"/><defs><linearGradient id="paint0_linear_101_2" x1="50" y1="35" x2="50" y2="85" gradientUnits="userSpaceOnUse"><stop stop-color="#8E2DE2"/><stop offset="1" stop-color="#4A00E0"/></linearGradient><linearGradient id="paint1_linear_101_2" x1="50" y1="20" x2="50" y2="35" gradientUnits="userSpaceOnUse"><stop stop-color="#A450E5"/><stop offset="1" stop-color="#6A10E0"/></linearGradient></defs></svg>
+                    <svg width="128" height="128" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M85 35H15C12.2386 35 10 37.2386 10 40V80C10 82.7614 12.2386 85 15 85H85C87.7614 85 90 82.7614 90 80V40C90 37.2386 87.7614 35 85 35Z" fill="url(#paint0_linear_case1)"/><path d="M85 20H15C12.2386 20 10 22.2386 10 25V35H90V25C90 22.2386 87.7614 20 85 20Z" fill="url(#paint1_linear_case1)"/><path d="M50 45C48.8954 45 48 45.8954 48 47V53C48 54.1046 48.8954 55 50 55C51.1046 55 52 54.1046 52 53V47C52 45.8954 51.1046 45 50 45Z" fill="#FFD700"/><defs/></svg>
                 </div>
-                <div class="case-price">
-                    222 ⭐
-                </div>
+                <div class="case-price">222 ⭐</div>
                 <div class="case-contents">
                     <p>Возможное содержимое:</p>
                     <ul>
@@ -38,12 +58,14 @@
             </div>
         </main>
 
-        <!-- 3. Нижнее меню -->
+        <!-- Нижнее меню (остается всегда) -->
         <nav class="bottom-nav">
             <button class="nav-button active">Кейсы</button>
             <button class="nav-button">Инвентарь</button>
         </nav>
     </div>
 
+    <!-- Подключаем файл со скриптами -->
+    <script src="script.js"></script>
 </body>
 </html>
