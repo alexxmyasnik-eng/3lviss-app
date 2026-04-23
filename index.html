@@ -121,11 +121,30 @@
   .admin-card-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--red);margin-bottom:12px;letter-spacing:1px}
   .admin-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;margin-bottom:8px}
   .admin-input:focus{outline:none;border-color:rgba(239,68,68,0.5)}
-  .admin-btn{width:100%;padding:11px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:10px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:1px}
+  .admin-btn{width:100%;padding:11px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:10px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:1px;margin-top:4px}
   .admin-btn:active{opacity:0.85}
+  .admin-btn:disabled{opacity:0.5;cursor:not-allowed}
   .admin-users-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
-  .admin-user-row{background:var(--bg3);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+  .admin-user-row{background:var(--bg3);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background 0.15s}
+  .admin-user-row:hover{background:var(--bg2)}
+  .admin-user-row.selected{background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.4)}
   .admin-user-bal{color:var(--gold2);font-weight:700;font-family:'Rajdhani',sans-serif;font-size:16px}
+  .selected-user-box{background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.3);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+  .selected-user-name{font-size:13px;font-weight:700;color:var(--accent)}
+  .selected-user-id{font-size:11px;color:var(--text2);margin-top:2px}
+  .selected-clear{background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px;padding:2px 6px}
+  .admin-search-box{position:relative;margin-bottom:8px}
+  .admin-search-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px 10px 38px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px}
+  .admin-search-input:focus{outline:none;border-color:rgba(192,132,252,0.5)}
+  .admin-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:16px}
+  .admin-input-hint{font-size:11px;color:var(--text2);margin-bottom:6px;padding-left:2px}
+  .bot-token-notice{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--gold2);line-height:1.6}
+  .token-input-wrap{display:flex;gap:8px;margin-bottom:8px}
+  .token-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px}
+  .token-input:focus{outline:none;border-color:rgba(245,158,11,0.5)}
+  .token-save-btn{padding:10px 14px;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);border-radius:10px;color:var(--gold2);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+  .status-ok{background:var(--green)}.status-bad{background:var(--red)}.status-none{background:var(--gray)}
 
   /* WITHDRAW MODAL */
   .withdraw-info{background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center}
@@ -158,6 +177,10 @@
 
   .b-common{border-color:rgba(107,114,128,0.6)!important}.b-uncommon{border-color:rgba(59,130,246,0.6)!important}.b-rare{border-color:rgba(129,140,248,0.6)!important}.b-epic{border-color:rgba(192,132,252,0.6)!important}.b-legendary{border-color:rgba(245,158,11,0.6)!important}
   .rarity-common{color:var(--gray)}.rarity-uncommon{color:var(--blue)}.rarity-rare{color:var(--accent2)}.rarity-epic{color:var(--accent)}.rarity-legendary{color:var(--gold)}
+
+  /* Loading spinner */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
 </style>
 </head>
 <body>
@@ -215,7 +238,7 @@
   <div class="section-title">О приложении</div>
   <div style="background:var(--bg2);border-radius:14px;border:1px solid var(--border);padding:16px;font-size:13px;color:var(--text2);line-height:1.7;">
     NFT Cases — Telegram Mini App.<br>Открывай кейсы, собирай NFT и выводи предметы.<br><br>
-    <span style="color:var(--accent)">Версия 2.0</span>
+    <span style="color:var(--accent)">Версия 2.1</span>
   </div>
 </div>
 
@@ -225,24 +248,69 @@
     <div class="section-title" style="margin-bottom:0">Панель администратора</div>
     <span class="admin-badge">ADMIN</span>
   </div>
+
+  <!-- Bot Token Setup -->
+  <div class="admin-card">
+    <div class="admin-card-title">🤖 Telegram Bot Token</div>
+    <div class="bot-token-notice">
+      Для отправки уведомлений игрокам нужен токен бота.<br>
+      Получи его у <b>@BotFather</b> → /mybot → API Token
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px;">
+      Статус: <span id="tokenStatus"><span class="status-dot status-none"></span>Не настроен</span>
+    </div>
+    <div class="token-input-wrap">
+      <input class="token-input" id="botTokenInput" type="password" placeholder="123456:ABC-DEF...">
+      <button class="token-save-btn" onclick="saveBotToken()">Сохранить</button>
+    </div>
+    <div style="font-size:11px;color:var(--text2)">Токен хранится только в localStorage этого устройства</div>
+  </div>
+
+  <!-- Topup -->
   <div class="admin-card">
     <div class="admin-card-title">💰 Пополнить баланс игроку</div>
-    <input class="admin-input" id="adminUserId" placeholder="Telegram ID игрока" type="number">
-    <input class="admin-input" id="adminAmount" placeholder="Сумма (монеты)" type="number">
-    <button class="admin-btn" onclick="adminTopup()">Пополнить</button>
+    <div id="topupSelectedUser" style="display:none" class="selected-user-box">
+      <div>
+        <div class="selected-user-name" id="topupSelName">—</div>
+        <div class="selected-user-id" id="topupSelId">—</div>
+      </div>
+      <button class="selected-clear" onclick="clearTopupSelection()">✕</button>
+    </div>
+    <div class="admin-input-hint">Telegram ID или @username:</div>
+    <input class="admin-input" id="adminUserId" placeholder="Например: 123456789 или @username" type="text" oninput="onAdminUserInput('topup')">
+    <input class="admin-input" id="adminAmount" placeholder="Сумма пополнения (монеты)" type="number" min="1">
+    <button class="admin-btn" id="topupBtn" onclick="adminTopup()">💰 Пополнить и уведомить</button>
   </div>
+
+  <!-- Set Balance -->
   <div class="admin-card">
     <div class="admin-card-title">⚙️ Установить баланс точно</div>
-    <input class="admin-input" id="adminSetId" placeholder="Telegram ID игрока" type="number">
-    <input class="admin-input" id="adminSetAmount" placeholder="Новый баланс" type="number">
-    <button class="admin-btn" onclick="adminSetBalance()">Установить</button>
+    <div id="setBalSelectedUser" style="display:none" class="selected-user-box">
+      <div>
+        <div class="selected-user-name" id="setBalSelName">—</div>
+        <div class="selected-user-id" id="setBalSelId">—</div>
+      </div>
+      <button class="selected-clear" onclick="clearSetBalSelection()">✕</button>
+    </div>
+    <div class="admin-input-hint">Telegram ID или @username:</div>
+    <input class="admin-input" id="adminSetId" placeholder="Например: 123456789 или @username" type="text" oninput="onAdminUserInput('setbal')">
+    <input class="admin-input" id="adminSetAmount" placeholder="Новый баланс (монеты)" type="number" min="0">
+    <button class="admin-btn" id="setBalBtn" onclick="adminSetBalance()">⚙️ Установить и уведомить</button>
   </div>
+
+  <!-- Withdraw requests -->
   <div class="admin-card">
     <div class="admin-card-title">📤 Заявки на вывод</div>
     <div id="adminWithdrawList"><div style="color:var(--text2);font-size:13px;text-align:center;padding:10px">Нет заявок</div></div>
   </div>
+
+  <!-- Players list -->
   <div class="admin-card">
-    <div class="admin-card-title">👥 Список игроков</div>
+    <div class="admin-card-title">👥 Список игроков <span id="playersCount" style="font-size:12px;color:var(--text2);font-weight:400"></span></div>
+    <div class="admin-search-box">
+      <span class="admin-search-icon">🔍</span>
+      <input class="admin-search-input" id="playersSearch" placeholder="Поиск по имени, ID или @username..." oninput="filterPlayers()">
+    </div>
     <div class="admin-users-list" id="adminUsersList"></div>
   </div>
 </div>
@@ -319,6 +387,7 @@
 
 <script>
 // ===== CONFIG =====
+// ⚠️ ЗАМЕНИ НА СВОЙ ADMIN ID
 const ADMIN_ID = 780434845;
 
 const CASES = [
@@ -355,6 +424,57 @@ const CASES = [
 const RARITY_COLORS = {common:'#6b7280',uncommon:'#3b82f6',rare:'#818cf8',epic:'#c084fc',legendary:'#f59e0b'};
 const RARITY_NAMES = {common:'Обычный',uncommon:'Необычный',rare:'Редкий',epic:'Эпический',legendary:'Легендарный'};
 
+// ===== BOT TOKEN =====
+const BOT_TOKEN_KEY = 'nftcases_bot_token';
+let BOT_TOKEN = localStorage.getItem(BOT_TOKEN_KEY) || '';
+
+function saveBotToken() {
+  const val = document.getElementById('botTokenInput').value.trim();
+  if (!val) { showToast('⚠️ Введи токен!', 'var(--gold)'); return; }
+  BOT_TOKEN = val;
+  localStorage.setItem(BOT_TOKEN_KEY, val);
+  document.getElementById('botTokenInput').value = '';
+  updateTokenStatus(true);
+  showToast('✅ Токен сохранён', 'var(--green)');
+}
+
+function updateTokenStatus(saved) {
+  const el = document.getElementById('tokenStatus');
+  if (!el) return;
+  if (BOT_TOKEN) {
+    el.innerHTML = `<span class="status-dot status-ok"></span>Настроен (${BOT_TOKEN.substring(0,8)}...)`;
+  } else {
+    el.innerHTML = `<span class="status-dot status-none"></span>Не настроен`;
+  }
+}
+
+async function sendTelegramMessage(chatId, text) {
+  if (!BOT_TOKEN) {
+    console.warn('Bot token not set');
+    return false;
+  }
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML',
+      })
+    });
+    const data = await resp.json();
+    if (!data.ok) {
+      console.error('TG API error:', data);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('sendMessage failed:', e);
+    return false;
+  }
+}
+
 // ===== STORAGE =====
 const SAVE_KEY = 'nftcases_v2';
 const GLOBAL_KEY = 'nftcases_global';
@@ -369,13 +489,20 @@ function saveState(){
     syncUserToGlobal();
   }catch(e){}
 }
-function loadGlobal(){try{const r=localStorage.getItem(GLOBAL_KEY);return r?JSON.parse(r):{users:{},withdrawRequests:[],adminCommands:[]}}catch(e){return{users:{},withdrawRequests:[],adminCommands:[]}}}
+function loadGlobal(){
+  try{
+    const r=localStorage.getItem(GLOBAL_KEY);
+    return r?JSON.parse(r):{users:{},withdrawRequests:[],adminCommands:[]};
+  }catch(e){return{users:{},withdrawRequests:[],adminCommands:[]};}
+}
 function saveGlobal(g){try{localStorage.setItem(GLOBAL_KEY,JSON.stringify(g))}catch(e){}}
 function syncUserToGlobal(){
   if(!userId||userId==='—') return;
   const g=loadGlobal();
   if(!g.users) g.users={};
-  g.users[userId]={name:userName,id:userId,balance:STATE._balance};
+  // Store username for search
+  const uname = userUsername ? userUsername.replace('@','') : '';
+  g.users[userId]={name:userName,id:userId,balance:STATE._balance,username:uname};
   saveGlobal(g);
 }
 
@@ -396,6 +523,7 @@ const STATE = {
 const tg = window.Telegram?.WebApp;
 let userName = 'Игрок';
 let userId = '—';
+let userUsername = '';
 let isAdmin = false;
 
 if(tg){
@@ -404,6 +532,7 @@ if(tg){
     const u=tg.initDataUnsafe.user;
     userName=u.first_name||'Игрок';
     userId=String(u.id);
+    userUsername=u.username?('@'+u.username):'';
     isAdmin=(u.id===ADMIN_ID);
   }
 }
@@ -613,7 +742,7 @@ document.getElementById('wdSubmitBtn').onclick=()=>{
 function renderProfile(){
   document.getElementById('profileAvatar').textContent=userName.slice(0,2).toUpperCase();
   document.getElementById('profileName').textContent=userName+(isAdmin?' 👑':'');
-  document.getElementById('profileId').textContent='ID: '+userId;
+  document.getElementById('profileId').textContent='ID: '+userId+(userUsername?' · '+userUsername:'');
   document.getElementById('statOpened').textContent=STATE.stats.opened;
   document.getElementById('statSold').textContent=STATE.stats.sold;
   document.getElementById('statWithdrawn').textContent=STATE.stats.withdrawn||0;
@@ -629,9 +758,77 @@ function renderProfile(){
   }
 }
 
+// ===== ADMIN: PLAYER SEARCH =====
+let topupSelectedPlayer = null;
+let setBalSelectedPlayer = null;
+
+// Resolve user by ID or @username from global storage
+function resolvePlayer(query) {
+  query = query.trim();
+  if (!query) return null;
+  const g = loadGlobal();
+  const users = g.users || {};
+
+  // Try by numeric ID
+  if (/^\d+$/.test(query)) {
+    return users[query] || null;
+  }
+  // Try by @username
+  const uname = query.replace('@','').toLowerCase();
+  for (const u of Object.values(users)) {
+    if (u.username && u.username.toLowerCase() === uname) return u;
+  }
+  // Check if it's current admin user
+  if (String(ADMIN_ID) === query || (userUsername && userUsername.replace('@','').toLowerCase() === uname)) {
+    return { name: userName, id: userId, balance: STATE._balance, username: userUsername.replace('@','') };
+  }
+  return null;
+}
+
+function onAdminUserInput(type) {
+  // Clear selection when typing new value
+  if (type === 'topup') {
+    topupSelectedPlayer = null;
+    document.getElementById('topupSelectedUser').style.display = 'none';
+  } else {
+    setBalSelectedPlayer = null;
+    document.getElementById('setBalSelectedUser').style.display = 'none';
+  }
+}
+
+function selectPlayerForTopup(u) {
+  topupSelectedPlayer = u;
+  document.getElementById('adminUserId').value = u.id;
+  document.getElementById('topupSelName').textContent = u.name + (u.username ? ' @'+u.username : '');
+  document.getElementById('topupSelId').textContent = 'ID: ' + u.id + ' · Баланс: ₮' + (u.balance||0).toLocaleString('ru');
+  document.getElementById('topupSelectedUser').style.display = 'flex';
+}
+
+function selectPlayerForSetBal(u) {
+  setBalSelectedPlayer = u;
+  document.getElementById('adminSetId').value = u.id;
+  document.getElementById('setBalSelName').textContent = u.name + (u.username ? ' @'+u.username : '');
+  document.getElementById('setBalSelId').textContent = 'ID: ' + u.id + ' · Баланс: ₮' + (u.balance||0).toLocaleString('ru');
+  document.getElementById('setBalSelectedUser').style.display = 'flex';
+}
+
+function clearTopupSelection() {
+  topupSelectedPlayer = null;
+  document.getElementById('adminUserId').value = '';
+  document.getElementById('topupSelectedUser').style.display = 'none';
+}
+
+function clearSetBalSelection() {
+  setBalSelectedPlayer = null;
+  document.getElementById('adminSetId').value = '';
+  document.getElementById('setBalSelectedUser').style.display = 'none';
+}
+
 // ===== ADMIN =====
 function renderAdmin(){
   if(!isAdmin) return;
+  updateTokenStatus();
+  if(BOT_TOKEN) document.getElementById('botTokenInput').placeholder = 'Токен сохранён (скрыт)';
   renderAdminWithdrawList();
   renderAdminUsers();
 }
@@ -656,67 +853,200 @@ function renderAdminWithdrawList(){
     </div>`).join('');
 }
 
-function adminApprove(id){
+async function adminApprove(id){
   const g=loadGlobal();
   const req=(g.withdrawRequests||[]).find(r=>r.id===id);
-  if(req) req.status='approved';
-  saveGlobal(g); showToast('✅ Заявка одобрена','var(--green)'); renderAdminWithdrawList();
+  if(req){
+    req.status='approved';
+    saveGlobal(g);
+    showToast('✅ Заявка одобрена','var(--green)');
+    renderAdminWithdrawList();
+    // Notify player
+    if(BOT_TOKEN && req.userId) {
+      const msg = `✅ <b>Заявка на вывод одобрена!</b>\n\n${req.itemEmoji} <b>${req.itemName}</b>\n💰 Стоимость: ₮${req.itemValue}\n\nАдминистратор свяжется с тобой для выдачи предмета.`;
+      await sendTelegramMessage(req.userId, msg);
+    }
+  }
 }
-function adminReject(id){
+
+async function adminReject(id){
   const g=loadGlobal();
   const req=(g.withdrawRequests||[]).find(r=>r.id===id);
-  if(req) req.status='rejected';
-  saveGlobal(g); showToast('❌ Заявка отклонена','var(--red)'); renderAdminWithdrawList();
+  if(req){
+    req.status='rejected';
+    saveGlobal(g);
+    showToast('❌ Заявка отклонена','var(--red)');
+    renderAdminWithdrawList();
+    if(BOT_TOKEN && req.userId) {
+      const msg = `❌ <b>Заявка на вывод отклонена</b>\n\n${req.itemEmoji} ${req.itemName}\n\nЕсли есть вопросы — обратись к администратору.`;
+      await sendTelegramMessage(req.userId, msg);
+    }
+  }
 }
+
+let allPlayersCache = [];
 
 function renderAdminUsers(){
   const g=loadGlobal();
-  const users=Object.values(g.users||{});
-  const el=document.getElementById('adminUsersList');
-  if(users.length===0){el.innerHTML='<div style="color:var(--text2);font-size:13px;text-align:center;padding:10px">Нет данных</div>';return;}
-  el.innerHTML=users.map(u=>`<div class="admin-user-row"><div><div style="font-size:13px;font-weight:600">${u.name}</div><div style="font-size:11px;color:var(--text2)">ID: ${u.id}</div></div><div class="admin-user-bal">₮${(u.balance||0).toLocaleString('ru')}</div></div>`).join('');
+  allPlayersCache = Object.values(g.users||{});
+  renderFilteredPlayers(allPlayersCache);
+  document.getElementById('playersCount').textContent = '(' + allPlayersCache.length + ')';
 }
 
-function adminTopup(){
+function filterPlayers() {
+  const q = document.getElementById('playersSearch').value.trim().toLowerCase();
+  if (!q) { renderFilteredPlayers(allPlayersCache); return; }
+  const filtered = allPlayersCache.filter(u =>
+    (u.name||'').toLowerCase().includes(q) ||
+    String(u.id||'').includes(q) ||
+    (u.username||'').toLowerCase().includes(q)
+  );
+  renderFilteredPlayers(filtered);
+}
+
+function renderFilteredPlayers(players) {
+  const el=document.getElementById('adminUsersList');
+  if(players.length===0){el.innerHTML='<div style="color:var(--text2);font-size:13px;text-align:center;padding:10px">Нет игроков</div>';return;}
+  el.innerHTML=players.map(u=>`
+    <div class="admin-user-row" onclick="quickSelectPlayer('${u.id}')">
+      <div>
+        <div style="font-size:13px;font-weight:600">${u.name}${u.username?' <span style="color:var(--accent2);font-size:11px">@'+u.username+'</span>':''}</div>
+        <div style="font-size:11px;color:var(--text2)">ID: ${u.id}</div>
+      </div>
+      <div class="admin-user-bal">₮${(u.balance||0).toLocaleString('ru')}</div>
+    </div>`).join('');
+}
+
+// Click player in list → auto-fill topup form
+function quickSelectPlayer(id) {
+  const g = loadGlobal();
+  const u = (g.users||{})[id];
+  if (!u) return;
+  selectPlayerForTopup(u);
+  showToast('👤 Выбран: '+u.name);
+  // Scroll to topup card
+  document.getElementById('adminAmount').focus();
+}
+
+async function adminTopup(){
   if(!isAdmin) return;
-  const targetId=document.getElementById('adminUserId').value.trim();
-  const amount=parseInt(document.getElementById('adminAmount').value);
-  if(!targetId||!amount||amount<=0){showToast('⚠️ Заполни все поля','var(--gold)');return;}
-  if(targetId===userId){
+  const btn = document.getElementById('topupBtn');
+  const rawInput = document.getElementById('adminUserId').value.trim();
+  const amount = parseInt(document.getElementById('adminAmount').value);
+
+  if(!rawInput || !amount || amount<=0){showToast('⚠️ Заполни все поля','var(--gold)');return;}
+
+  // Resolve player
+  let player = topupSelectedPlayer || resolvePlayer(rawInput);
+
+  if (!player && !(/^\d+$/.test(rawInput))) {
+    showToast('❌ Игрок не найден. Используй ID или выбери из списка','var(--red)');
+    return;
+  }
+
+  const targetId = player ? player.id : rawInput;
+  const targetName = player ? player.name : ('ID '+targetId);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Отправляем...';
+
+  let notified = false;
+
+  if(targetId === userId){
+    // Self topup (admin topping up their own account)
     STATE.addBalance(amount);
     STATE.txHistory.push({amount,label:'Пополнение от администратора',time:Date.now()});
-    saveState(); showToast('💰 Пополнено ₮'+amount,'var(--green)');
+    saveState();
+    notified = true;
   } else {
-    const g=loadGlobal();
-    if(!g.adminCommands) g.adminCommands=[];
-    g.adminCommands.push({type:'topup',targetId,amount,time:Date.now()});
-    if(g.users&&g.users[targetId]) g.users[targetId].balance=Math.round((g.users[targetId].balance||0)+amount);
+    const g = loadGlobal();
+    if(!g.adminCommands) g.adminCommands = [];
+    g.adminCommands.push({type:'topup', targetId, amount, time:Date.now()});
+    if(g.users && g.users[targetId]) {
+      g.users[targetId].balance = Math.round((g.users[targetId].balance||0) + amount);
+    }
     saveGlobal(g);
-    showToast('💰 Команда отправлена для ID '+targetId,'var(--green)');
+
+    // Send Telegram notification
+    if(BOT_TOKEN) {
+      const newBal = player ? Math.round((player.balance||0) + amount) : '?';
+      const msg = `💰 <b>Баланс пополнен!</b>\n\n` +
+        `➕ Начислено: <b>+₮${amount.toLocaleString('ru')}</b>\n` +
+        `👛 Текущий баланс: <b>₮${typeof newBal === 'number' ? newBal.toLocaleString('ru') : newBal}</b>\n\n` +
+        `<i>Пополнение от администратора NFT Cases</i>`;
+      notified = await sendTelegramMessage(targetId, msg);
+    }
     renderAdminUsers();
   }
-  document.getElementById('adminUserId').value='';
-  document.getElementById('adminAmount').value='';
+
+  btn.disabled = false;
+  btn.innerHTML = '💰 Пополнить и уведомить';
+
+  if(notified || !BOT_TOKEN) {
+    showToast(`✅ ₮${amount} начислено ${targetName}` + (notified ? ' · уведомлен' : ' · токен не настроен'), 'var(--green)');
+  } else {
+    showToast(`✅ ₮${amount} начислено, но уведомить не удалось`, 'var(--gold)');
+  }
+
+  clearTopupSelection();
+  document.getElementById('adminUserId').value = '';
+  document.getElementById('adminAmount').value = '';
 }
 
-function adminSetBalance(){
+async function adminSetBalance(){
   if(!isAdmin) return;
-  const targetId=document.getElementById('adminSetId').value.trim();
-  const amount=parseInt(document.getElementById('adminSetAmount').value);
-  if(!targetId||isNaN(amount)||amount<0){showToast('⚠️ Заполни все поля','var(--gold)');return;}
-  if(targetId===userId){
-    STATE.balance=amount; saveState(); showToast('⚙️ Баланс установлен: ₮'+amount,'var(--accent)');
-  } else {
-    const g=loadGlobal();
-    if(!g.adminCommands) g.adminCommands=[];
-    g.adminCommands.push({type:'setbalance',targetId,amount,time:Date.now()});
-    if(g.users&&g.users[targetId]) g.users[targetId].balance=amount;
-    saveGlobal(g);
-    showToast('⚙️ Баланс установлен для ID '+targetId,'var(--accent)');
-    renderAdminUsers();
+  const btn = document.getElementById('setBalBtn');
+  const rawInput = document.getElementById('adminSetId').value.trim();
+  const amount = parseInt(document.getElementById('adminSetAmount').value);
+
+  if(!rawInput || isNaN(amount) || amount<0){showToast('⚠️ Заполни все поля','var(--gold)');return;}
+
+  let player = setBalSelectedPlayer || resolvePlayer(rawInput);
+
+  if (!player && !(/^\d+$/.test(rawInput))) {
+    showToast('❌ Игрок не найден. Используй ID или выбери из списка','var(--red)');
+    return;
   }
-  document.getElementById('adminSetId').value='';
-  document.getElementById('adminSetAmount').value='';
+
+  const targetId = player ? player.id : rawInput;
+  const targetName = player ? player.name : ('ID '+targetId);
+  const oldBal = player ? (player.balance||0) : '?';
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Применяем...';
+
+  let notified = false;
+
+  if(targetId === userId){
+    STATE.balance = amount;
+    saveState();
+    notified = true;
+    showToast('⚙️ Свой баланс установлен: ₮'+amount,'var(--accent)');
+  } else {
+    const g = loadGlobal();
+    if(!g.adminCommands) g.adminCommands = [];
+    g.adminCommands.push({type:'setbalance', targetId, amount, time:Date.now()});
+    if(g.users && g.users[targetId]) g.users[targetId].balance = amount;
+    saveGlobal(g);
+
+    if(BOT_TOKEN) {
+      const diff = typeof oldBal === 'number' ? amount - oldBal : null;
+      const diffStr = diff !== null ? (diff >= 0 ? ` (+${diff.toLocaleString('ru')})` : ` (${diff.toLocaleString('ru')})`) : '';
+      const msg = `⚙️ <b>Баланс изменён администратором</b>\n\n` +
+        `👛 Новый баланс: <b>₮${amount.toLocaleString('ru')}</b>${diffStr}\n\n` +
+        `<i>NFT Cases</i>`;
+      notified = await sendTelegramMessage(targetId, msg);
+    }
+    renderAdminUsers();
+    showToast(`✅ Баланс ${targetName}: ₮${amount}` + (notified ? ' · уведомлен' : !BOT_TOKEN ? ' · токен не настроен' : ' · не удалось уведомить'), notified ? 'var(--green)' : 'var(--gold)');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⚙️ Установить и уведомить';
+
+  clearSetBalSelection();
+  document.getElementById('adminSetId').value = '';
+  document.getElementById('adminSetAmount').value = '';
 }
 
 // Проверяем команды от админа при загрузке
@@ -743,6 +1073,7 @@ checkAdminCommands();
 renderCases();
 renderBalance();
 syncUserToGlobal();
+updateTokenStatus();
 </script>
 </body>
 </html>
