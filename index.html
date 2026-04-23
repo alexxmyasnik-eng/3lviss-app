@@ -472,29 +472,57 @@ const RARITY_NAMES = {
 };
 
 // ============================================================
+// STORAGE — persist to localStorage
+// ============================================================
+const SAVE_KEY = 'nftcases_v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      balance: STATE._balance,
+      inventory: STATE.inventory,
+      stats: STATE.stats,
+      txHistory: STATE.txHistory,
+    }));
+  } catch(e) {}
+}
+
+// ============================================================
 // STATE — precise integer balance to avoid float bugs
 // ============================================================
+const _saved = loadState();
+
 const STATE = {
-  _balance: 0,           // stored as integer (coins)
-  inventory: [],         // { ...item, uuid }
-  stats: { opened: 0, sold: 0, earned: 0 },
-  txHistory: [],
+  _balance: _saved ? Math.round(_saved.balance) : 0,
+  inventory: _saved ? (_saved.inventory || []) : [],
+  stats: _saved ? (_saved.stats || { opened: 0, sold: 0, earned: 0 }) : { opened: 0, sold: 0, earned: 0 },
+  txHistory: _saved ? (_saved.txHistory || []) : [],
 
   get balance() { return this._balance; },
   set balance(v) {
-    // always store as rounded integer
     this._balance = Math.round(v);
     renderBalance();
+    saveState();
   },
 
   addBalance(amount) {
     this._balance = Math.round(this._balance + Math.round(amount));
     renderBalance();
+    saveState();
   },
   subBalance(amount) {
     this._balance = Math.round(this._balance - Math.round(amount));
     if (this._balance < 0) this._balance = 0;
     renderBalance();
+    saveState();
   }
 };
 
@@ -659,6 +687,7 @@ function spinRoulette() {
   // deduct cost immediately
   STATE.subBalance(currentCase.price);
   STATE.stats.opened++;
+  saveState();
 
   // pick winning item
   wonItem = weightedRandom(currentCase.items);
@@ -729,6 +758,7 @@ document.getElementById('resultSellBtn').onclick = () => {
   STATE.addBalance(wonItem.value);
   STATE.stats.sold++;
   STATE.stats.earned = Math.round(STATE.stats.earned + wonItem.value);
+  saveState();
   showToast('✅ Продано за ₮' + wonItem.value, 'var(--green)');
   wonItem = null;
   document.getElementById('resultBox').classList.remove('show');
@@ -737,6 +767,7 @@ document.getElementById('resultSellBtn').onclick = () => {
 document.getElementById('resultKeepBtn').onclick = () => {
   if (!wonItem) return;
   STATE.inventory.push({ ...wonItem, uuid: Date.now() + Math.random() });
+  saveState();
   showToast('📦 Добавлено в инвентарь!');
   wonItem = null;
   document.getElementById('resultBox').classList.remove('show');
@@ -768,6 +799,7 @@ function renderTopup() {
 function doTopup(amount) {
   STATE.addBalance(amount);
   STATE.txHistory.push({ amount, label: 'Пополнение', time: Date.now() });
+  saveState();
   showToast('💰 +₮' + amount + ' зачислено', 'var(--green)');
   renderTopup();
   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
@@ -810,6 +842,7 @@ function sellInvItem(uuid) {
   STATE.addBalance(item.value);
   STATE.stats.sold++;
   STATE.stats.earned = Math.round(STATE.stats.earned + item.value);
+  saveState();
   showToast('✅ Продано за ₮' + item.value, 'var(--green)');
   renderInventory();
 }
