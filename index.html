@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NFT Cases v4.4</title>
+<title>NFT Cases v5.0</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
@@ -65,9 +65,12 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .btn-main:disabled{opacity:0.5;cursor:not-allowed}
 .btn-fast{width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:transform 0.1s}
 .btn-fast:disabled{opacity:0.5;cursor:not-allowed}
+/* drops scrollable */
+.drops-scroll{max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.drops-scroll::-webkit-scrollbar{width:3px}
+.drops-scroll::-webkit-scrollbar-thumb{background:rgba(192,132,252,0.3);border-radius:4px}
 /* STEP1 roulettes */
 .rl-wrap{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
-/* Each slot has FIXED total height = roulette(90px) + result-bar(44px) */
 .rl-slot{background:var(--bg3);border-radius:10px;overflow:hidden}
 .rl-cont{width:100%;height:90px;position:relative;overflow:hidden;border-top:2px solid rgba(192,132,252,0.3);border-bottom:2px solid rgba(192,132,252,0.3)}
 .rl-ptr{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--gold);z-index:10;pointer-events:none}
@@ -78,7 +81,6 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .rl-item-em{font-size:34px}
 .rl-item-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
 .ri-common{background:var(--gray)}.ri-uncommon{background:var(--blue)}.ri-rare{background:var(--accent2)}.ri-epic{background:var(--accent)}.ri-legendary{background:var(--gold)}
-/* Result bar — always 44px height, hidden until result appears */
 .rl-result{height:44px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 10px;opacity:0;pointer-events:none;transition:opacity 0.3s}
 .rl-result.show{opacity:1;pointer-events:auto}
 .rr-em{font-size:22px;flex-shrink:0}
@@ -215,11 +217,14 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .b-common{border-color:rgba(107,114,128,0.6)!important}.b-uncommon{border-color:rgba(59,130,246,0.6)!important}
 .b-rare{border-color:rgba(129,140,248,0.6)!important}.b-epic{border-color:rgba(192,132,252,0.6)!important}.b-legendary{border-color:rgba(245,158,11,0.6)!important}
 .rc{color:var(--gray)}.run{color:var(--blue)}.rr{color:var(--accent2)}.rep{color:var(--accent)}.rl{color:var(--gold)}
+/* sync indicator */
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--gray);display:inline-block;margin-left:6px;transition:background 0.3s;vertical-align:middle}
+.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="logo">NFTCASES</div>
+  <div class="logo">NFTCASES<span class="sync-dot" id="syncDot" title="Синхронизация данных"></span></div>
   <div class="balance-badge"><div class="coin">₮</div><div class="bal-amt" id="balEl">0</div></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -270,7 +275,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="sec-title">О приложении</div>
     <div style="background:var(--bg2);border-radius:14px;border:1px solid var(--border);padding:16px;font-size:13px;color:var(--text2);line-height:1.7">
       NFT Cases — Telegram Mini App.<br>Открывай кейсы, собирай NFT и выводи предметы.<br><br>
-      <span style="color:var(--accent)">Версия 4.4</span>
+      <span style="color:var(--accent)">Версия 5.0</span>
     </div>
   </div>
   <div class="psec" id="psec-ref">
@@ -317,13 +322,14 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div><div class="sel-nm" id="selNm">—</div><div style="font-size:11px;color:var(--text2)" id="selId">—</div></div>
       <button class="sel-x" onclick="clearSel()">✕</button>
     </div>
-    <input class="ai" id="topId" placeholder="Telegram ID игрока" type="text" oninput="clearSel()">
+    <!-- ID или @username -->
+    <input class="ai" id="topId" placeholder="Telegram ID или @username" type="text" oninput="onTopIdInput()">
     <input class="ai" id="topAmt" placeholder="Сумма (монеты)" type="number" min="1">
     <button class="ab" id="topBtn" onclick="doTopup()">💰 Пополнить и уведомить</button>
   </div>
   <div class="admin-card">
     <div class="act">⚙️ Установить баланс</div>
-    <input class="ai" id="setId" placeholder="Telegram ID игрока" type="text">
+    <input class="ai" id="setId" placeholder="Telegram ID или @username" type="text">
     <input class="ai" id="setAmt" placeholder="Новый баланс" type="number" min="0">
     <button class="ab" id="setBtn" onclick="doSetBal()">⚙️ Установить и уведомить</button>
   </div>
@@ -335,7 +341,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
   <div class="admin-card">
     <div class="act">👥 Список игроков <span id="plCount" style="font-size:12px;color:var(--text2);font-weight:400"></span></div>
-    <input class="a-search" id="plSrch" placeholder="Поиск по имени или ID..." oninput="filterPlayers()">
+    <input class="a-search" id="plSrch" placeholder="Поиск по имени, ID или @username..." oninput="filterPlayers()">
     <div class="a-users" id="plList"></div>
     <div class="pgn" id="plPgn"></div>
   </div>
@@ -367,7 +373,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
       <div style="padding:0 14px 14px">
         <div class="sec-title" style="margin-top:4px">Возможные дропы</div>
-        <div id="drops0"></div>
+        <div class="drops-scroll" id="drops0"></div>
       </div>
     </div>
     <!-- STEP 1 -->
@@ -379,7 +385,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
       <div style="padding:0 12px 12px">
         <div class="sec-title" style="margin-top:8px">Возможные дропы</div>
-        <div id="drops1"></div>
+        <div class="drops-scroll" id="drops1"></div>
       </div>
     </div>
     <!-- STEP 2 -->
@@ -451,15 +457,30 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <script>
 // ===== CONFIG =====
-const ADMIN_ID=780434845,REF_REWARD=50,REF_MIN=200;
+const ADMIN_ID=780434845, REF_REWARD=50, REF_MIN=200;
+
+// ===== CASES =====
 const CASES=[
+  {
+    id:'star',nm:'Звёздный',em:'⭐',price:222,gc:'rgba(252,211,77,0.2)',hot:true,
+    items:[
+      // sorted by value desc (no chance shown)
+      {nm:'500 Звёзд',em:'🌟',r:'legendary',v:839,ch:0.3},
+      {nm:'300 Звёзд',em:'💫',r:'epic',v:525,ch:0.7},
+      {nm:'200 Звёзд',em:'✨',r:'rare',v:343,ch:4},
+      {nm:'150 Звёзд',em:'⭐',r:'uncommon',v:275,ch:12},
+      {nm:'125 Звёзд',em:'🌠',r:'uncommon',v:244,ch:18},
+      {nm:'100 Звёзд',em:'💥',r:'common',v:213,ch:30},
+      {nm:'75 Звёзд',em:'🔆',r:'common',v:178,ch:35},
+    ]
+  },
   {id:'s',nm:'Стартовый',em:'📦',price:50,gc:'rgba(99,179,237,0.15)',hot:false,items:[
     {nm:'Пиксельный Меч',em:'⚔️',r:'common',v:20,ch:40},
     {nm:'Огненный Щит',em:'🛡️',r:'uncommon',v:60,ch:30},
     {nm:'Зелёный Дракон',em:'🐉',r:'rare',v:120,ch:15},
     {nm:'Кристальный Посох',em:'🔮',r:'epic',v:280,ch:10},
     {nm:'Золотой Феникс',em:'🦅',r:'legendary',v:600,ch:5}]},
-  {id:'c',nm:'Киберпанк',em:'🤖',price:150,gc:'rgba(192,132,252,0.2)',hot:true,items:[
+  {id:'c',nm:'Киберпанк',em:'🤖',price:150,gc:'rgba(192,132,252,0.2)',hot:false,items:[
     {nm:'Нано-Чип',em:'💾',r:'common',v:50,ch:35},
     {nm:'Плазма-Клинок',em:'⚡',r:'uncommon',v:160,ch:28},
     {nm:'Кибер-Маска',em:'🥽',r:'rare',v:350,ch:20},
@@ -498,25 +519,55 @@ async function tgSend(cid,txt,kb){
   try{const b={chat_id:cid,text:txt,parse_mode:'HTML'};if(kb)b.reply_markup=kb;const r=await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const d=await r.json();return d.ok;}catch(e){return false;}
 }
 
-// ===== STORAGE =====
+// ===== CROSS-DEVICE SYNC via localStorage + BroadcastChannel =====
+// Key design: admin writes to GLOBAL key, players poll it on focus/visibility
 const GK='nfc_global';
-function loadG(){try{const r=localStorage.getItem(GK);return r?JSON.parse(r):{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}catch(e){return{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}}
-function saveG(g){try{localStorage.setItem(GK,JSON.stringify(g));}catch(e){}}
+let _bc=null;
+try{_bc=new BroadcastChannel('nfc_sync');}catch(e){}
+
+function loadG(){
+  try{const r=localStorage.getItem(GK);return r?JSON.parse(r):{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
+  catch(e){return{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
+}
+function saveG(g){
+  try{localStorage.setItem(GK,JSON.stringify(g));if(_bc)_bc.postMessage({t:'sync',ts:Date.now()});}catch(e){}
+}
+
+// Per-user key
 let SK='nfc_u_guest';
 function loadU(){try{const r=localStorage.getItem(SK);return r?JSON.parse(r):null;}catch(e){return null;}}
 function saveU(){
-  try{localStorage.setItem(SK,JSON.stringify({bal:U.bal,inv:U.inv,stats:U.stats,tx:U.tx,ref:U.ref}));syncG();}catch(e){}
+  try{
+    localStorage.setItem(SK,JSON.stringify({bal:U.bal,inv:U.inv,stats:U.stats,tx:U.tx,ref:U.ref}));
+    syncG();
+    setSyncDot('ok');
+  }catch(e){setSyncDot('err');}
 }
 function syncG(){
   if(!uid||uid==='—')return;
   const g=loadG();if(!g.users)g.users={};
-  g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};saveG(g);
+  g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
+  saveG(g);
+}
+function setSyncDot(state){
+  const d=document.getElementById('syncDot');if(!d)return;
+  d.className='sync-dot '+(state==='ok'?'ok':'err');
+  clearTimeout(d._t);d._t=setTimeout(()=>d.className='sync-dot',2000);
 }
 
 // ===== TELEGRAM =====
 const tg=window.Telegram?.WebApp;
 let uname='Игрок',uid='—',uun='',isAdmin=false;
-if(tg){tg.ready();tg.expand();if(tg.initDataUnsafe?.user){const u=tg.initDataUnsafe.user;uname=u.first_name||'Игрок';uid=String(u.id);uun=u.username?('@'+u.username):'';isAdmin=(u.id===ADMIN_ID);}}
+if(tg){
+  tg.ready();tg.expand();
+  if(tg.initDataUnsafe?.user){
+    const u=tg.initDataUnsafe.user;
+    uname=u.first_name||'Игрок';
+    uid=String(u.id);
+    uun=u.username?('@'+u.username):'';
+    isAdmin=(u.id===ADMIN_ID);
+  }
+}
 if(uid&&uid!=='—')SK='nfc_u_'+uid;
 
 // ===== STATE =====
@@ -533,6 +584,36 @@ const U={
 };
 if(isAdmin)document.getElementById('adminBtn').style.display='flex';
 
+// ===== POLLING (cross-device sync) =====
+// When app comes into focus, re-apply any pending commands for this user
+function pollSync(){
+  if(!uid||uid==='—')return;
+  applyCmd();
+  // Also reload own data from localStorage (handles multi-tab / other device writes)
+  const fresh=loadU();
+  if(fresh){
+    // Only apply if saved version is newer (higher bal or more items) to avoid overwriting
+    // Use a simple heuristic: trust localStorage for balance if commands pending
+    const g=loadG();
+    const hasMine=(g.cmds||[]).some(c=>c.tid===uid);
+    if(!hasMine){
+      // No pending commands, safe to reload
+      U.bal=Math.round(fresh.bal||0);
+      U.inv=fresh.inv||[];
+      U.stats=fresh.stats||{op:0,sl:0,er:0,wd:0,wv:0};
+      U.tx=fresh.tx||[];
+      U.ref=fresh.ref||{by:null,inv:[],er:0};
+      renderBal();
+    }
+  }
+}
+
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSync();});
+window.addEventListener('focus',pollSync);
+if(_bc)_bc.onmessage=()=>pollSync();
+// Poll every 15s while app is open
+setInterval(()=>{if(!document.hidden)pollSync();},15000);
+
 // ===== HELPERS =====
 function renderBal(){document.getElementById('balEl').textContent=U.bal.toLocaleString('ru');}
 function toast(msg,color){const t=document.getElementById('toast');t.textContent=msg;t.style.color=color||'var(--text)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -541,9 +622,9 @@ function goPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');
-  if(name==='inventory')renderInv();
+  if(name==='inventory'){pollSync();renderInv();}
   if(name==='profile'){renderProf();renderRef();}
-  if(name==='admin')renderAdmin();
+  if(name==='admin'){pollSync();renderAdmin();}
 }
 function pTab(t,btn){
   document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
@@ -552,7 +633,11 @@ function pTab(t,btn){
   if(t==='ref')renderRef();
 }
 function showStep(n){[0,1,2].forEach(i=>document.getElementById('s'+i).classList.toggle('on',i===n));}
-function buildDropsHtml(c){return c.items.map(i=>`<div class="drops-row"><div style="font-size:22px;flex-shrink:0">${i.em}</div><div style="flex:1;margin-left:10px"><div style="font-size:13px;font-weight:600">${i.nm}</div><div style="font-size:11px;color:var(--text2);margin-top:1px"><span class="rdot" style="background:${RC[i.r]}"></span>${RN[i.r]}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:600" class="r${i.r==='uncommon'?'un':i.r==='legendary'?'l':i.r[0]}">${i.ch}%</div><div style="font-size:11px;color:var(--gold2)">₮${i.v}</div></div></div>`).join('');}
+
+// Drops html — no chance shown, sorted by value desc (items already sorted)
+function buildDropsHtml(c){
+  return c.items.map(i=>`<div class="drops-row"><div style="font-size:22px;flex-shrink:0">${i.em}</div><div style="flex:1;margin-left:10px"><div style="font-size:13px;font-weight:600">${i.nm}</div><div style="font-size:11px;color:var(--text2);margin-top:1px"><span class="rdot" style="background:${RC[i.r]}"></span>${RN[i.r]}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:600;color:var(--gold2)">₮${i.v}</div></div></div>`).join('');
+}
 
 // ===== CASES =====
 function renderCases(){
@@ -608,15 +693,13 @@ function spin(fast){
   let done=0;spinTm=[];
   wonSlots.forEach((slot,i)=>{
     placeWinner(i,slot.item);
-    // Double rAF ensures element is in DOM and painted before we set transition
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       const tr=document.getElementById('tr_'+i);if(!tr)return;
       const cw=tr.parentElement.offsetWidth;
       const WIN=46,jitter=Math.round((Math.random()-0.5)*20);
       const fx=-(WIN*IW - cw/2 + IW/2 + jitter);
-      tr.style.transition='none';
-      tr.style.transform='translateX(0)';
-      tr.getBoundingClientRect(); // force reflow
+      tr.style.transition='none';tr.style.transform='translateX(0)';
+      tr.getBoundingClientRect();
       tr.style.transition='transform cubic-bezier(0.05,0.82,0.35,1) 4s';
       tr.style.transform=`translateX(${fx}px)`;
     }));
@@ -639,35 +722,10 @@ function buildSlots(){
     wrap.appendChild(div);
   }
 }
-function placeWinner(i,won){
-  const tr=document.getElementById('tr_'+i);if(!tr)return;
-  const cell=tr.children[46];if(!cell)return;
-  cell.querySelector('.rl-item-em').textContent=won.em;
-  cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;
-}
-function showSlotRes(i){
-  const s=wonSlots[i];if(!s)return;
-  const row=document.getElementById('rr_'+i);if(!row)return;
-  document.getElementById('rr_em_'+i).textContent=s.item.em;
-  document.getElementById('rr_nm_'+i).textContent=s.item.nm;
-  document.getElementById('rr_nm_'+i).className='rr-nm r'+({'uncommon':'un','legendary':'l'}[s.item.r]||s.item.r[0]);
-  document.getElementById('rr_vl_'+i).textContent=RN[s.item.r];
-  document.getElementById('rr_pr_'+i).textContent=s.item.v;
-  row.classList.add('show');
-}
-function showMBar(){
-  const tot=wonSlots.filter(s=>s&&!s.handled).reduce((a,s)=>a+s.item.v,0);
-  document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');
-  document.getElementById('mBar').classList.add('show');
-}
-function showS2(item){
-  document.getElementById('s2em').textContent=item.em;
-  document.getElementById('s2em').className='s2-em b-'+item.r;
-  document.getElementById('s2nm').textContent=item.nm;
-  document.getElementById('s2nm').className='s2-nm r'+({'uncommon':'un','legendary':'l'}[item.r]||item.r[0]);
-  document.getElementById('s2vl').textContent=RN[item.r]+' · ₮'+item.v;
-  showStep(2);haptic();
-}
+function placeWinner(i,won){const tr=document.getElementById('tr_'+i);if(!tr)return;const cell=tr.children[46];if(!cell)return;cell.querySelector('.rl-item-em').textContent=won.em;cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;}
+function showSlotRes(i){const s=wonSlots[i];if(!s)return;const row=document.getElementById('rr_'+i);if(!row)return;document.getElementById('rr_em_'+i).textContent=s.item.em;document.getElementById('rr_nm_'+i).textContent=s.item.nm;document.getElementById('rr_nm_'+i).className='rr-nm r'+({'uncommon':'un','legendary':'l'}[s.item.r]||s.item.r[0]);document.getElementById('rr_vl_'+i).textContent=RN[s.item.r];document.getElementById('rr_pr_'+i).textContent=s.item.v;row.classList.add('show');}
+function showMBar(){const tot=wonSlots.filter(s=>s&&!s.handled).reduce((a,s)=>a+s.item.v,0);document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');document.getElementById('mBar').classList.add('show');}
+function showS2(item){document.getElementById('s2em').textContent=item.em;document.getElementById('s2em').className='s2-em b-'+item.r;document.getElementById('s2nm').textContent=item.nm;document.getElementById('s2nm').className='s2-nm r'+({'uncommon':'un','legendary':'l'}[item.r]||item.r[0]);document.getElementById('s2vl').textContent=RN[item.r]+' · ₮'+item.v;showStep(2);haptic();}
 function haptic(){if(!tg?.HapticFeedback)return;const b=wonSlots.reduce((a,s)=>(!a||s.item.v>a.item.v)?s:a,null);if(!b)return;if(b.item.r==='legendary')tg.HapticFeedback.notificationOccurred('success');else if(b.item.r==='epic')tg.HapticFeedback.impactOccurred('heavy');else tg.HapticFeedback.impactOccurred('light');}
 function sellSlot(i){const s=wonSlots[i];if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);saveU();const row=document.getElementById('rr_'+i);if(row)row.classList.remove('show');toast('✅ Продано ₮'+s.item.v,'var(--green)');const rem=wonSlots.filter(x=>x&&!x.handled);if(rem.length===0)document.getElementById('mBar').classList.remove('show');else{const tot=rem.reduce((a,x)=>a+x.item.v,0);document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');}}
 function sellAll(){wonSlots.forEach((_,i)=>sellSlot(i));document.getElementById('mBar').classList.remove('show');}
@@ -712,7 +770,6 @@ function openWdModal(uuid){
   checkWdStatus();
   const it=U.inv.find(i=>String(i.uuid)===uuid);if(!it)return;
   if(it.wdOn){toast('⚠️ Заявка уже на рассмотрении','var(--gold)');return;}
-  // Double check global
   const g=loadG();const ex=(g.wdReqs||[]).find(r=>String(r.uuid)===uuid&&r.uid===uid&&r.st==='pending');
   if(ex){it.wdOn=true;it.wdRid=ex.id;saveU();renderInv();toast('⚠️ Заявка уже на рассмотрении','var(--gold)');return;}
   wdUuid=uuid;
@@ -771,10 +828,37 @@ function copyRef(){const link=document.getElementById('refLink').textContent;if(
 // ===== ADMIN =====
 let plCache=[],plPage=0,wdPage=0,selP=null;
 const PG=10;
+
+// Resolve ID or @username → player object
+function resolvePlayer(raw){
+  raw=(raw||'').trim();
+  if(!raw)return null;
+  const g=loadG();const users=g.users||{};
+  // Try direct ID
+  if(users[raw])return users[raw];
+  // Try @username (strip @)
+  const un=raw.replace(/^@/,'').toLowerCase();
+  return Object.values(users).find(u=>(u.un||'').toLowerCase()===un)||null;
+}
+
+function onTopIdInput(){
+  const raw=document.getElementById('topId').value.trim();
+  if(!raw){clearSel();return;}
+  // Try to auto-resolve
+  const p=resolvePlayer(raw);
+  if(p){
+    selP=p;
+    document.getElementById('selNm').textContent=p.nm+(p.un?' @'+p.un:'');
+    document.getElementById('selId').textContent='ID: '+p.id+' · ₮'+(p.bal||0).toLocaleString('ru');
+    document.getElementById('selBox').style.display='flex';
+  } else {
+    clearSel();
+  }
+}
 function clearSel(){selP=null;document.getElementById('selBox').style.display='none';}
 function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();}
 
-// WD LIST with pagination
+// WD LIST
 function renderWdList(){
   const g=loadG();
   const q=(document.getElementById('wdSrch')?.value||'').trim().toLowerCase();
@@ -799,7 +883,7 @@ function renderWdList(){
   pgn('wdPgn',wdPage,pages,'wd');
 }
 
-// PLAYERS with pagination
+// PLAYERS
 function renderPlayers(){
   const g=loadG();plCache=Object.values(g.users||{});
   document.getElementById('plCount').textContent='('+plCache.length+')';
@@ -816,8 +900,6 @@ function filterPlayers(){
   else el.innerHTML=sl.map(u=>`<div class="a-urow" onclick="selPlayer('${u.id}')"><div><div style="font-size:13px;font-weight:600">${u.nm}${u.un?' <span style="color:var(--accent2);font-size:11px">@'+u.un+'</span>':''}</div><div style="font-size:11px;color:var(--text2)">ID: ${u.id}</div></div><div class="a-ubal">₮${(u.bal||0).toLocaleString('ru')}</div></div>`).join('');
   pgn('plPgn',plPage,pages,'pl');
 }
-
-// Pagination — uses data attribute to avoid closure serialization issues
 function pgn(cid,page,pages,key){
   const el=document.getElementById(cid);if(!el)return;
   if(pages<=1){el.innerHTML='';return;}
@@ -829,11 +911,7 @@ function pgn(cid,page,pages,key){
   h+=`<span class="pg-info">${page+1}/${pages}</span>`;
   el.innerHTML=h;
 }
-function pgClick(btn){
-  const key=btn.dataset.pg,p=parseInt(btn.dataset.p);
-  if(key==='wd'){wdPage=p;renderWdList();}
-  else if(key==='pl'){plPage=p;filterPlayers();}
-}
+function pgClick(btn){const key=btn.dataset.pg,p=parseInt(btn.dataset.p);if(key==='wd'){wdPage=p;renderWdList();}else if(key==='pl'){plPage=p;filterPlayers();}}
 
 function selPlayer(id){
   const g=loadG();const u=(g.users||{})[id];if(!u)return;
@@ -866,14 +944,17 @@ function confirmRej(){
   toast('❌ Отклонено','var(--red)');closeRej();renderWdList();if(req.uid===uid)applyCmd();
 }
 
-// TOPUP / SETBAL
+// TOPUP / SETBAL — теперь поддерживает @username
 async function doTopup(){
   const btn=document.getElementById('topBtn');
   const rawId=(document.getElementById('topId').value||'').trim();
   const amt=parseInt(document.getElementById('topAmt').value);
   if(!rawId||!amt||amt<=0){toast('⚠️ Заполни поля','var(--gold)');return;}
-  const g=loadG();const pl=selP||(g.users||{})[rawId];const tid=pl?pl.id:rawId;
+  const pl=selP||resolvePlayer(rawId);
+  const tid=pl?pl.id:rawId;
+  if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден. Используй цифровой ID.','var(--red)');return;}
   btn.disabled=true;btn.innerHTML='<span class="spin2"></span>Отправляем...';
+  const g=loadG();
   if(tid===uid){U.add(amt);U.tx.push({amt,lbl:'Пополнение от администратора',ts:Date.now()});saveU();chkRef(g,tid,amt);saveG(g);}
   else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'top',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=Math.round((g.users[tid].bal||0)+amt);chkRef(g,tid,amt);saveG(g);if(BOT)await tgSend(tid,`💰 <b>Баланс пополнен!</b>\n\n➕ +₮${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();}
   btn.disabled=false;btn.innerHTML='💰 Пополнить и уведомить';
@@ -885,9 +966,12 @@ async function doSetBal(){
   const rawId=(document.getElementById('setId').value||'').trim();
   const amt=parseInt(document.getElementById('setAmt').value);
   if(!rawId||isNaN(amt)||amt<0){toast('⚠️ Заполни поля','var(--gold)');return;}
+  const pl=resolvePlayer(rawId);
+  const tid=pl?pl.id:rawId;
+  if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден. Используй цифровой ID.','var(--red)');return;}
   const g=loadG();btn.disabled=true;btn.innerHTML='<span class="spin2"></span>Применяем...';
-  if(rawId===uid){U.setBal(amt);saveU();toast('⚙️ Баланс: ₮'+amt,'var(--accent)');}
-  else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'setbal',tid:rawId,amt,ts:Date.now()});if(g.users&&g.users[rawId])g.users[rawId].bal=amt;saveG(g);if(BOT)await tgSend(rawId,`⚙️ <b>Баланс изменён</b>\n\n₮${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();toast('✅ Установлено','var(--green)');}
+  if(tid===uid){U.setBal(amt);saveU();toast('⚙️ Баланс: ₮'+amt,'var(--accent)');}
+  else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'setbal',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=amt;saveG(g);if(BOT)await tgSend(tid,`⚙️ <b>Баланс изменён</b>\n\n₮${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();toast('✅ Установлено','var(--green)');}
   btn.disabled=false;btn.innerHTML='⚙️ Установить и уведомить';
   document.getElementById('setId').value='';document.getElementById('setAmt').value='';
 }
@@ -906,12 +990,14 @@ function chkRef(g,tid,amt){
   }
 }
 
-// APPLY COMMANDS
+// APPLY COMMANDS — ключевое место для cross-device синхронизации
 function applyCmd(){
   if(!uid||uid==='—')return;
   const g=loadG();if(!g.cmds||g.cmds.length===0)return;
   const mine=g.cmds.filter(c=>c.tid===uid);if(mine.length===0)return;
+  let changed=false;
   mine.forEach(c=>{
+    changed=true;
     if(c.t==='top'){U.bal=Math.round(U.bal+Math.round(c.amt));U.tx.push({amt:c.amt,lbl:'Пополнение от администратора',ts:c.ts});}
     else if(c.t==='setbal'){U.bal=Math.round(c.amt);}
     else if(c.t==='rmWd'){
@@ -919,9 +1005,17 @@ function applyCmd(){
       if(idx!==-1){const it=U.inv[idx];U.inv.splice(idx,1);if(!U.stats.wd)U.stats.wd=0;if(!U.stats.wv)U.stats.wv=0;U.stats.wd++;U.stats.wv=Math.round(U.stats.wv+it.v);if(!U.stats.bw||it.v>U.stats.bw.v)U.stats.bw={nm:it.nm,em:it.em,v:it.v};}
     }
     else if(c.t==='rejWd'){const it=U.inv.find(i=>String(i.uuid)===String(c.uuid));if(it){it.wdOn=false;it.wdRid=null;}}
-    else if(c.t==='ref'){U.bal=Math.round(U.bal+Math.round(c.amt));U.tx.push({amt:c.amt,lbl:'Реферальный бонус',ts:c.ts});if(!U.ref.inv)U.ref.inv=[];if(!U.ref.inv.find(x=>x.id===c.fid)){const g2=loadG();const fnm=g2.users&&g2.users[c.fid]?g2.users[c.fid].nm:'Игрок';U.ref.inv.push({id:c.fid,nm:fnm,ok:true});}U.ref.er=(U.ref.er||0)+c.amt;}
+    else if(c.t==='ref'){
+      U.bal=Math.round(U.bal+Math.round(c.amt));
+      U.tx.push({amt:c.amt,lbl:'Реферальный бонус',ts:c.ts});
+      if(!U.ref.inv)U.ref.inv=[];
+      if(!U.ref.inv.find(x=>x.id===c.fid)){const g2=loadG();const fnm=g2.users&&g2.users[c.fid]?g2.users[c.fid].nm:'Игрок';U.ref.inv.push({id:c.fid,nm:fnm,ok:true});}
+      U.ref.er=(U.ref.er||0)+c.amt;
+    }
   });
-  g.cmds=g.cmds.filter(c=>c.tid!==uid);saveG(g);saveU();renderBal();
+  // Remove processed commands
+  g.cmds=g.cmds.filter(c=>c.tid!==uid);saveG(g);
+  if(changed){saveU();renderBal();setSyncDot('ok');}
 }
 
 function parseRef(){
