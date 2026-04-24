@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NFT Cases v4.2</title>
+<title>NFT Cases</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
@@ -48,9 +48,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .case-badge{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px}
 
 /* MODAL — scrollable */
-.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.9);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 24px;display:none}
-.modal-overlay:not(.hidden){display:block;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.modal-overlay.hidden{display:none!important}
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.9);backdrop-filter:blur(4px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 24px}
+.modal-overlay.hidden{display:none}
 .modal-box{background:var(--bg2);border-radius:20px;border:1px solid var(--border);width:100%;max-width:480px;margin:0 auto}
 .modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:10;border-radius:20px 20px 0 0}
 .modal-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
@@ -285,7 +284,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="section-title">О приложении</div>
     <div style="background:var(--bg2);border-radius:14px;border:1px solid var(--border);padding:16px;font-size:13px;color:var(--text2);line-height:1.7">
       NFT Cases — Telegram Mini App.<br>Открывай кейсы, собирай NFT и выводи предметы.<br><br>
-      <span style="color:var(--accent)">Версия 4.2</span>
+      <span style="color:var(--accent)">Версия 4.0</span>
     </div>
   </div>
   <div class="profile-section" id="ptab-ref">
@@ -397,10 +396,6 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="multi-action-bar" id="multiBar">
         <button class="btn-sell-all" id="btnSellAll" onclick="sellAll()">Продать все</button>
         <button class="btn-again-all" onclick="goBack()">↩ Ещё раз</button>
-      </div>
-      <div style="padding:0 14px 14px">
-        <div class="section-title" style="margin-top:8px">Возможные дропы</div>
-        <div id="dropsTable1"></div>
       </div>
     </div>
 
@@ -696,9 +691,7 @@ function flushWonItems(){
 }
 
 function buildDropsTable(c){
-  const html=c.items.map(i=>`<div class="drops-row"><div style="font-size:24px;flex-shrink:0">${i.emoji}</div><div style="flex:1;margin-left:10px"><div style="font-size:13px;font-weight:600">${i.name}</div><div style="font-size:11px;color:var(--text2);margin-top:2px"><span class="rarity-dot" style="background:${RC[i.rarity]}"></span>${RN[i.rarity]}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:600" class="${'r'+i.rarity[0]}">${i.chance}%</div><div style="font-size:11px;color:var(--gold2)">₮${i.value}</div></div></div>`).join('');
-  document.getElementById('dropsTable').innerHTML=html;
-  document.getElementById('dropsTable1').innerHTML=html;
+  document.getElementById('dropsTable').innerHTML=c.items.map(i=>`<div class="drops-row"><div style="font-size:24px;flex-shrink:0">${i.emoji}</div><div style="flex:1;margin-left:10px"><div style="font-size:13px;font-weight:600">${i.name}</div><div style="font-size:11px;color:var(--text2);margin-top:2px"><span class="rarity-dot" style="background:${RC[i.rarity]}"></span>${RN[i.rarity]}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:600" class="${'r'+i.rarity[0]}">${i.chance}%</div><div style="font-size:11px;color:var(--gold2)">₮${i.value}</div></div></div>`).join('');
 }
 
 // ==================== SPIN ====================
@@ -739,25 +732,20 @@ function startSpin(fast){
   spinTimers=[];
   wonSlots.forEach((slot,i)=>{
     placeWinnerInTrack(i,slot.item);
-    // Use double requestAnimationFrame to ensure DOM is painted before transition starts
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        const track=document.getElementById('track_'+i);
-        if(!track)return;
-        const cW=track.parentElement.offsetWidth;
-        const WIN_POS=46;
-        const jitter=Math.round((Math.random()-0.5)*24);
-        const finalX=-(WIN_POS*ITEM_W - cW/2 + ITEM_W/2 + jitter);
-        // reset position without transition
-        track.style.transition='none';
-        track.style.transform='translateX(0)';
-        // force reflow
-        track.getBoundingClientRect();
-        // apply transition and move
-        track.style.transition='transform cubic-bezier(0.05,0.8,0.35,1) 4s';
-        track.style.transform=`translateX(${finalX}px)`;
-      });
-    });
+    // animate after reflow
+    setTimeout(()=>{
+      const track=document.getElementById('track_'+i);
+      if(!track)return;
+      const cW=track.parentElement.offsetWidth;
+      const WIN_POS=46;
+      const jitter=Math.round((Math.random()-0.5)*24);
+      const finalX=-(WIN_POS*ITEM_W-cW/2+ITEM_W/2+jitter);
+      track.style.transition='none';
+      track.style.transform='translateX(0)';
+      void track.offsetWidth;
+      track.classList.add('spin-slow');
+      track.style.transform=`translateX(${finalX}px)`;
+    },50);
 
     const t=setTimeout(()=>{
       done++;
@@ -772,22 +760,16 @@ function startSpin(fast){
           haptic(wonSlots);
         }
       }
-    },4300);
+    },4100);
     spinTimers.push(t);
   });
 }
 
 function buildRoulettes(instant){
-  const wrap=document.getElementById('roulettesWrap');
-  wrap.innerHTML='';
+  const wrap=document.getElementById('roulettesWrap');wrap.innerHTML='';
   for(let i=0;i<openCount;i++){
     const items=[];for(let j=0;j<60;j++)items.push(wrand(cCase.items));
-    const trackHTML=items.map(it=>`<div class="roulette-item"><div class="roulette-item-emoji">${it.emoji}</div><div class="roulette-item-rarity ri-${it.rarity}"></div></div>`).join('');
-    const slotResult=openCount>1?`<div class="slot-result-row" id="srr_${i}"><div class="srr-emoji" id="srr_em_${i}"></div><div class="srr-info"><div class="srr-name" id="srr_nm_${i}"></div><div class="srr-val" id="srr_vl_${i}"></div></div><button class="srr-sell-btn" onclick="sellSlot(${i})">Продать ₮<span id="srr_pr_${i}"></span></button></div>`:'';
-    const div=document.createElement('div');
-    div.className='roulette-single';
-    div.innerHTML=`<div class="roulette-container"><div class="roulette-pointer"></div><div class="roulette-track" id="track_${i}">${trackHTML}</div></div>${slotResult}`;
-    wrap.appendChild(div);
+    wrap.innerHTML+=`<div class="roulette-single"><div class="roulette-container"><div class="roulette-pointer"></div><div class="roulette-track" id="track_${i}">${items.map(it=>`<div class="roulette-item"><div class="roulette-item-emoji">${it.emoji}</div><div class="roulette-item-rarity ri-${it.rarity}"></div></div>`).join('')}</div></div>${openCount>1?`<div class="slot-result-row" id="srr_${i}"><div class="srr-emoji" id="srr_em_${i}"></div><div class="srr-info"><div class="srr-name" id="srr_nm_${i}"></div><div class="srr-val" id="srr_vl_${i}"></div></div><button class="srr-sell-btn" onclick="sellSlot(${i})">Продать ₮<span id="srr_pr_${i}"></span></button></div>`:''}</div>`;
   }
 }
 
@@ -934,12 +916,10 @@ async function submitWithdraw(){
   if(!wdUuid)return;
   const contact=document.getElementById('wdContact').value.trim();
   if(!contact){showToast('⚠️ Укажи контакт!','var(--gold)');return;}
-  const item=S.inventory.find(i=>i.uuid===wdUuid);
-  if(!item){showToast('⚠️ Предмет не найден','var(--red)');return;}
-  if(item.wdPending){showToast('⚠️ Заявка уже отправлена!','var(--gold)');closeWd();return;}
-  // Use short string ID — avoids Number precision issues in onclick attributes
-  const reqId='r'+Date.now().toString(36);
-  const req={id:reqId,uuid:item.uuid,userId,userName,
+  const idx=S.inventory.findIndex(i=>i.uuid===wdUuid);if(idx===-1)return;
+  const item=S.inventory[idx];
+  const reqId=Date.now();
+  const req={id:reqId,uuid:wdUuid,userId,userName,
     itemName:item.name,itemEmoji:item.emoji,itemValue:item.value,itemRarity:item.rarity,
     contact,status:'pending',time:Date.now()};
   const g=loadGlobal();
@@ -1023,7 +1003,7 @@ function renderWdList(){
         <span class="wr-status ws-${req.status}">${req.status==='pending'?'Ожидает':req.status==='approved'?'Выдано':'Отклонено'}</span>
       </div>
       <div class="wr-contact">📬 ${req.contact}</div>
-      ${req.status==='pending'?`<div class="wr-btns"><button class="wr-btn wr-approve" onclick="adminApprove('${req.id}')">✅ Я выдал</button><button class="wr-btn wr-reject" onclick="adminReject('${req.id}')">❌ Отклонить</button></div>`:''}
+      ${req.status==='pending'?`<div class="wr-btns"><button class="wr-btn wr-approve" onclick="adminApprove(${req.id})">✅ Я выдал</button><button class="wr-btn wr-reject" onclick="adminReject(${req.id})">❌ Отклонить</button></div>`:''}
     </div>`).join('');
 }
 
@@ -1153,9 +1133,7 @@ function checkRefReward(g,targetId,amount){
       const invName=g.users&&g.users[targetId]?g.users[targetId].name:'Игрок';
       g.refInvited[refBy].push({id:targetId,name:invName,rewarded:true});
     }
-    if(BOT_TOKEN){
-        sendTG(refBy,`🎉 <b>Реферальный бонус +₮${REF_REWARD}!</b>\n\nТвой друг ${invName} выполнил условие — пополнил баланс на ₮${REF_MIN_TOPUP}+.\n\n💰 Тебе начислено <b>+₮${REF_REWARD}</b>!\n\n<i>NFT Cases</i>`);
-      }
+    if(BOT_TOKEN)sendTG(refBy,`🎉 <b>Реферальный бонус +₮${REF_REWARD}!</b>\n\nТвой друг пополнил баланс.\n\n<i>NFT Cases</i>`);
   }
 }
 
@@ -1214,18 +1192,6 @@ function parseRefParam(){
         if(!g.refRelations)g.refRelations={};
         if(!g.refRelations[userId]){
           g.refRelations[userId]={invitedBy:refId,rewarded:false,totalTopup:0};
-          // Add invited to referrer's list as pending
-          if(!g.refInvited)g.refInvited={};
-          if(!g.refInvited[refId])g.refInvited[refId]=[];
-          if(!g.refInvited[refId].find(x=>x.id===userId)){
-            g.refInvited[refId].push({id:userId,name:userName,rewarded:false});
-          }
-          saveGlobal(g);
-          // Notify referrer that their friend joined
-          if(BOT_TOKEN){
-            sendTG(refId,`👋 <b>Новый реферал!</b>\n\n${userName}${userUsername?' ('+userUsername+')':''} перешёл по твоей ссылке.\n\nКак только ему пополнят баланс на ₮${REF_MIN_TOPUP}+, ты получишь <b>+₮${REF_REWARD}</b>! 🎁`);
-          }
-        } else {
           saveGlobal(g);
         }
         saveUserState();
