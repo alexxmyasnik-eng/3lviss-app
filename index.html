@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NFT Cases v5.0</title>
+<title>NFT Cases v5.1</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
@@ -18,6 +18,10 @@
 body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:80px}
 .header{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:2px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sync-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--gray);transition:background 0.3s}
+.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}.sync-dot.loading{background:var(--gold);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .balance-badge{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 14px}
 .coin{width:18px;height:18px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#000;flex-shrink:0}
 .bal-amt{color:var(--gold2);font-family:'Rajdhani',sans-serif;font-size:17px;min-width:60px;text-align:right}
@@ -26,18 +30,25 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .nav-btn.active{color:var(--accent)}
 .nav-btn svg{width:22px;height:22px}
 .nav-btn span{font-size:10px;font-weight:600}
-.page{display:none;padding:16px}
-.page.active{display:block}
+.page{display:none;padding:16px}.page.active{display:block}
 .sec-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+/* LOADING SCREEN */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:16px}
+.loading-screen.hidden{display:none}
+.loading-logo{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.loading-spin{width:36px;height:36px;border:3px solid rgba(192,132,252,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-size:13px;color:var(--text2)}
 /* CASES */
 .cases-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .case-card{background:var(--bg2);border-radius:16px;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:transform 0.15s;position:relative}
 .case-card:active{transform:scale(0.97)}
 .case-card.hot{border-color:rgba(192,132,252,0.4)}
-.case-img{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.case-img{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--bg3)}
+.case-cover{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
 .case-glow{position:absolute;inset:0;background:radial-gradient(circle at center,var(--gc,rgba(192,132,252,0.15)) 0%,transparent 70%)}
-.case-em{font-size:64px;filter:drop-shadow(0 0 20px rgba(192,132,252,0.5));position:relative}
-.case-badge{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px}
+.case-em{font-size:64px;filter:drop-shadow(0 0 20px rgba(192,132,252,0.5));position:relative;z-index:1}
+.case-badge{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;z-index:2}
 .case-info{padding:10px 12px 12px}
 .case-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700}
 .case-price-row{display:flex;align-items:center;gap:4px;margin-top:6px}
@@ -49,11 +60,12 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:20px 20px 0 0}
 .modal-ttl{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
 .modal-x{background:none;border:none;color:var(--text2);cursor:pointer;font-size:22px;line-height:1;padding:4px 8px}
-/* STEPS */
 .step{display:none}.step.on{display:block}
 /* STEP0 */
 .open-screen{padding:20px 16px}
-.case-big-em{font-size:80px;text-align:center;margin-bottom:12px;filter:drop-shadow(0 0 24px rgba(192,132,252,0.5))}
+.case-big-wrap{position:relative;width:120px;height:120px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+.case-big-img{width:100%;height:100%;object-fit:contain;border-radius:16px;display:none}
+.case-big-em{font-size:80px;filter:drop-shadow(0 0 24px rgba(192,132,252,0.5))}
 .case-big-nm{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;text-align:center;margin-bottom:4px}
 .case-big-pr{text-align:center;color:var(--text2);font-size:14px;margin-bottom:20px}
 .cnt-tabs{display:flex;gap:6px;margin-bottom:16px}
@@ -61,15 +73,17 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .cnt-tab.on{background:rgba(192,132,252,0.15);border-color:var(--accent);color:var(--accent)}
 .open-btns{display:flex;flex-direction:column;gap:8px}
 .btn-main{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;cursor:pointer;transition:transform 0.1s}
-.btn-main:active{transform:scale(0.98)}
-.btn-main:disabled{opacity:0.5;cursor:not-allowed}
-.btn-fast{width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:transform 0.1s}
+.btn-main:active{transform:scale(0.98)}.btn-main:disabled{opacity:0.5;cursor:not-allowed}
+.btn-fast{width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;cursor:pointer}
 .btn-fast:disabled{opacity:0.5;cursor:not-allowed}
-/* drops scrollable */
-.drops-scroll{max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* drops */
+.drops-scroll{max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .drops-scroll::-webkit-scrollbar{width:3px}
 .drops-scroll::-webkit-scrollbar-thumb{background:rgba(192,132,252,0.3);border-radius:4px}
-/* STEP1 roulettes */
+.drops-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border)}
+.rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.drop-model{font-size:10px;color:var(--text2);margin-top:1px}
+/* ROULETTE */
 .rl-wrap{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .rl-slot{background:var(--bg3);border-radius:10px;overflow:hidden}
 .rl-cont{width:100%;height:90px;position:relative;overflow:hidden;border-top:2px solid rgba(192,132,252,0.3);border-bottom:2px solid rgba(192,132,252,0.3)}
@@ -78,9 +92,13 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .rl-ptr::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:8px solid var(--gold)}
 .rl-track{display:flex;height:90px;will-change:transform}
 .rl-item{flex-shrink:0;width:86px;height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:1px solid var(--border);position:relative}
-.rl-item-em{font-size:34px}
+.rl-item-em{font-size:32px}
 .rl-item-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
 .ri-common{background:var(--gray)}.ri-uncommon{background:var(--blue)}.ri-rare{background:var(--accent2)}.ri-epic{background:var(--accent)}.ri-legendary{background:var(--gold)}
+/* idle roulette animation */
+@keyframes rlIdle{0%{transform:translateX(0)}100%{transform:translateX(-860px)}}
+.rl-track.idle{animation:rlIdle 12s linear infinite}
+/* slot result */
 .rl-result{height:44px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 10px;opacity:0;pointer-events:none;transition:opacity 0.3s}
 .rl-result.show{opacity:1;pointer-events:auto}
 .rr-em{font-size:22px;flex-shrink:0}
@@ -88,23 +106,34 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .rr-nm{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rr-val{font-size:10px;color:var(--text2)}
 .rr-sell{padding:5px 10px;background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Exo 2',sans-serif;flex-shrink:0}
-/* Multi bar */
-.multi-bar{display:none;padding:10px 12px 14px;gap:8px}
+/* multi bar */
+.multi-bar{display:none;padding:10px 12px 14px;gap:8px;flex-direction:column}
 .multi-bar.show{display:flex}
+.multi-bar-btns{display:flex;gap:8px}
 .btn-sell-all{flex:1;padding:12px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
-.btn-again{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
-/* STEP2 single result */
+.btn-again-multi{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+/* step2 */
 .s2-wrap{padding:16px;text-align:center}
 .s2-em{width:110px;height:110px;margin:0 auto 10px;background:var(--bg3);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:58px;border:2px solid transparent;animation:winPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
 @keyframes winPop{0%{transform:scale(0.5);opacity:0}100%{transform:scale(1);opacity:1}}
 .s2-nm{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:3px}
+.s2-model{font-size:12px;color:var(--text2);margin-bottom:3px}
 .s2-vl{font-size:13px;color:var(--text2);margin-bottom:14px}
 .s2-btns{display:flex;gap:8px}
 .btn-sell1{flex:1;padding:12px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
 .btn-again1{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
-/* DROPS */
-.drops-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border)}
-.rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+/* WIN POPUP */
+.win-popup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.win-popup.show{display:flex}
+.win-popup-box{background:var(--bg2);border-radius:24px;border:1px solid var(--border);padding:28px 24px;text-align:center;max-width:320px;width:90%;animation:winPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+.win-gift-anim{font-size:80px;animation:giftBounce 0.6s cubic-bezier(0.34,1.56,0.64,1);display:block;margin-bottom:12px}
+@keyframes giftBounce{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0deg);opacity:1}}
+.win-popup-nm{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.win-popup-model{font-size:13px;color:var(--text2);margin-bottom:4px}
+.win-popup-val{font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:20px}
+.win-popup-btns{display:flex;gap:8px}
+.wp-sell{flex:1;padding:12px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
+.wp-keep{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
 /* INVENTORY */
 .inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .inv-item{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:10px 8px;text-align:center;position:relative}
@@ -114,6 +143,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .ov-txt{font-size:10px;color:var(--text2);text-align:center;line-height:1.4}
 .inv-em{font-size:36px}
 .inv-nm{font-size:11px;font-weight:600;margin-top:4px;line-height:1.3}
+.inv-model{font-size:10px;color:var(--text2);margin-top:1px}
 .inv-vl{font-size:12px;color:var(--gold2);font-weight:700;margin-top:3px}
 .inv-acts{display:flex;gap:4px;margin-top:6px}
 .inv-btn{flex:1;padding:5px 0;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Exo 2',sans-serif;border:none}
@@ -133,7 +163,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .ptab{flex:1;padding:9px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;text-align:center;transition:all 0.15s;font-family:'Exo 2',sans-serif}
 .ptab.on{background:rgba(192,132,252,0.15);border-color:var(--accent);color:var(--accent)}
 .psec{display:none}.psec.on{display:block}
-/* REFERRAL */
+/* REF */
 .ref-hero{background:linear-gradient(135deg,rgba(192,132,252,0.15),rgba(129,140,248,0.1));border:1px solid rgba(192,132,252,0.3);border-radius:16px;padding:20px;text-align:center;margin-bottom:14px}
 .ref-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px}
 .ref-bonus{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:20px;padding:6px 14px;font-weight:700;color:var(--gold2);font-size:14px;margin-bottom:12px}
@@ -167,11 +197,9 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .sel-x{background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px}
 .a-search{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;margin-bottom:8px}
 .a-search:focus{outline:none;border-color:rgba(192,132,252,0.5)}
-/* WD cards */
 .wr-card{background:var(--bg3);border-radius:12px;border:1px solid var(--border);padding:12px;margin-bottom:8px}
 .wr-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.wr-em{font-size:26px}
-.wr-nm{font-size:14px;font-weight:700}
+.wr-em{font-size:26px}.wr-nm{font-size:14px;font-weight:700}
 .wr-usr{font-size:11px;color:var(--text2);margin-top:2px}
 .wr-contact{font-size:12px;color:var(--text2);background:var(--bg2);border-radius:8px;padding:8px;margin-bottom:8px;word-break:break-word}
 .wr-reason{font-size:12px;color:var(--red);background:rgba(239,68,68,0.08);border-radius:8px;padding:8px;margin-bottom:4px;word-break:break-word}
@@ -180,16 +208,12 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .wr-ok{background:rgba(16,185,129,0.2);color:var(--green);border:1px solid rgba(16,185,129,0.4)!important}
 .wr-no{background:rgba(239,68,68,0.2);color:var(--red);border:1px solid rgba(239,68,68,0.4)!important}
 .ws{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0}
-.ws-p{background:rgba(245,158,11,0.2);color:var(--gold2)}
-.ws-a{background:rgba(16,185,129,0.2);color:var(--green)}
-.ws-r{background:rgba(239,68,68,0.2);color:var(--red)}
+.ws-p{background:rgba(245,158,11,0.2);color:var(--gold2)}.ws-a{background:rgba(16,185,129,0.2);color:var(--green)}.ws-r{background:rgba(239,68,68,0.2);color:var(--red)}
 .wd-srch{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;margin-bottom:8px}
 .wd-srch:focus{outline:none;border-color:rgba(192,132,252,0.5)}
-/* PAGINATION */
 .pgn{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 0 4px;flex-wrap:wrap}
 .pg{padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;min-width:34px;text-align:center}
-.pg:disabled{opacity:0.3;cursor:not-allowed}
-.pg.cur{background:rgba(192,132,252,0.2);border-color:var(--accent);color:var(--accent)}
+.pg:disabled{opacity:0.3;cursor:not-allowed}.pg.cur{background:rgba(192,132,252,0.2);border-color:var(--accent);color:var(--accent)}
 .pg-info{font-size:12px;color:var(--text2);padding:0 4px}
 /* WD MODAL */
 .wd-info{background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center}
@@ -217,15 +241,23 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .b-common{border-color:rgba(107,114,128,0.6)!important}.b-uncommon{border-color:rgba(59,130,246,0.6)!important}
 .b-rare{border-color:rgba(129,140,248,0.6)!important}.b-epic{border-color:rgba(192,132,252,0.6)!important}.b-legendary{border-color:rgba(245,158,11,0.6)!important}
 .rc{color:var(--gray)}.run{color:var(--blue)}.rr{color:var(--accent2)}.rep{color:var(--accent)}.rl{color:var(--gold)}
-/* sync indicator */
-.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--gray);display:inline-block;margin-left:6px;transition:background 0.3s;vertical-align:middle}
-.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}
 </style>
 </head>
 <body>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">NFTCASES</div>
+  <div class="loading-spin"></div>
+  <div class="loading-txt" id="loadingTxt">Загрузка данных...</div>
+</div>
+
 <div class="header">
-  <div class="logo">NFTCASES<span class="sync-dot" id="syncDot" title="Синхронизация данных"></span></div>
-  <div class="balance-badge"><div class="coin">₮</div><div class="bal-amt" id="balEl">0</div></div>
+  <div class="logo">NFTCASES</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="sync-badge"><div class="sync-dot" id="syncDot"></div><span id="syncTxt"></span></div>
+    <div class="balance-badge"><div class="coin">₮</div><div class="bal-amt" id="balEl">0</div></div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -274,8 +306,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="sec-title">О приложении</div>
     <div style="background:var(--bg2);border-radius:14px;border:1px solid var(--border);padding:16px;font-size:13px;color:var(--text2);line-height:1.7">
-      NFT Cases — Telegram Mini App.<br>Открывай кейсы, собирай NFT и выводи предметы.<br><br>
-      <span style="color:var(--accent)">Версия 5.0</span>
+      NFT Cases — Telegram Mini App.<br>Открывай кейсы, собирай подарки и выводи их.<br><br>
+      <span style="color:var(--accent)">Версия 5.1</span>
     </div>
   </div>
   <div class="psec" id="psec-ref">
@@ -322,8 +354,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div><div class="sel-nm" id="selNm">—</div><div style="font-size:11px;color:var(--text2)" id="selId">—</div></div>
       <button class="sel-x" onclick="clearSel()">✕</button>
     </div>
-    <!-- ID или @username -->
-    <input class="ai" id="topId" placeholder="Telegram ID или @username" type="text" oninput="onTopIdInput()">
+    <input class="ai" id="topId" placeholder="Telegram ID или @username" type="text" oninput="onTopInput()">
     <input class="ai" id="topAmt" placeholder="Сумма (монеты)" type="number" min="1">
     <button class="ab" id="topBtn" onclick="doTopup()">💰 Пополнить и уведомить</button>
   </div>
@@ -341,7 +372,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
   <div class="admin-card">
     <div class="act">👥 Список игроков <span id="plCount" style="font-size:12px;color:var(--text2);font-weight:400"></span></div>
-    <input class="a-search" id="plSrch" placeholder="Поиск по имени, ID или @username..." oninput="filterPlayers()">
+    <input class="a-search" id="plSrch" placeholder="Поиск..." oninput="filterPlayers()">
     <div class="a-users" id="plList"></div>
     <div class="pgn" id="plPgn"></div>
   </div>
@@ -354,10 +385,12 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="modal-ttl" id="mTitle">Кейс</div>
       <button class="modal-x" onclick="closeCase()">✕</button>
     </div>
-    <!-- STEP 0 -->
     <div class="step on" id="s0">
       <div class="open-screen">
-        <div class="case-big-em" id="s0em"></div>
+        <div class="case-big-wrap">
+          <img class="case-big-img" id="s0img" src="" alt="">
+          <div class="case-big-em" id="s0em"></div>
+        </div>
         <div class="case-big-nm" id="s0nm"></div>
         <div class="case-big-pr" id="s0pr"></div>
         <div class="cnt-tabs" id="cntTabs">
@@ -368,37 +401,52 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <div class="open-btns">
           <button class="btn-main" id="btnMain" onclick="spin(false)">🔓 ОТКРЫТЬ</button>
-          <button class="btn-fast" id="btnFast" onclick="spin(true)">⚡ Быстро (без анимации)</button>
+          <button class="btn-fast" id="btnFast" onclick="spin(true)">⚡ Быстро</button>
         </div>
       </div>
       <div style="padding:0 14px 14px">
-        <div class="sec-title" style="margin-top:4px">Возможные дропы</div>
+        <div class="sec-title" style="margin-top:4px">Содержимое</div>
         <div class="drops-scroll" id="drops0"></div>
       </div>
     </div>
-    <!-- STEP 1 -->
     <div class="step" id="s1">
       <div class="rl-wrap" id="rlWrap"></div>
       <div class="multi-bar" id="mBar">
-        <button class="btn-sell-all" id="btnSellAll" onclick="sellAll()">Продать все</button>
-        <button class="btn-again" onclick="goBack()">↩ Ещё раз</button>
+        <div class="multi-bar-btns">
+          <button class="btn-sell-all" id="btnSellAll" onclick="sellAll()">Продать все</button>
+          <button class="btn-again-multi" onclick="goBack()">↩ Ещё раз</button>
+        </div>
       </div>
       <div style="padding:0 12px 12px">
-        <div class="sec-title" style="margin-top:8px">Возможные дропы</div>
+        <div class="sec-title" style="margin-top:8px">Содержимое</div>
         <div class="drops-scroll" id="drops1"></div>
       </div>
     </div>
-    <!-- STEP 2 -->
     <div class="step" id="s2">
       <div class="s2-wrap">
         <div class="s2-em" id="s2em"></div>
         <div class="s2-nm" id="s2nm"></div>
+        <div class="s2-model" id="s2model"></div>
         <div class="s2-vl" id="s2vl"></div>
         <div class="s2-btns">
           <button class="btn-sell1" onclick="sellSingle()">Продать</button>
           <button class="btn-again1" onclick="goBack()">↩ Ещё раз</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- WIN POPUP (animated) -->
+<div class="win-popup" id="winPopup">
+  <div class="win-popup-box">
+    <span class="win-gift-anim" id="wpEmoji"></span>
+    <div class="win-popup-nm" id="wpName"></div>
+    <div class="win-popup-model" id="wpModel"></div>
+    <div class="win-popup-val" id="wpVal"></div>
+    <div class="win-popup-btns">
+      <button class="wp-sell" id="wpSell">Продать</button>
+      <button class="wp-keep" id="wpKeep">В инвентарь</button>
     </div>
   </div>
 </div>
@@ -435,7 +483,6 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
-<!-- NAV -->
 <nav class="nav">
   <button class="nav-btn active" onclick="goPage('cases',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2"/></svg>
@@ -456,54 +503,62 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 </nav>
 
 <script>
-// ===== CONFIG =====
+// ============================================================
+// CONFIG
+// ============================================================
 const ADMIN_ID=780434845, REF_REWARD=50, REF_MIN=200;
 
-// ===== CASES =====
+// ============================================================
+// CASES — v5.1
+// ============================================================
+// cover: путь к изображению на GitHub (напр. 'covers/star.jpg')
+// Если cover не указан или файл не найден — показывается emoji
 const CASES=[
   {
-    id:'star',nm:'Звёздный',em:'⭐',price:222,gc:'rgba(252,211,77,0.2)',hot:true,
+    id:'star', nm:'Звёздный', em:'⭐', price:222,
+    gc:'rgba(252,211,77,0.25)', hot:true,
+    cover:'covers/star.jpg', // ← положи файл на GitHub
     items:[
-      // sorted by value desc (no chance shown)
-      {nm:'500 Звёзд',em:'🌟',r:'legendary',v:839,ch:0.3},
-      {nm:'300 Звёзд',em:'💫',r:'epic',v:525,ch:0.7},
-      {nm:'200 Звёзд',em:'✨',r:'rare',v:343,ch:4},
-      {nm:'150 Звёзд',em:'⭐',r:'uncommon',v:275,ch:12},
-      {nm:'125 Звёзд',em:'🌠',r:'uncommon',v:244,ch:18},
-      {nm:'100 Звёзд',em:'💥',r:'common',v:213,ch:30},
-      {nm:'75 Звёзд',em:'🔆',r:'common',v:178,ch:35},
+      {nm:'500 Звёзд',em:'🌟',r:'legendary',v:839,ch:0.3,model:null},
+      {nm:'300 Звёзд',em:'💫',r:'epic',    v:525,ch:0.7,model:null},
+      {nm:'200 Звёзд',em:'✨',r:'rare',    v:343,ch:4,  model:null},
+      {nm:'150 Звёзд',em:'⭐',r:'common',  v:275,ch:12, model:null},
+      {nm:'125 Звёзд',em:'🌠',r:'common',  v:244,ch:18, model:null},
+      {nm:'100 Звёзд',em:'💥',r:'common',  v:213,ch:30, model:null},
+      {nm:'75 Звёзд', em:'🔆',r:'common',  v:178,ch:35, model:null},
     ]
   },
-  {id:'s',nm:'Стартовый',em:'📦',price:50,gc:'rgba(99,179,237,0.15)',hot:false,items:[
-    {nm:'Пиксельный Меч',em:'⚔️',r:'common',v:20,ch:40},
-    {nm:'Огненный Щит',em:'🛡️',r:'uncommon',v:60,ch:30},
-    {nm:'Зелёный Дракон',em:'🐉',r:'rare',v:120,ch:15},
-    {nm:'Кристальный Посох',em:'🔮',r:'epic',v:280,ch:10},
-    {nm:'Золотой Феникс',em:'🦅',r:'legendary',v:600,ch:5}]},
-  {id:'c',nm:'Киберпанк',em:'🤖',price:150,gc:'rgba(192,132,252,0.2)',hot:false,items:[
-    {nm:'Нано-Чип',em:'💾',r:'common',v:50,ch:35},
-    {nm:'Плазма-Клинок',em:'⚡',r:'uncommon',v:160,ch:28},
-    {nm:'Кибер-Маска',em:'🥽',r:'rare',v:350,ch:20},
-    {nm:'ИИ-Помощник',em:'🤖',r:'epic',v:700,ch:12},
-    {nm:'Квантовый Мозг',em:'🧠',r:'legendary',v:2000,ch:5}]},
-  {id:'sp',nm:'Космос',em:'🚀',price:300,gc:'rgba(129,140,248,0.2)',hot:false,items:[
-    {nm:'Метеорит',em:'☄️',r:'common',v:90,ch:35},
-    {nm:'Звёздная Карта',em:'🗺️',r:'uncommon',v:280,ch:28},
-    {nm:'Нептун-NFT',em:'🪐',r:'rare',v:600,ch:20},
-    {nm:'Галактика',em:'🌌',r:'epic',v:1200,ch:12},
-    {nm:'Чёрная Дыра',em:'🕳️',r:'legendary',v:5000,ch:5}]},
-  {id:'d',nm:'Дракон',em:'🐲',price:500,gc:'rgba(245,158,11,0.2)',hot:true,items:[
-    {nm:'Чешуя Дракона',em:'🦎',r:'common',v:150,ch:33},
-    {nm:'Коготь',em:'🦴',r:'uncommon',v:450,ch:27},
-    {nm:'Огненное Яйцо',em:'🥚',r:'rare',v:900,ch:20},
-    {nm:'Голова Дракона',em:'🐲',r:'epic',v:2500,ch:13},
-    {nm:'Вечный Дракон',em:'🔱',r:'legendary',v:10000,ch:7}]},
+  {
+    id:'budget', nm:'Бюджетный', em:'🎁', price:79,
+    gc:'rgba(99,179,237,0.18)', hot:false,
+    cover:'covers/budget.jpg',
+    items:[
+      // 100 звёзд — шанс 2% — подарки: Кубок, Кольцо, Алмаз
+      {nm:'100 Звёзд',em:'🏆',r:'common',v:213,ch:0.67,model:'Кубок'},
+      {nm:'100 Звёзд',em:'💍',r:'common',v:213,ch:0.67,model:'Кольцо'},
+      {nm:'100 Звёзд',em:'💎',r:'common',v:213,ch:0.66,model:'Алмаз'},
+      // 50 звёзд — шанс 10% — подарки: Торт, Букет, Ракета, Шампанское
+      {nm:'50 Звёзд', em:'🎂',r:'common',v:107,ch:2.5, model:'Торт'},
+      {nm:'50 Звёзд', em:'💐',r:'common',v:107,ch:2.5, model:'Букет'},
+      {nm:'50 Звёзд', em:'🚀',r:'common',v:107,ch:2.5, model:'Ракета'},
+      {nm:'50 Звёзд', em:'🍾',r:'common',v:107,ch:2.5, model:'Шампанское'},
+      // 25 звёзд — шанс 40% — подарки: Коробка, Роза
+      {nm:'25 Звёзд', em:'📦',r:'common',v:53, ch:20,  model:'Коробка'},
+      {nm:'25 Звёзд', em:'🌹',r:'common',v:53, ch:20,  model:'Роза'},
+      // 15 звёзд — шанс 48% — подарки: Сердце, Мишка
+      {nm:'15 Звёзд', em:'❤️',r:'common',v:32, ch:24,  model:'Сердце'},
+      {nm:'15 Звёзд', em:'🧸',r:'common',v:32, ch:24,  model:'Мишка'},
+    ]
+  },
 ];
-const RC={common:'#6b7280',uncommon:'#3b82f6',rare:'#818cf8',epic:'#c084fc',legendary:'#f59e0b'};
+
+const RC={common:'#9ca3af',uncommon:'#3b82f6',rare:'#818cf8',epic:'#c084fc',legendary:'#f59e0b'};
 const RN={common:'Обычный',uncommon:'Необычный',rare:'Редкий',epic:'Эпический',legendary:'Легендарный'};
 const IW=86;
 
-// ===== BOT TOKEN =====
+// ============================================================
+// BOT TOKEN
+// ============================================================
 let BOT='';
 function initBot(){BOT=localStorage.getItem('nfc_tok')||'';}
 function saveTok(){
@@ -519,112 +574,171 @@ async function tgSend(cid,txt,kb){
   try{const b={chat_id:cid,text:txt,parse_mode:'HTML'};if(kb)b.reply_markup=kb;const r=await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const d=await r.json();return d.ok;}catch(e){return false;}
 }
 
-// ===== CROSS-DEVICE SYNC via localStorage + BroadcastChannel =====
-// Key design: admin writes to GLOBAL key, players poll it on focus/visibility
-const GK='nfc_global';
-let _bc=null;
-try{_bc=new BroadcastChannel('nfc_sync');}catch(e){}
-
-function loadG(){
-  try{const r=localStorage.getItem(GK);return r?JSON.parse(r):{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
-  catch(e){return{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
-}
-function saveG(g){
-  try{localStorage.setItem(GK,JSON.stringify(g));if(_bc)_bc.postMessage({t:'sync',ts:Date.now()});}catch(e){}
-}
-
-// Per-user key
-let SK='nfc_u_guest';
-function loadU(){try{const r=localStorage.getItem(SK);return r?JSON.parse(r):null;}catch(e){return null;}}
-function saveU(){
-  try{
-    localStorage.setItem(SK,JSON.stringify({bal:U.bal,inv:U.inv,stats:U.stats,tx:U.tx,ref:U.ref}));
-    syncG();
-    setSyncDot('ok');
-  }catch(e){setSyncDot('err');}
-}
-function syncG(){
-  if(!uid||uid==='—')return;
-  const g=loadG();if(!g.users)g.users={};
-  g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
-  saveG(g);
-}
-function setSyncDot(state){
-  const d=document.getElementById('syncDot');if(!d)return;
-  d.className='sync-dot '+(state==='ok'?'ok':'err');
-  clearTimeout(d._t);d._t=setTimeout(()=>d.className='sync-dot',2000);
-}
-
-// ===== TELEGRAM =====
+// ============================================================
+// TELEGRAM CLOUD STORAGE — основное хранилище
+// localStorage — только резерв для ПК/браузера
+// ============================================================
 const tg=window.Telegram?.WebApp;
 let uname='Игрок',uid='—',uun='',isAdmin=false;
 if(tg){
   tg.ready();tg.expand();
   if(tg.initDataUnsafe?.user){
     const u=tg.initDataUnsafe.user;
-    uname=u.first_name||'Игрок';
-    uid=String(u.id);
-    uun=u.username?('@'+u.username):'';
-    isAdmin=(u.id===ADMIN_ID);
+    uname=u.first_name||'Игрок';uid=String(u.id);
+    uun=u.username?('@'+u.username):'';isAdmin=(u.id===ADMIN_ID);
   }
 }
-if(uid&&uid!=='—')SK='nfc_u_'+uid;
 
-// ===== STATE =====
-const _u=loadU();
+// CloudStorage wrapper — returns Promise
+const CS=tg?.CloudStorage;
+function csGet(key){
+  return new Promise(res=>{
+    if(!CS){res(null);return;}
+    CS.getItem(key,(err,val)=>res(err?null:(val||null)));
+  });
+}
+function csSet(key,val){
+  return new Promise(res=>{
+    if(!CS){res(false);return;}
+    CS.setItem(key,val,(err)=>res(!err));
+  });
+}
+
+// Global key — shared admin data (wdReqs, cmds, users, refRel, refInv)
+// Stored in ADMIN's CloudStorage AND in localStorage (for admin panel access)
+const GK='nfc_global';
+const LS_GK='nfc_global'; // localStorage backup
+
+function loadG(){
+  try{const r=localStorage.getItem(LS_GK);return r?JSON.parse(r):{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
+  catch(e){return{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
+}
+function saveG(g){
+  try{
+    const s=JSON.stringify(g);
+    localStorage.setItem(LS_GK,s);
+    // Admin also saves to their CloudStorage so it's accessible
+    if(isAdmin&&CS)csSet(GK,s);
+  }catch(e){}
+}
+
+// Per-user state key
+const UK='nfc_state';
+const LS_UK=uid&&uid!=='—'?'nfc_u_'+uid:'nfc_u_guest';
+
+function loadLsState(){
+  try{const r=localStorage.getItem(LS_UK);return r?JSON.parse(r):null;}catch(e){return null;}
+}
+function saveLsState(data){
+  try{localStorage.setItem(LS_UK,JSON.stringify(data));}catch(e){}
+}
+
+// ============================================================
+// STATE
+// ============================================================
+const EMPTY_STATE={bal:0,inv:[],stats:{op:0,sl:0,er:0,wd:0,wv:0},tx:[],ref:{by:null,inv:[],er:0}};
+
 const U={
-  bal:_u?Math.round(_u.bal||0):0,
-  inv:_u?(_u.inv||[]):[],
-  stats:_u?(_u.stats||{op:0,sl:0,er:0,wd:0,wv:0}):{op:0,sl:0,er:0,wd:0,wv:0},
-  tx:_u?(_u.tx||[]):[],
-  ref:_u?(_u.ref||{by:null,inv:[],er:0}):{by:null,inv:[],er:0},
-  add(a){this.bal=Math.round(this.bal+Math.round(a));renderBal();saveU();},
-  sub(a){this.bal=Math.max(0,Math.round(this.bal-Math.round(a)));renderBal();saveU();},
-  setBal(v){this.bal=Math.round(v);renderBal();saveU();},
-};
-if(isAdmin)document.getElementById('adminBtn').style.display='flex';
+  bal:0, inv:[], stats:{op:0,sl:0,er:0,wd:0,wv:0}, tx:[], ref:{by:null,inv:[],er:0},
+  _ready:false,
 
-// ===== POLLING (cross-device sync) =====
-// When app comes into focus, re-apply any pending commands for this user
-function pollSync(){
-  if(!uid||uid==='—')return;
-  applyCmd();
-  // Also reload own data from localStorage (handles multi-tab / other device writes)
-  const fresh=loadU();
-  if(fresh){
-    // Only apply if saved version is newer (higher bal or more items) to avoid overwriting
-    // Use a simple heuristic: trust localStorage for balance if commands pending
-    const g=loadG();
-    const hasMine=(g.cmds||[]).some(c=>c.tid===uid);
-    if(!hasMine){
-      // No pending commands, safe to reload
-      U.bal=Math.round(fresh.bal||0);
-      U.inv=fresh.inv||[];
-      U.stats=fresh.stats||{op:0,sl:0,er:0,wd:0,wv:0};
-      U.tx=fresh.tx||[];
-      U.ref=fresh.ref||{by:null,inv:[],er:0};
-      renderBal();
+  add(a){this.bal=Math.round(this.bal+Math.round(a));renderBal();this.save();},
+  sub(a){this.bal=Math.max(0,Math.round(this.bal-Math.round(a)));renderBal();this.save();},
+  setBal(v){this.bal=Math.round(v);renderBal();this.save();},
+
+  fromObj(o){
+    this.bal=Math.round(o.bal||0);
+    this.inv=o.inv||[];
+    this.stats=o.stats||{op:0,sl:0,er:0,wd:0,wv:0};
+    this.tx=o.tx||[];
+    this.ref=o.ref||{by:null,inv:[],er:0};
+  },
+  toObj(){
+    return{bal:this.bal,inv:this.inv,stats:this.stats,tx:this.tx,ref:this.ref};
+  },
+
+  async save(){
+    const s=JSON.stringify(this.toObj());
+    saveLsState(this.toObj());
+    setSyncDot('loading');
+    if(CS){
+      const ok=await csSet(UK,s);
+      setSyncDot(ok?'ok':'err');
+    } else {
+      setSyncDot('ok');
     }
+    syncG();
+  },
+
+  async load(){
+    setSyncDot('loading');
+    // Try CloudStorage first
+    if(CS){
+      const val=await csGet(UK);
+      if(val){
+        try{
+          const parsed=JSON.parse(val);
+          this.fromObj(parsed);
+          // Sync to localStorage as backup
+          saveLsState(parsed);
+          setSyncDot('ok');
+          this._ready=true;
+          return true;
+        }catch(e){}
+      }
+    }
+    // Fallback to localStorage
+    const ls=loadLsState();
+    if(ls){this.fromObj(ls);setSyncDot('ok');}
+    else{this.fromObj(EMPTY_STATE);}
+    this._ready=true;
+    return false;
   }
+};
+
+if(isAdmin) document.getElementById('adminBtn').style.display='flex';
+
+// ============================================================
+// SYNC DOT
+// ============================================================
+function setSyncDot(state){
+  const d=document.getElementById('syncDot');const t=document.getElementById('syncTxt');if(!d)return;
+  d.className='sync-dot '+state;
+  if(t)t.textContent=state==='loading'?'Сохранение...':state==='ok'?'':state==='err'?'Ошибка':'';
+  if(state==='ok'||state==='err'){clearTimeout(d._t);d._t=setTimeout(()=>{d.className='sync-dot';if(t)t.textContent='';},2500);}
 }
 
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSync();});
-window.addEventListener('focus',pollSync);
-if(_bc)_bc.onmessage=()=>pollSync();
-// Poll every 15s while app is open
-setInterval(()=>{if(!document.hidden)pollSync();},15000);
+// ============================================================
+// GLOBAL SYNC — Poll global data (cmds for this user)
+// Admin saves global to their CS; other users read from localStorage
+// (they're on same device context via GitHub Pages)
+// For true cross-device: admin must be on same domain
+// ============================================================
+function syncG(){
+  if(!uid||uid==='—')return;
+  const g=loadG();if(!g.users)g.users={};
+  g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
+  saveG(g);
+}
 
-// ===== HELPERS =====
+// Poll for admin commands every 10 seconds
+setInterval(()=>{if(!document.hidden)applyCmd();},10000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)applyCmd();});
+
+// ============================================================
+// HELPERS
+// ============================================================
 function renderBal(){document.getElementById('balEl').textContent=U.bal.toLocaleString('ru');}
 function toast(msg,color){const t=document.getElementById('toast');t.textContent=msg;t.style.color=color||'var(--text)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function wrand(items){const tot=items.reduce((s,i)=>s+i.ch,0);let r=Math.random()*tot;for(const x of items){r-=x.ch;if(r<=0)return x;}return items[items.length-1];}
+
 function goPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');
-  if(name==='inventory'){pollSync();renderInv();}
+  if(name==='inventory'){applyCmd();renderInv();}
   if(name==='profile'){renderProf();renderRef();}
-  if(name==='admin'){pollSync();renderAdmin();}
+  if(name==='admin'){applyCmd();renderAdmin();}
 }
 function pTab(t,btn){
   document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
@@ -634,27 +748,46 @@ function pTab(t,btn){
 }
 function showStep(n){[0,1,2].forEach(i=>document.getElementById('s'+i).classList.toggle('on',i===n));}
 
-// Drops html — no chance shown, sorted by value desc (items already sorted)
 function buildDropsHtml(c){
-  return c.items.map(i=>`<div class="drops-row"><div style="font-size:22px;flex-shrink:0">${i.em}</div><div style="flex:1;margin-left:10px"><div style="font-size:13px;font-weight:600">${i.nm}</div><div style="font-size:11px;color:var(--text2);margin-top:1px"><span class="rdot" style="background:${RC[i.r]}"></span>${RN[i.r]}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:600;color:var(--gold2)">₮${i.v}</div></div></div>`).join('');
+  // sorted by value desc, no chance, show model if exists
+  const sorted=[...c.items].sort((a,b)=>b.v-a.v);
+  return sorted.map(i=>`<div class="drops-row">
+    <div style="font-size:22px;flex-shrink:0">${i.em}</div>
+    <div style="flex:1;margin-left:10px">
+      <div style="font-size:13px;font-weight:600">${i.nm}</div>
+      ${i.model?`<div class="drop-model">${i.model}</div>`:''}
+      <div style="font-size:11px;color:var(--text2);margin-top:1px"><span class="rdot" style="background:${RC[i.r]}"></span>${RN[i.r]}</div>
+    </div>
+    <div style="text-align:right;font-size:12px;font-weight:600;color:var(--gold2)">₮${i.v}</div>
+  </div>`).join('');
 }
 
-// ===== CASES =====
+// ============================================================
+// CASES PAGE
+// ============================================================
 function renderCases(){
   const g=document.getElementById('casesGrid');g.innerHTML='';
   CASES.forEach(c=>{
     const d=document.createElement('div');d.className='case-card'+(c.hot?' hot':'');
-    d.innerHTML=`<div class="case-img" style="--gc:${c.gc}"><div class="case-glow"></div><div class="case-em">${c.em}</div>${c.hot?'<div class="case-badge">ХИТ</div>':''}</div><div class="case-info"><div class="case-name">${c.nm}</div><div class="case-price-row"><span style="font-size:14px">₮</span><span class="case-pv">${c.price}</span></div></div>`;
+    const imgHtml=c.cover?`<img class="case-cover" src="${c.cover}" alt="${c.nm}" onerror="this.style.display='none'" loading="lazy">`:'';
+    d.innerHTML=`<div class="case-img" style="--gc:${c.gc}">${imgHtml}<div class="case-glow"></div><div class="case-em">${c.em}</div>${c.hot?'<div class="case-badge">ХИТ</div>':''}</div><div class="case-info"><div class="case-name">${c.nm}</div><div class="case-price-row"><span style="font-size:14px">₮</span><span class="case-pv">${c.price}</span></div></div>`;
     d.onclick=()=>openCase(c);g.appendChild(d);
   });
 }
 
-// ===== CASE MODAL =====
+// ============================================================
+// CASE MODAL
+// ============================================================
 let CC=null,cnt=1,spinning=false,wonSlots=[],spinTm=[];
+let idleTimers=[];
+
 function openCase(c){
   CC=c;cnt=1;spinning=false;wonSlots=[];
-  document.getElementById('mTitle').textContent=c.em+' '+c.nm;
-  document.getElementById('s0em').textContent=c.em;
+  document.getElementById('mTitle').textContent=c.nm;
+  // Cover image
+  const img=document.getElementById('s0img');const em=document.getElementById('s0em');
+  if(c.cover){img.src=c.cover;img.style.display='block';em.style.display='none';}
+  else{img.style.display='none';em.style.display='block';em.textContent=c.em;}
   document.getElementById('s0nm').textContent=c.nm;
   document.getElementById('s0pr').textContent='Цена: ₮'+c.price+' за 1 кейс';
   document.querySelectorAll('.cnt-tab').forEach((t,i)=>t.classList.toggle('on',i===0));
@@ -671,25 +804,64 @@ function updOpenBtns(){
   document.getElementById('btnFast').textContent='⚡ Быстро ×'+cnt+' — ₮'+tot;
 }
 function setCnt(n,tab){if(spinning)return;cnt=n;document.querySelectorAll('.cnt-tab').forEach(t=>t.classList.remove('on'));tab.classList.add('on');updOpenBtns();}
-function closeCase(){flushWon();wonSlots=[];spinning=false;spinTm.forEach(clearTimeout);spinTm=[];document.getElementById('caseModal').classList.remove('open');}
-function goBack(){flushWon();wonSlots=[];spinning=false;spinTm.forEach(clearTimeout);spinTm=[];showStep(0);updOpenBtns();document.getElementById('mBar').classList.remove('show');}
-function flushWon(){wonSlots.forEach(s=>{if(s&&!s.handled){s.handled=true;U.inv.push({...s.item,uuid:Date.now()+Math.random()});}});if(wonSlots.some(s=>s))saveU();}
+function closeCase(){
+  stopIdle();flushWon();wonSlots=[];spinning=false;
+  spinTm.forEach(clearTimeout);spinTm=[];
+  document.getElementById('caseModal').classList.remove('open');
+}
+function goBack(){
+  stopIdle();flushWon();wonSlots=[];spinning=false;
+  spinTm.forEach(clearTimeout);spinTm=[];
+  showStep(0);updOpenBtns();
+  document.getElementById('mBar').classList.remove('show');
+}
+function flushWon(){
+  let any=false;
+  wonSlots.forEach(s=>{if(s&&!s.handled){s.handled=true;U.inv.push({...s.item,uuid:Date.now()+Math.random()});any=true;}});
+  if(any)U.save();
+}
 
-// ===== SPIN =====
+// IDLE roulette animation
+function startIdle(trackId){
+  const tr=document.getElementById(trackId);if(!tr)return;
+  tr.classList.add('idle');
+}
+function stopIdle(){
+  idleTimers.forEach(clearTimeout);idleTimers=[];
+  document.querySelectorAll('.rl-track.idle').forEach(t=>t.classList.remove('idle'));
+}
+
+// ============================================================
+// SPIN
+// ============================================================
 function spin(fast){
   if(spinning)return;
   const tot=CC.price*cnt;
   if(U.bal<tot){toast('❌ Недостаточно монет!','var(--red)');return;}
-  U.sub(tot);U.stats.op+=cnt;saveU();
+  U.sub(tot);U.stats.op+=cnt;U.save();
   wonSlots=[];for(let i=0;i<cnt;i++)wonSlots.push({item:wrand(CC.items),handled:false});
+
   if(fast){
-    if(cnt===1){showS2(wonSlots[0].item);}
-    else{buildSlots();showStep(1);wonSlots.forEach((_,i)=>showSlotRes(i));showMBar();}
+    if(cnt===1){
+      const slot=wonSlots[0];
+      showWinPopup(slot.item, ()=>{
+        slot.handled=true;U.add(slot.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+slot.item.v);U.save();
+        toast('✅ Продано ₮'+slot.item.v,'var(--green)');goBack();
+      }, ()=>{
+        // keep — go to s2 to show result
+        showS2(slot.item);
+      });
+    } else {
+      buildSlots(true);showStep(1);wonSlots.forEach((_,i)=>showSlotRes(i));showMBar();
+    }
     haptic();return;
   }
+
   spinning=true;
-  buildSlots();showStep(1);
+  buildSlots(false);showStep(1);
   document.getElementById('mBar').classList.remove('show');
+  stopIdle();
+
   let done=0;spinTm=[];
   wonSlots.forEach((slot,i)=>{
     placeWinner(i,slot.item);
@@ -697,7 +869,7 @@ function spin(fast){
       const tr=document.getElementById('tr_'+i);if(!tr)return;
       const cw=tr.parentElement.offsetWidth;
       const WIN=46,jitter=Math.round((Math.random()-0.5)*20);
-      const fx=-(WIN*IW - cw/2 + IW/2 + jitter);
+      const fx=-(WIN*IW-cw/2+IW/2+jitter);
       tr.style.transition='none';tr.style.transform='translateX(0)';
       tr.getBoundingClientRect();
       tr.style.transition='transform cubic-bezier(0.05,0.82,0.35,1) 4s';
@@ -705,33 +877,79 @@ function spin(fast){
     }));
     spinTm.push(setTimeout(()=>{
       done++;
-      if(cnt===1){spinning=false;showS2(slot.item);}
-      else{showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}}
+      if(cnt===1){
+        spinning=false;
+        // show win popup
+        showWinPopup(slot.item, ()=>{
+          slot.handled=true;U.add(slot.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+slot.item.v);U.save();
+          toast('✅ Продано ₮'+slot.item.v,'var(--green)');goBack();
+        }, ()=>{
+          showS2(slot.item);
+        });
+      } else {
+        showSlotRes(i);
+        if(done===cnt){spinning=false;showMBar();haptic();}
+      }
     },4300));
   });
 }
 
-function buildSlots(){
+// WIN POPUP
+let wpSellCb=null,wpKeepCb=null;
+function showWinPopup(item,onSell,onKeep){
+  document.getElementById('wpEmoji').textContent=item.em;
+  document.getElementById('wpName').textContent=item.nm;
+  document.getElementById('wpModel').textContent=item.model||'';
+  document.getElementById('wpModel').style.display=item.model?'block':'none';
+  document.getElementById('wpVal').textContent=RN[item.r]+' · ₮'+item.v;
+  wpSellCb=onSell;wpKeepCb=onKeep;
+  document.getElementById('winPopup').classList.add('show');
+  haptic();
+}
+document.getElementById('wpSell').onclick=()=>{document.getElementById('winPopup').classList.remove('show');if(wpSellCb)wpSellCb();};
+document.getElementById('wpKeep').onclick=()=>{document.getElementById('winPopup').classList.remove('show');if(wpKeepCb)wpKeepCb();};
+
+function buildSlots(instant){
   const wrap=document.getElementById('rlWrap');wrap.innerHTML='';
   for(let i=0;i<cnt;i++){
     const items=[];for(let j=0;j<60;j++)items.push(wrand(CC.items));
     const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${it.em}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
     const resBar=cnt>1?`<div class="rl-result" id="rr_${i}"><div class="rr-em" id="rr_em_${i}"></div><div class="rr-info"><div class="rr-nm" id="rr_nm_${i}"></div><div class="rr-val" id="rr_vl_${i}"></div></div><button class="rr-sell" onclick="sellSlot(${i})">Продать ₮<span id="rr_pr_${i}"></span></button></div>`:'';
     const div=document.createElement('div');div.className='rl-slot';
-    div.innerHTML=`<div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track" id="tr_${i}">${trackHtml}</div></div>${resBar}`;
+    div.innerHTML=`<div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track${instant?'':''}" id="tr_${i}">${trackHtml}</div></div>${resBar}`;
     wrap.appendChild(div);
+    // start idle animation
+    if(!instant){
+      const t=setTimeout(()=>startIdle('tr_'+i),100);
+      idleTimers.push(t);
+    }
   }
 }
-function placeWinner(i,won){const tr=document.getElementById('tr_'+i);if(!tr)return;const cell=tr.children[46];if(!cell)return;cell.querySelector('.rl-item-em').textContent=won.em;cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;}
+function placeWinner(i,won){const tr=document.getElementById('tr_'+i);if(!tr)return;tr.classList.remove('idle');const cell=tr.children[46];if(!cell)return;cell.querySelector('.rl-item-em').textContent=won.em;cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;}
 function showSlotRes(i){const s=wonSlots[i];if(!s)return;const row=document.getElementById('rr_'+i);if(!row)return;document.getElementById('rr_em_'+i).textContent=s.item.em;document.getElementById('rr_nm_'+i).textContent=s.item.nm;document.getElementById('rr_nm_'+i).className='rr-nm r'+({'uncommon':'un','legendary':'l'}[s.item.r]||s.item.r[0]);document.getElementById('rr_vl_'+i).textContent=RN[s.item.r];document.getElementById('rr_pr_'+i).textContent=s.item.v;row.classList.add('show');}
-function showMBar(){const tot=wonSlots.filter(s=>s&&!s.handled).reduce((a,s)=>a+s.item.v,0);document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');document.getElementById('mBar').classList.add('show');}
-function showS2(item){document.getElementById('s2em').textContent=item.em;document.getElementById('s2em').className='s2-em b-'+item.r;document.getElementById('s2nm').textContent=item.nm;document.getElementById('s2nm').className='s2-nm r'+({'uncommon':'un','legendary':'l'}[item.r]||item.r[0]);document.getElementById('s2vl').textContent=RN[item.r]+' · ₮'+item.v;showStep(2);haptic();}
+function showMBar(){
+  const tot=wonSlots.filter(s=>s&&!s.handled).reduce((a,s)=>a+s.item.v,0);
+  document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');
+  document.getElementById('mBar').classList.add('show');
+}
+function showS2(item){
+  document.getElementById('s2em').textContent=item.em;
+  document.getElementById('s2em').className='s2-em b-'+item.r;
+  document.getElementById('s2nm').textContent=item.nm;
+  document.getElementById('s2nm').className='s2-nm r'+({'uncommon':'un','legendary':'l'}[item.r]||item.r[0]);
+  const m=document.getElementById('s2model');m.textContent=item.model||'';m.style.display=item.model?'block':'none';
+  document.getElementById('s2vl').textContent=RN[item.r]+' · ₮'+item.v;
+  showStep(2);
+}
 function haptic(){if(!tg?.HapticFeedback)return;const b=wonSlots.reduce((a,s)=>(!a||s.item.v>a.item.v)?s:a,null);if(!b)return;if(b.item.r==='legendary')tg.HapticFeedback.notificationOccurred('success');else if(b.item.r==='epic')tg.HapticFeedback.impactOccurred('heavy');else tg.HapticFeedback.impactOccurred('light');}
-function sellSlot(i){const s=wonSlots[i];if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);saveU();const row=document.getElementById('rr_'+i);if(row)row.classList.remove('show');toast('✅ Продано ₮'+s.item.v,'var(--green)');const rem=wonSlots.filter(x=>x&&!x.handled);if(rem.length===0)document.getElementById('mBar').classList.remove('show');else{const tot=rem.reduce((a,x)=>a+x.item.v,0);document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');}}
-function sellAll(){wonSlots.forEach((_,i)=>sellSlot(i));document.getElementById('mBar').classList.remove('show');}
-function sellSingle(){const s=wonSlots[0];if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);saveU();toast('✅ Продано ₮'+s.item.v,'var(--green)');goBack();}
 
-// ===== INVENTORY =====
+function sellSlot(i){const s=wonSlots[i];if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);U.save();const row=document.getElementById('rr_'+i);if(row)row.classList.remove('show');toast('✅ Продано ₮'+s.item.v,'var(--green)');const rem=wonSlots.filter(x=>x&&!x.handled);if(rem.length===0)document.getElementById('mBar').classList.remove('show');else{const tot=rem.reduce((a,x)=>a+x.item.v,0);document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');}}
+function sellAll(){wonSlots.forEach((_,i)=>sellSlot(i));document.getElementById('mBar').classList.remove('show');}
+function sellSingle(){const s=wonSlots[0];if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);U.save();toast('✅ Продано ₮'+s.item.v,'var(--green)');goBack();}
+
+// ============================================================
+// INVENTORY
+// ============================================================
 function renderInv(){
   checkWdStatus();
   const grid=document.getElementById('invGrid'),tot=document.getElementById('invTotal');
@@ -742,6 +960,7 @@ function renderInv(){
       <div class="inv-ov"><div style="font-size:22px">⏳</div><div class="ov-txt">Ожидает выдачи</div></div>
       <div class="inv-em">${it.em}</div>
       <div class="inv-nm">${it.nm}</div>
+      ${it.model?`<div class="inv-model">${it.model}</div>`:''}
       <div class="inv-vl">₮${it.v}</div>
       <div class="inv-acts">
         <button class="inv-btn ib-sell" onclick="sellInv('${it.uuid}')">Продать</button>
@@ -756,25 +975,27 @@ function checkWdStatus(){
     const req=it.wdRid?reqs.find(r=>r.id===it.wdRid):reqs.find(r=>String(r.uuid)===String(it.uuid)&&r.uid===uid&&r.st==='pending');
     if(!req||req.st==='rejected'){it.wdOn=false;it.wdRid=null;ch=true;}
   });
-  if(ch)saveU();
+  if(ch)U.save();
 }
 function sellInv(uuid){
   const idx=U.inv.findIndex(i=>String(i.uuid)===uuid);if(idx===-1)return;
   const it=U.inv[idx];if(it.wdOn){toast('⚠️ Заявка на вывод активна','var(--gold)');return;}
-  U.inv.splice(idx,1);U.add(it.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+it.v);saveU();toast('✅ Продано ₮'+it.v,'var(--green)');renderInv();
+  U.inv.splice(idx,1);U.add(it.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+it.v);U.save();toast('✅ Продано ₮'+it.v,'var(--green)');renderInv();
 }
 
-// ===== WITHDRAW =====
+// ============================================================
+// WITHDRAW
+// ============================================================
 let wdUuid=null;
 function openWdModal(uuid){
   checkWdStatus();
   const it=U.inv.find(i=>String(i.uuid)===uuid);if(!it)return;
   if(it.wdOn){toast('⚠️ Заявка уже на рассмотрении','var(--gold)');return;}
   const g=loadG();const ex=(g.wdReqs||[]).find(r=>String(r.uuid)===uuid&&r.uid===uid&&r.st==='pending');
-  if(ex){it.wdOn=true;it.wdRid=ex.id;saveU();renderInv();toast('⚠️ Заявка уже на рассмотрении','var(--gold)');return;}
+  if(ex){it.wdOn=true;it.wdRid=ex.id;U.save();renderInv();toast('⚠️ Заявка уже на рассмотрении','var(--gold)');return;}
   wdUuid=uuid;
   document.getElementById('wdEm').textContent=it.em;
-  document.getElementById('wdNm').textContent=it.nm;
+  document.getElementById('wdNm').textContent=it.nm+(it.model?' — '+it.model:'');
   document.getElementById('wdVl').textContent=RN[it.r]+' · ₮'+it.v;
   document.getElementById('wdContact').value='';
   document.getElementById('wdModal').classList.add('open');
@@ -789,18 +1010,20 @@ async function submitWd(){
   if(it.wdOn){toast('⚠️ Заявка уже отправлена!','var(--gold)');closeWd();return;}
   const rid='r'+Date.now().toString(36);
   const req={id:rid,uuid:wdUuid,uid,unm:uname,unick:uun,
-    inm:it.nm,iem:it.em,iv:it.v,ir:it.r,
+    inm:it.nm+(it.model?' ('+it.model+')':''),iem:it.em,iv:it.v,ir:it.r,
     contact,st:'pending',time:Date.now()};
   const g=loadG();if(!g.wdReqs)g.wdReqs=[];g.wdReqs.push(req);saveG(g);
-  it.wdOn=true;it.wdRid=rid;saveU();
+  it.wdOn=true;it.wdRid=rid;U.save();
   closeWd();toast('📤 Заявка отправлена!','var(--gold2)');renderInv();
   if(BOT){
     const kb={inline_keyboard:[[{text:'✅ Я выдал',callback_data:'ok_'+rid},{text:'❌ Отклонить',callback_data:'no_'+rid}]]};
-    await tgSend(ADMIN_ID,`📤 <b>Заявка на вывод!</b>\n\n${it.em} <b>${it.nm}</b> — ₮${it.v}\n👤 ${uname}${uun?' '+uun:''}\n🆔 ${uid}\n📬 ${contact}`,kb);
+    await tgSend(ADMIN_ID,`📤 <b>Заявка на вывод!</b>\n\n${it.em} <b>${it.nm}</b>${it.model?' ('+it.model+')':''} — ₮${it.v}\n👤 ${uname}${uun?' '+uun:''}\n🆔 ${uid}\n📬 ${contact}`,kb);
   }
 }
 
-// ===== PROFILE =====
+// ============================================================
+// PROFILE
+// ============================================================
 function renderProf(){
   document.getElementById('pAvatar').textContent=uname.slice(0,2).toUpperCase();
   document.getElementById('pName').textContent=uname+(isAdmin?' 👑':'');
@@ -825,40 +1048,28 @@ function renderRef(){
 }
 function copyRef(){const link=document.getElementById('refLink').textContent;if(navigator.clipboard?.writeText){navigator.clipboard.writeText(link).then(()=>toast('✅ Скопировано!','var(--green)')).catch(fb);}else fb();function fb(){const e=document.createElement('textarea');e.value=link;document.body.appendChild(e);e.select();document.execCommand('copy');document.body.removeChild(e);toast('✅ Скопировано!','var(--green)');}}
 
-// ===== ADMIN =====
+// ============================================================
+// ADMIN
+// ============================================================
 let plCache=[],plPage=0,wdPage=0,selP=null;
 const PG=10;
 
-// Resolve ID or @username → player object
 function resolvePlayer(raw){
-  raw=(raw||'').trim();
-  if(!raw)return null;
+  raw=(raw||'').trim();if(!raw)return null;
   const g=loadG();const users=g.users||{};
-  // Try direct ID
   if(users[raw])return users[raw];
-  // Try @username (strip @)
   const un=raw.replace(/^@/,'').toLowerCase();
   return Object.values(users).find(u=>(u.un||'').toLowerCase()===un)||null;
 }
-
-function onTopIdInput(){
+function onTopInput(){
   const raw=document.getElementById('topId').value.trim();
-  if(!raw){clearSel();return;}
-  // Try to auto-resolve
   const p=resolvePlayer(raw);
-  if(p){
-    selP=p;
-    document.getElementById('selNm').textContent=p.nm+(p.un?' @'+p.un:'');
-    document.getElementById('selId').textContent='ID: '+p.id+' · ₮'+(p.bal||0).toLocaleString('ru');
-    document.getElementById('selBox').style.display='flex';
-  } else {
-    clearSel();
-  }
+  if(p){selP=p;document.getElementById('selNm').textContent=p.nm+(p.un?' @'+p.un:'');document.getElementById('selId').textContent='ID: '+p.id+' · ₮'+(p.bal||0).toLocaleString('ru');document.getElementById('selBox').style.display='flex';}
+  else clearSel();
 }
 function clearSel(){selP=null;document.getElementById('selBox').style.display='none';}
 function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();}
 
-// WD LIST
 function renderWdList(){
   const g=loadG();
   const q=(document.getElementById('wdSrch')?.value||'').trim().toLowerCase();
@@ -882,12 +1093,9 @@ function renderWdList(){
     </div>`).join('');
   pgn('wdPgn',wdPage,pages,'wd');
 }
-
-// PLAYERS
 function renderPlayers(){
   const g=loadG();plCache=Object.values(g.users||{});
-  document.getElementById('plCount').textContent='('+plCache.length+')';
-  filterPlayers();
+  document.getElementById('plCount').textContent='('+plCache.length+')';filterPlayers();
 }
 function filterPlayers(){
   const q=document.getElementById('plSrch').value.trim().toLowerCase();
@@ -912,7 +1120,6 @@ function pgn(cid,page,pages,key){
   el.innerHTML=h;
 }
 function pgClick(btn){const key=btn.dataset.pg,p=parseInt(btn.dataset.p);if(key==='wd'){wdPage=p;renderWdList();}else if(key==='pl'){plPage=p;filterPlayers();}}
-
 function selPlayer(id){
   const g=loadG();const u=(g.users||{})[id];if(!u)return;
   selP=u;document.getElementById('topId').value=u.id;
@@ -922,7 +1129,6 @@ function selPlayer(id){
   document.getElementById('topAmt').focus();toast('👤 '+u.nm);
 }
 
-// APPROVE / REJECT
 function doApprove(id){
   const g=loadG();const req=(g.wdReqs||[]).find(r=>r.id===id);if(!req||req.st!=='pending')return;
   req.st='approved';if(!g.cmds)g.cmds=[];
@@ -944,18 +1150,16 @@ function confirmRej(){
   toast('❌ Отклонено','var(--red)');closeRej();renderWdList();if(req.uid===uid)applyCmd();
 }
 
-// TOPUP / SETBAL — теперь поддерживает @username
 async function doTopup(){
   const btn=document.getElementById('topBtn');
   const rawId=(document.getElementById('topId').value||'').trim();
   const amt=parseInt(document.getElementById('topAmt').value);
   if(!rawId||!amt||amt<=0){toast('⚠️ Заполни поля','var(--gold)');return;}
-  const pl=selP||resolvePlayer(rawId);
-  const tid=pl?pl.id:rawId;
-  if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден. Используй цифровой ID.','var(--red)');return;}
+  const pl=selP||resolvePlayer(rawId);const tid=pl?pl.id:rawId;
+  if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден','var(--red)');return;}
   btn.disabled=true;btn.innerHTML='<span class="spin2"></span>Отправляем...';
   const g=loadG();
-  if(tid===uid){U.add(amt);U.tx.push({amt,lbl:'Пополнение от администратора',ts:Date.now()});saveU();chkRef(g,tid,amt);saveG(g);}
+  if(tid===uid){U.add(amt);U.tx.push({amt,lbl:'Пополнение от администратора',ts:Date.now()});U.save();chkRef(g,tid,amt);saveG(g);}
   else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'top',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=Math.round((g.users[tid].bal||0)+amt);chkRef(g,tid,amt);saveG(g);if(BOT)await tgSend(tid,`💰 <b>Баланс пополнен!</b>\n\n➕ +₮${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();}
   btn.disabled=false;btn.innerHTML='💰 Пополнить и уведомить';
   toast(`✅ ₮${amt} → ${pl?pl.nm:'ID '+tid}`,'var(--green)');
@@ -966,17 +1170,15 @@ async function doSetBal(){
   const rawId=(document.getElementById('setId').value||'').trim();
   const amt=parseInt(document.getElementById('setAmt').value);
   if(!rawId||isNaN(amt)||amt<0){toast('⚠️ Заполни поля','var(--gold)');return;}
-  const pl=resolvePlayer(rawId);
-  const tid=pl?pl.id:rawId;
-  if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден. Используй цифровой ID.','var(--red)');return;}
+  const pl=resolvePlayer(rawId);const tid=pl?pl.id:rawId;
+  if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден','var(--red)');return;}
   const g=loadG();btn.disabled=true;btn.innerHTML='<span class="spin2"></span>Применяем...';
-  if(tid===uid){U.setBal(amt);saveU();toast('⚙️ Баланс: ₮'+amt,'var(--accent)');}
+  if(tid===uid){U.setBal(amt);U.save();toast('⚙️ Баланс: ₮'+amt,'var(--accent)');}
   else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'setbal',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=amt;saveG(g);if(BOT)await tgSend(tid,`⚙️ <b>Баланс изменён</b>\n\n₮${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();toast('✅ Установлено','var(--green)');}
   btn.disabled=false;btn.innerHTML='⚙️ Установить и уведомить';
   document.getElementById('setId').value='';document.getElementById('setAmt').value='';
 }
 
-// REFERRAL REWARD
 function chkRef(g,tid,amt){
   if(!g.refRel)g.refRel={};const rel=g.refRel[tid];if(!rel||rel.ok)return;
   if(!rel.tot)rel.tot=0;rel.tot=Math.round(rel.tot+amt);
@@ -990,7 +1192,9 @@ function chkRef(g,tid,amt){
   }
 }
 
-// APPLY COMMANDS — ключевое место для cross-device синхронизации
+// ============================================================
+// APPLY ADMIN COMMANDS
+// ============================================================
 function applyCmd(){
   if(!uid||uid==='—')return;
   const g=loadG();if(!g.cmds||g.cmds.length===0)return;
@@ -1000,22 +1204,12 @@ function applyCmd(){
     changed=true;
     if(c.t==='top'){U.bal=Math.round(U.bal+Math.round(c.amt));U.tx.push({amt:c.amt,lbl:'Пополнение от администратора',ts:c.ts});}
     else if(c.t==='setbal'){U.bal=Math.round(c.amt);}
-    else if(c.t==='rmWd'){
-      const idx=U.inv.findIndex(i=>String(i.uuid)===String(c.uuid));
-      if(idx!==-1){const it=U.inv[idx];U.inv.splice(idx,1);if(!U.stats.wd)U.stats.wd=0;if(!U.stats.wv)U.stats.wv=0;U.stats.wd++;U.stats.wv=Math.round(U.stats.wv+it.v);if(!U.stats.bw||it.v>U.stats.bw.v)U.stats.bw={nm:it.nm,em:it.em,v:it.v};}
-    }
+    else if(c.t==='rmWd'){const idx=U.inv.findIndex(i=>String(i.uuid)===String(c.uuid));if(idx!==-1){const it=U.inv[idx];U.inv.splice(idx,1);if(!U.stats.wd)U.stats.wd=0;if(!U.stats.wv)U.stats.wv=0;U.stats.wd++;U.stats.wv=Math.round(U.stats.wv+it.v);if(!U.stats.bw||it.v>U.stats.bw.v)U.stats.bw={nm:it.nm,em:it.em,v:it.v};}}
     else if(c.t==='rejWd'){const it=U.inv.find(i=>String(i.uuid)===String(c.uuid));if(it){it.wdOn=false;it.wdRid=null;}}
-    else if(c.t==='ref'){
-      U.bal=Math.round(U.bal+Math.round(c.amt));
-      U.tx.push({amt:c.amt,lbl:'Реферальный бонус',ts:c.ts});
-      if(!U.ref.inv)U.ref.inv=[];
-      if(!U.ref.inv.find(x=>x.id===c.fid)){const g2=loadG();const fnm=g2.users&&g2.users[c.fid]?g2.users[c.fid].nm:'Игрок';U.ref.inv.push({id:c.fid,nm:fnm,ok:true});}
-      U.ref.er=(U.ref.er||0)+c.amt;
-    }
+    else if(c.t==='ref'){U.bal=Math.round(U.bal+Math.round(c.amt));U.tx.push({amt:c.amt,lbl:'Реферальный бонус',ts:c.ts});if(!U.ref.inv)U.ref.inv=[];if(!U.ref.inv.find(x=>x.id===c.fid)){const g2=loadG();const fnm=g2.users&&g2.users[c.fid]?g2.users[c.fid].nm:'Игрок';U.ref.inv.push({id:c.fid,nm:fnm,ok:true});}U.ref.er=(U.ref.er||0)+c.amt;}
   });
-  // Remove processed commands
   g.cmds=g.cmds.filter(c=>c.tid!==uid);saveG(g);
-  if(changed){saveU();renderBal();setSyncDot('ok');}
+  if(changed){U.save();renderBal();setSyncDot('ok');}
 }
 
 function parseRef(){
@@ -1029,15 +1223,46 @@ function parseRef(){
       g.refRel[uid]={by:rid,ok:false,tot:0};
       if(!g.refInv)g.refInv={};if(!g.refInv[rid])g.refInv[rid]=[];
       if(!g.refInv[rid].find(x=>x.id===uid))g.refInv[rid].push({id:uid,nm:uname,ok:false});
-      saveG(g);saveU();
+      saveG(g);U.save();
       if(BOT)tgSend(rid,`👋 <b>Новый реферал!</b>\n\n${uname}${uun?' ('+uun+')':''} перешёл по твоей ссылке.\n\nКак только ему пополнят баланс на ₮${REF_MIN}+, ты получишь <b>+₮${REF_REWARD}</b>! 🎁`);
     }else saveG(g);
   }catch(e){}
 }
 
-// ===== INIT =====
-initBot();parseRef();applyCmd();renderCases();renderBal();syncG();
-if(BOT)fetch(`https://api.telegram.org/bot${BOT}/getMe`).then(r=>r.json()).then(d=>{if(d.ok&&d.result?.username)localStorage.setItem('nfc_bun',d.result.username);}).catch(()=>{});
+// ============================================================
+// INIT — async, loads CloudStorage first
+// ============================================================
+async function init(){
+  const loadEl=document.getElementById('loadingScreen');
+  const txtEl=document.getElementById('loadingTxt');
+
+  initBot();
+
+  if(CS){
+    txtEl.textContent='Загрузка из Telegram Cloud...';
+    await U.load();
+  } else {
+    txtEl.textContent='Загрузка...';
+    // No CloudStorage (browser/PC) — use localStorage
+    const ls=loadLsState();
+    if(ls)U.fromObj(ls);
+    else U.fromObj(EMPTY_STATE);
+    U._ready=true;
+  }
+
+  parseRef();
+  applyCmd();
+  renderCases();
+  renderBal();
+  syncG();
+
+  // Hide loading screen
+  loadEl.classList.add('hidden');
+
+  if(BOT)fetch(`https://api.telegram.org/bot${BOT}/getMe`).then(r=>r.json()).then(d=>{if(d.ok&&d.result?.username)localStorage.setItem('nfc_bun',d.result.username);}).catch(()=>{});
+}
+
+init();
 </script>
 </body>
 </html>
