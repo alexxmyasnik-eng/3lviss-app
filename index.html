@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NFT Cases v5.1</title>
+<title>NFT Cases v5.2</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
@@ -122,18 +122,58 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .s2-btns{display:flex;gap:8px}
 .btn-sell1{flex:1;padding:12px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
 .btn-again1{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
-/* WIN POPUP */
-.win-popup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+/* WIN POPUP — стиль как на скрине "Поздравляем!" */
+.win-popup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.75);display:none;align-items:flex-end;justify-content:center;padding-bottom:0}
 .win-popup.show{display:flex}
-.win-popup-box{background:var(--bg2);border-radius:24px;border:1px solid var(--border);padding:28px 24px;text-align:center;max-width:320px;width:90%;animation:winPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
-.win-gift-anim{font-size:80px;animation:giftBounce 0.6s cubic-bezier(0.34,1.56,0.64,1);display:block;margin-bottom:12px}
-@keyframes giftBounce{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0deg);opacity:1}}
-.win-popup-nm{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
-.win-popup-model{font-size:13px;color:var(--text2);margin-bottom:4px}
-.win-popup-val{font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:20px}
-.win-popup-btns{display:flex;gap:8px}
-.wp-sell{flex:1;padding:12px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
-.wp-keep{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
+.win-popup-box{
+  background:linear-gradient(180deg,#1a0a2e 0%,#0d0d1a 100%);
+  border-radius:24px 24px 0 0;
+  border:1px solid rgba(192,132,252,0.2);
+  border-bottom:none;
+  padding:24px 24px 36px;
+  text-align:center;
+  width:100%;
+  max-width:480px;
+  position:relative;
+  animation:slideUp 0.35s cubic-bezier(0.34,1.2,0.64,1);
+}
+@keyframes slideUp{0%{transform:translateY(100%);opacity:0}100%{transform:translateY(0);opacity:1}}
+.win-congrats{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:20px;letter-spacing:1px}
+.win-gift-wrap{
+  width:120px;height:120px;margin:0 auto 20px;
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+.win-gift-glow{
+  position:absolute;inset:-20px;
+  background:radial-gradient(circle,rgba(245,158,11,0.35) 0%,transparent 70%);
+  animation:glowPulse 1.5s ease-in-out infinite;
+}
+@keyframes glowPulse{0%,100%{transform:scale(1);opacity:0.7}50%{transform:scale(1.1);opacity:1}}
+.win-gift-em{
+  font-size:80px;
+  animation:giftBounce 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;z-index:1;
+  filter:drop-shadow(0 4px 16px rgba(245,158,11,0.5));
+}
+@keyframes giftBounce{0%{transform:scale(0.3) rotate(-15deg);opacity:0}70%{transform:scale(1.1) rotate(5deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.win-popup-nm{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.win-popup-model{font-size:13px;color:var(--text2);margin-bottom:20px}
+.win-popup-btns{display:flex;flex-direction:column;gap:10px}
+.wp-sell{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
+  border:none;border-radius:14px;color:#fff;
+  font-family:'Exo 2',sans-serif;font-size:16px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.wp-keep{
+  width:100%;padding:11px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:12px;color:var(--text2);
+  font-family:'Exo 2',sans-serif;font-size:14px;font-weight:600;cursor:pointer;
+}
+.win-close-x{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1;padding:4px}
 /* INVENTORY */
 .inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .inv-item{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:10px 8px;text-align:center;position:relative}
@@ -307,7 +347,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="sec-title">О приложении</div>
     <div style="background:var(--bg2);border-radius:14px;border:1px solid var(--border);padding:16px;font-size:13px;color:var(--text2);line-height:1.7">
       NFT Cases — Telegram Mini App.<br>Открывай кейсы, собирай подарки и выводи их.<br><br>
-      <span style="color:var(--accent)">Версия 5.1</span>
+      <span style="color:var(--accent)">Версия 5.2</span>
     </div>
   </div>
   <div class="psec" id="psec-ref">
@@ -437,16 +477,20 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
-<!-- WIN POPUP (animated) -->
+<!-- WIN POPUP -->
 <div class="win-popup" id="winPopup">
   <div class="win-popup-box">
-    <span class="win-gift-anim" id="wpEmoji"></span>
+    <button class="win-close-x" onclick="winClose()">✕</button>
+    <div class="win-congrats">Поздравляем!</div>
+    <div class="win-gift-wrap">
+      <div class="win-gift-glow"></div>
+      <div class="win-gift-em" id="wpEmoji">🎁</div>
+    </div>
     <div class="win-popup-nm" id="wpName"></div>
     <div class="win-popup-model" id="wpModel"></div>
-    <div class="win-popup-val" id="wpVal"></div>
     <div class="win-popup-btns">
       <button class="wp-sell" id="wpSell">Продать</button>
-      <button class="wp-keep" id="wpKeep">В инвентарь</button>
+      <button class="wp-keep" id="wpKeep">Забрать в инвентарь</button>
     </div>
   </div>
 </div>
@@ -517,15 +561,15 @@ const CASES=[
   {
     id:'star', nm:'Звёздный', em:'⭐', price:222,
     gc:'rgba(252,211,77,0.25)', hot:true,
-    cover:'covers/star.jpg', // ← положи файл на GitHub
+    cover:'covers/star.jpg',
     items:[
-      {nm:'500 Звёзд',em:'🌟',r:'legendary',v:839,ch:0.3,model:null},
-      {nm:'300 Звёзд',em:'💫',r:'epic',    v:525,ch:0.7,model:null},
-      {nm:'200 Звёзд',em:'✨',r:'rare',    v:343,ch:4,  model:null},
-      {nm:'150 Звёзд',em:'⭐',r:'common',  v:275,ch:12, model:null},
-      {nm:'125 Звёзд',em:'🌠',r:'common',  v:244,ch:18, model:null},
-      {nm:'100 Звёзд',em:'💥',r:'common',  v:213,ch:30, model:null},
-      {nm:'75 Звёзд', em:'🔆',r:'common',  v:178,ch:35, model:null},
+      {nm:'Signet Ring',   em:'💍', r:'legendary', v:3966, ch:0.3,  model:'Hearts'},
+      {nm:'Trapped Heart', em:'💝', r:'epic',      v:1800, ch:0.7,  model:'Magic Kiss'},
+      {nm:'Valentine Box', em:'🍫', r:'rare',      v:1220, ch:4,    model:'Случайный'},
+      {nm:'Jelly Bunny',   em:'🐰', r:'uncommon',  v:680,  ch:12,   model:'Случайный'},
+      {nm:'Lol Pop',       em:'🍭', r:'uncommon',  v:425,  ch:18,   model:'Случайный'},
+      {nm:'Flowers',       em:'💐', r:'common',    v:70,   ch:30,   model:'Обычный'},
+      {nm:'Rose',          em:'🌹', r:'common',    v:36,   ch:35,   model:null},
     ]
   },
   {
@@ -848,8 +892,11 @@ function spin(fast){
         slot.handled=true;U.add(slot.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+slot.item.v);U.save();
         toast('✅ Продано ₮'+slot.item.v,'var(--green)');goBack();
       }, ()=>{
-        // keep — go to s2 to show result
-        showS2(slot.item);
+        slot.handled=true;
+        U.inv.push({...slot.item,uuid:Date.now()+Math.random()});
+        U.save();
+        toast('📦 Добавлено в инвентарь!');
+        closeCase();
       });
     } else {
       buildSlots(true);showStep(1);wonSlots.forEach((_,i)=>showSlotRes(i));showMBar();
@@ -879,12 +926,17 @@ function spin(fast){
       done++;
       if(cnt===1){
         spinning=false;
-        // show win popup
         showWinPopup(slot.item, ()=>{
+          // SELL
           slot.handled=true;U.add(slot.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+slot.item.v);U.save();
           toast('✅ Продано ₮'+slot.item.v,'var(--green)');goBack();
         }, ()=>{
-          showS2(slot.item);
+          // KEEP — save to inventory and close case completely
+          slot.handled=true;
+          U.inv.push({...slot.item,uuid:Date.now()+Math.random()});
+          U.save();
+          toast('📦 Добавлено в инвентарь!');
+          closeCase();
         });
       } else {
         showSlotRes(i);
@@ -899,15 +951,32 @@ let wpSellCb=null,wpKeepCb=null;
 function showWinPopup(item,onSell,onKeep){
   document.getElementById('wpEmoji').textContent=item.em;
   document.getElementById('wpName').textContent=item.nm;
-  document.getElementById('wpModel').textContent=item.model||'';
-  document.getElementById('wpModel').style.display=item.model?'block':'none';
-  document.getElementById('wpVal').textContent=RN[item.r]+' · ₮'+item.v;
+  const modelEl=document.getElementById('wpModel');
+  modelEl.textContent=item.model||('');
+  modelEl.style.display=item.model?'block':'none';
+  // Sell button shows price
+  document.getElementById('wpSell').innerHTML='Продать за '+item.v+' ⭐';
   wpSellCb=onSell;wpKeepCb=onKeep;
   document.getElementById('winPopup').classList.add('show');
-  haptic();
+  if(tg?.HapticFeedback){
+    if(item.r==='legendary')tg.HapticFeedback.notificationOccurred('success');
+    else if(item.r==='epic')tg.HapticFeedback.impactOccurred('heavy');
+    else tg.HapticFeedback.impactOccurred('medium');
+  }
 }
-document.getElementById('wpSell').onclick=()=>{document.getElementById('winPopup').classList.remove('show');if(wpSellCb)wpSellCb();};
-document.getElementById('wpKeep').onclick=()=>{document.getElementById('winPopup').classList.remove('show');if(wpKeepCb)wpKeepCb();};
+function winClose(){
+  document.getElementById('winPopup').classList.remove('show');
+  // treat as keep
+  if(wpKeepCb){wpKeepCb();wpKeepCb=null;wpSellCb=null;}
+}
+document.getElementById('wpSell').onclick=()=>{
+  document.getElementById('winPopup').classList.remove('show');
+  if(wpSellCb){wpSellCb();wpSellCb=null;wpKeepCb=null;}
+};
+document.getElementById('wpKeep').onclick=()=>{
+  document.getElementById('winPopup').classList.remove('show');
+  if(wpKeepCb){wpKeepCb();wpKeepCb=null;wpSellCb=null;}
+};
 
 function buildSlots(instant){
   const wrap=document.getElementById('rlWrap');wrap.innerHTML='';
