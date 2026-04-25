@@ -76,13 +76,63 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .btn-main:active{transform:scale(0.98)}.btn-main:disabled{opacity:0.5;cursor:not-allowed}
 .btn-fast{width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;cursor:pointer}
 .btn-fast:disabled{opacity:0.5;cursor:not-allowed}
-/* drops */
-.drops-scroll{max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* drops — gift grid style like Telegram Gift Drop */
+.drops-scroll{max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 12px 8px}
 .drops-scroll::-webkit-scrollbar{width:3px}
 .drops-scroll::-webkit-scrollbar-thumb{background:rgba(192,132,252,0.3);border-radius:4px}
-.drops-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border)}
-.rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.drop-model{font-size:10px;color:var(--text2);margin-top:1px}
+/* секция "Содержимое кейса" */
+.drops-label{font-size:12px;color:var(--text2);padding:8px 2px 6px;letter-spacing:0.5px}
+/* сетка подарков */
+.gifts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gift-card{
+  position:relative;background:var(--bg3);border-radius:14px;
+  overflow:hidden;display:flex;flex-direction:column;align-items:center;
+  padding-bottom:10px;border:1px solid rgba(255,255,255,0.05);
+  cursor:default;
+}
+/* цена звёздочкой сверху слева */
+.gift-price{
+  position:absolute;top:7px;left:7px;z-index:2;
+  display:flex;align-items:center;gap:2px;
+  font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--text);
+  text-shadow:0 1px 3px rgba(0,0,0,0.8);
+}
+/* картинка/гиф/эмодзи */
+.gift-img-area{
+  width:100%;aspect-ratio:1;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.gift-img-bg{position:absolute;inset:0;opacity:0.22;border-radius:14px 14px 0 0}
+.gift-emoji{font-size:48px;line-height:1;position:relative;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5))}
+.gift-img-area img{
+  width:70%;height:70%;object-fit:contain;
+  position:relative;z-index:1;
+  filter:drop-shadow(0 3px 10px rgba(0,0,0,0.55));
+}
+/* название + категория */
+.gift-name{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;text-align:center;padding:2px 5px 0;line-height:1.2}
+.gift-sub{font-size:10px;color:var(--text2);text-align:center;margin-top:1px;padding:0 4px;line-height:1.2}
+/* полоска редкости снизу */
+.gift-bar{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px}
+.gb-common{background:var(--gray)}.gb-uncommon{background:var(--blue)}.gb-rare{background:var(--accent2)}.gb-epic{background:var(--accent)}.gb-legendary{background:var(--gold)}
+/* фоны карточек по редкости */
+.gbg-common{background:rgba(107,114,128,0.18)}.gbg-uncommon{background:rgba(59,130,246,0.18)}.gbg-rare{background:rgba(129,140,248,0.18)}.gbg-epic{background:rgba(192,132,252,0.20)}.gbg-legendary{background:rgba(245,158,11,0.20)}
+
+/* Баннер нехватки монет — показывается СРАЗУ над кнопками */
+.no-funds-banner{
+  display:none;
+  background:rgba(239,68,68,0.12);
+  border:1px solid rgba(239,68,68,0.35);
+  border-radius:12px;
+  padding:11px 14px;
+  margin-bottom:10px;
+  font-size:13px;
+  color:#fca5a5;
+  text-align:center;
+  line-height:1.5;
+}
+.no-funds-banner.show{display:block}
 /* ROULETTE */
 .rl-wrap{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .rl-slot{background:var(--bg3);border-radius:10px;overflow:hidden}
@@ -95,9 +145,9 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .rl-item-em{font-size:32px}
 .rl-item-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
 .ri-common{background:var(--gray)}.ri-uncommon{background:var(--blue)}.ri-rare{background:var(--accent2)}.ri-epic{background:var(--accent)}.ri-legendary{background:var(--gold)}
-/* idle roulette animation */
+/* idle roulette — медленная прокрутка когда кейс открыт, ещё не крутим */
 @keyframes rlIdle{0%{transform:translateX(0)}100%{transform:translateX(-860px)}}
-.rl-track.idle{animation:rlIdle 12s linear infinite}
+.rl-track.idle{animation:rlIdle 18s linear infinite}
 /* slot result */
 .rl-result{height:44px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 10px;opacity:0;pointer-events:none;transition:opacity 0.3s}
 .rl-result.show{opacity:1;pointer-events:auto}
@@ -426,12 +476,14 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <button class="modal-x" onclick="closeCase()">✕</button>
     </div>
     <div class="step on" id="s0">
+      <!-- Idle рулетка — показывается сразу при открытии кейса -->
+      <div class="rl-wrap" id="rlWrapIdle" style="padding-bottom:0"></div>
       <div class="open-screen">
         <div class="case-big-wrap">
           <img class="case-big-img" id="s0img" src="" alt="">
           <div class="case-big-em" id="s0em"></div>
         </div>
-        <div class="case-big-nm" id="s0nm"></div>
+        <div class="case-big-nm" id="s0nm" style="display:none"></div>
         <div class="case-big-pr" id="s0pr"></div>
         <div class="cnt-tabs" id="cntTabs">
           <div class="cnt-tab on" onclick="setCnt(1,this)">×1</div>
@@ -439,13 +491,14 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
           <div class="cnt-tab" onclick="setCnt(3,this)">×3</div>
           <div class="cnt-tab" onclick="setCnt(5,this)">×5</div>
         </div>
+        <div class="no-funds-banner" id="noFundsBanner"></div>
         <div class="open-btns">
           <button class="btn-main" id="btnMain" onclick="spin(false)">🔓 ОТКРЫТЬ</button>
           <button class="btn-fast" id="btnFast" onclick="spin(true)">⚡ Быстро</button>
         </div>
       </div>
       <div style="padding:0 14px 14px">
-        <div class="sec-title" style="margin-top:4px">Содержимое</div>
+        <div class="drops-label">Содержимое кейса</div>
         <div class="drops-scroll" id="drops0"></div>
       </div>
     </div>
@@ -458,7 +511,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
       </div>
       <div style="padding:0 12px 12px">
-        <div class="sec-title" style="margin-top:8px">Содержимое</div>
+        <div class="drops-label">Содержимое кейса</div>
         <div class="drops-scroll" id="drops1"></div>
       </div>
     </div>
@@ -787,18 +840,35 @@ function pTab(t,btn){
 }
 function showStep(n){[0,1,2].forEach(i=>document.getElementById('s'+i).classList.toggle('on',i===n));}
 
-function buildDropsHtml(c){
-  // sorted by value desc, no chance, show model if exists
+// ============================================================
+// GIFT GRID — стиль как Telegram Gift Drop (фото 2)
+// Поддерживает gif/png через item.gif, иначе emoji
+// ============================================================
+const GIFT_BG={common:'rgba(107,114,128,0.18)',uncommon:'rgba(59,130,246,0.18)',rare:'rgba(129,140,248,0.18)',epic:'rgba(192,132,252,0.20)',legendary:'rgba(245,158,11,0.20)'};
+
+function renderItemMedia(item, size=52){
+  // gif или png — показываем img; иначе emoji
+  if(item.gif){
+    return `<img src="${item.gif}" alt="${item.nm}" style="width:${size}px;height:${size}px;object-fit:contain" onerror="this.outerHTML='<span class=gift-emoji>${item.em}</span>'">`;
+  }
+  return `<span class="gift-emoji" style="font-size:${size}px">${item.em}</span>`;
+}
+
+function buildGiftsHtml(c){
   const sorted=[...c.items].sort((a,b)=>b.v-a.v);
-  return sorted.map(i=>`<div class="drops-row">
-    <div style="font-size:22px;flex-shrink:0">${i.em}</div>
-    <div style="flex:1;margin-left:10px">
-      <div style="font-size:13px;font-weight:600">${i.nm}</div>
-      ${i.model?`<div class="drop-model">${i.model}</div>`:''}
-      <div style="font-size:11px;color:var(--text2);margin-top:1px"><span class="rdot" style="background:${RC[i.r]}"></span>${RN[i.r]}</div>
-    </div>
-    <div style="text-align:right;font-size:12px;font-weight:600;color:var(--gold2)">₮${i.v}</div>
-  </div>`).join('');
+  return '<div class="gifts-grid">'+sorted.map(it=>{
+    const bg=GIFT_BG[it.r]||GIFT_BG.common;
+    return `<div class="gift-card">
+      <div class="gift-price">⭐ ${it.v.toLocaleString('ru')}</div>
+      <div class="gift-img-area">
+        <div class="gift-img-bg" style="background:${bg}"></div>
+        ${renderItemMedia(it,52)}
+      </div>
+      <div class="gift-name">${it.nm}</div>
+      <div class="gift-sub">${it.model||RN[it.r]}</div>
+      <div class="gift-bar gb-${it.r}"></div>
+    </div>`;
+  }).join('')+'</div>';
 }
 
 // ============================================================
@@ -827,20 +897,50 @@ function openCase(c){
   const img=document.getElementById('s0img');const em=document.getElementById('s0em');
   if(c.cover){img.src=c.cover;img.style.display='block';em.style.display='none';}
   else{img.style.display='none';em.style.display='block';em.textContent=c.em;}
-  document.getElementById('s0nm').textContent=c.nm;
   document.getElementById('s0pr').textContent='Цена: ₮'+c.price+' за 1 кейс';
   document.querySelectorAll('.cnt-tab').forEach((t,i)=>t.classList.toggle('on',i===0));
-  const dh=buildDropsHtml(c);
-  document.getElementById('drops0').innerHTML=dh;
-  document.getElementById('drops1').innerHTML=dh;
+  const gh=buildGiftsHtml(c);
+  document.getElementById('drops0').innerHTML=gh;
+  document.getElementById('drops1').innerHTML=gh;
+  // Строим idle-рулетку в step0
+  buildIdleRoulette();
   updOpenBtns();showStep(0);
   document.getElementById('mBar').classList.remove('show');
   document.getElementById('caseModal').classList.add('open');
+  document.getElementById('caseModal').scrollTop=0;
+  checkFunds();
+}
+
+// Idle рулетка — 1 трек, медленно крутится пока смотришь на кейс
+function buildIdleRoulette(){
+  const wrap=document.getElementById('rlWrapIdle');if(!wrap)return;
+  wrap.innerHTML='';
+  const items=[];for(let j=0;j<16;j++)items.push(wrand(CC.items));// 16 = хватит для петли
+  const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderItemMedia(it,28)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
+  wrap.innerHTML=`<div class="rl-slot"><div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track idle" id="tr_idle">${trackHtml}</div></div></div>`;
 }
 function updOpenBtns(){
   const tot=(CC.price*cnt).toLocaleString('ru');
   document.getElementById('btnMain').textContent='🔓 ОТКРЫТЬ ×'+cnt+' — ₮'+tot;
   document.getElementById('btnFast').textContent='⚡ Быстро ×'+cnt+' — ₮'+tot;
+  checkFunds();
+}
+// Проверка баланса — показываем баннер сразу если не хватает
+function checkFunds(){
+  const banner=document.getElementById('noFundsBanner');
+  if(!banner||!CC)return;
+  const need=CC.price*cnt;
+  const lack=need-U.bal;
+  if(lack>0){
+    banner.textContent='Для открытия не хватает ещё '+lack.toLocaleString('ru')+' ₮';
+    banner.classList.add('show');
+    document.getElementById('btnMain').disabled=true;
+    document.getElementById('btnFast').disabled=true;
+  } else {
+    banner.classList.remove('show');
+    document.getElementById('btnMain').disabled=false;
+    document.getElementById('btnFast').disabled=false;
+  }
 }
 function setCnt(n,tab){if(spinning)return;cnt=n;document.querySelectorAll('.cnt-tab').forEach(t=>t.classList.remove('on'));tab.classList.add('on');updOpenBtns();}
 function closeCase(){
@@ -876,7 +976,7 @@ function stopIdle(){
 function spin(fast){
   if(spinning)return;
   const tot=CC.price*cnt;
-  if(U.bal<tot){toast('❌ Недостаточно монет!','var(--red)');return;}
+  if(U.bal<tot){checkFunds();return;}
   U.sub(tot);U.stats.op+=cnt;U.save();
   wonSlots=[];for(let i=0;i<cnt;i++)wonSlots.push({item:wrand(CC.items),handled:false});
 
@@ -945,15 +1045,20 @@ function spin(fast){
   });
 }
 
-// WIN POPUP
 let wpSellCb=null,wpKeepCb=null;
 function showWinPopup(item,onSell,onKeep){
   const emEl=document.getElementById('wpEmoji');
-  // Если у предмета есть gif — показываем картинку, иначе emoji
   if(item.gif){
-    emEl.innerHTML=`<img src="${item.gif}" style="width:90px;height:90px;object-fit:contain;border-radius:12px" alt="${item.nm}">`;
+    // Всегда используем <img> для gif/png — никакого текста
+    emEl.innerHTML='';
+    const img=document.createElement('img');
+    img.src=item.gif;
+    img.alt=item.nm;
+    img.style.cssText='width:90px;height:90px;object-fit:contain;border-radius:12px;display:block';
+    img.onerror=function(){this.outerHTML='<span style="font-size:80px;line-height:1">'+item.em+'</span>';};
+    emEl.appendChild(img);
   } else {
-    emEl.innerHTML=item.em;
+    emEl.innerHTML=`<span style="font-size:80px;line-height:1">${item.em}</span>`;
   }
   document.getElementById('wpName').textContent=item.nm;
   const modelEl=document.getElementById('wpModel');
@@ -985,20 +1090,30 @@ function buildSlots(instant){
   const wrap=document.getElementById('rlWrap');wrap.innerHTML='';
   for(let i=0;i<cnt;i++){
     const items=[];for(let j=0;j<60;j++)items.push(wrand(CC.items));
-    const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${it.em}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
+    const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderItemMedia(it,28)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
     const resBar=cnt>1?`<div class="rl-result" id="rr_${i}"><div class="rr-em" id="rr_em_${i}"></div><div class="rr-info"><div class="rr-nm" id="rr_nm_${i}"></div><div class="rr-val" id="rr_vl_${i}"></div></div><button class="rr-sell" onclick="sellSlot(${i})">Продать ₮<span id="rr_pr_${i}"></span></button></div>`:'';
     const div=document.createElement('div');div.className='rl-slot';
-    div.innerHTML=`<div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track${instant?'':''}" id="tr_${i}">${trackHtml}</div></div>${resBar}`;
+    div.innerHTML=`<div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track" id="tr_${i}">${trackHtml}</div></div>${resBar}`;
     wrap.appendChild(div);
-    // start idle animation
-    if(!instant){
-      const t=setTimeout(()=>startIdle('tr_'+i),100);
-      idleTimers.push(t);
-    }
+    if(!instant){const t=setTimeout(()=>startIdle('tr_'+i),100);idleTimers.push(t);}
   }
 }
-function placeWinner(i,won){const tr=document.getElementById('tr_'+i);if(!tr)return;tr.classList.remove('idle');const cell=tr.children[46];if(!cell)return;cell.querySelector('.rl-item-em').textContent=won.em;cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;}
-function showSlotRes(i){const s=wonSlots[i];if(!s)return;const row=document.getElementById('rr_'+i);if(!row)return;document.getElementById('rr_em_'+i).textContent=s.item.em;document.getElementById('rr_nm_'+i).textContent=s.item.nm;document.getElementById('rr_nm_'+i).className='rr-nm r'+({'uncommon':'un','legendary':'l'}[s.item.r]||s.item.r[0]);document.getElementById('rr_vl_'+i).textContent=RN[s.item.r];document.getElementById('rr_pr_'+i).textContent=s.item.v;row.classList.add('show');}
+function placeWinner(i,won){
+  const tr=document.getElementById('tr_'+i);if(!tr)return;
+  tr.classList.remove('idle');
+  const cell=tr.children[46];if(!cell)return;
+  cell.querySelector('.rl-item-em').innerHTML=renderItemMedia(won,28);
+  cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;
+}
+function showSlotRes(i){
+  const s=wonSlots[i];if(!s)return;const row=document.getElementById('rr_'+i);if(!row)return;
+  document.getElementById('rr_em_'+i).innerHTML=renderItemMedia(s.item,20);
+  document.getElementById('rr_nm_'+i).textContent=s.item.nm;
+  document.getElementById('rr_nm_'+i).className='rr-nm r'+({'uncommon':'un','legendary':'l'}[s.item.r]||s.item.r[0]);
+  document.getElementById('rr_vl_'+i).textContent=RN[s.item.r]+(s.item.model?' · '+s.item.model:'');
+  document.getElementById('rr_pr_'+i).textContent=s.item.v;
+  row.classList.add('show');
+}
 function showMBar(){
   const tot=wonSlots.filter(s=>s&&!s.handled).reduce((a,s)=>a+s.item.v,0);
   document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');
