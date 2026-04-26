@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NFT Cases v5.3</title>
+<title>NFT Cases v6.0</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600;700&display=swap');
 :root{
-  --bg:#0a0a0f;--bg2:#11111a;--bg3:#1a1a28;
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a26;
   --accent:#c084fc;--accent2:#818cf8;
   --gold:#f59e0b;--gold2:#fcd34d;
   --red:#ef4444;--blue:#3b82f6;--green:#10b981;--gray:#6b7280;
@@ -16,44 +16,63 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:80px}
-.header{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+
+/* ── HEADER ── */
+.header{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:2px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.sync-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
-.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--gray);transition:background 0.3s}
+.hdr-right{display:flex;align-items:center;gap:8px}
+/* плюсик */
+.hdr-plus{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);flex-shrink:0;transition:background 0.15s}
+.hdr-plus:active{background:rgba(255,255,255,0.18)}
+/* баланс */
+.balance-badge{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 12px}
+.coin-t{color:var(--gold);font-size:17px;font-weight:700;font-family:'Rajdhani',sans-serif;line-height:1}
+.bal-amt{color:var(--gold2);font-family:'Rajdhani',sans-serif;font-size:17px;min-width:40px;text-align:right}
+/* аватарка */
+.hdr-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer}
+.hdr-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+/* sync dot */
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--gray);transition:background 0.3s;display:inline-block}
 .sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}.sync-dot.loading{background:var(--gold);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.balance-badge{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:6px 14px}
-.coin{width:18px;height:18px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#000;flex-shrink:0}
-.bal-amt{color:var(--gold2);font-family:'Rajdhani',sans-serif;font-size:17px;min-width:60px;text-align:right}
+
+/* ── NAV ── */
 .nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 max(8px,env(safe-area-inset-bottom))}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;background:none;border:none;color:var(--gray);cursor:pointer;transition:color 0.2s;font-family:'Exo 2',sans-serif}
 .nav-btn.active{color:var(--accent)}
 .nav-btn svg{width:22px;height:22px}
 .nav-btn span{font-size:10px;font-weight:600}
+
+/* ── PAGES ── */
 .page{display:none;padding:16px}.page.active{display:block}
 .sec-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
-/* LOADING SCREEN */
+
+/* ── LOADING ── */
 .loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:16px}
 .loading-screen.hidden{display:none}
 .loading-logo{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .loading-spin{width:36px;height:36px;border:3px solid rgba(192,132,252,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-txt{font-size:13px;color:var(--text2)}
-/* CASES */
+
+/* ── CASES ── */
 .cases-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .case-card{background:var(--bg2);border-radius:16px;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:transform 0.15s;position:relative}
 .case-card:active{transform:scale(0.97)}
 .case-card.hot{border-color:rgba(192,132,252,0.4)}
 .case-img{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--bg3)}
-.case-cover{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+/* 1. Кастом фото на обложке кейса */
+.case-cover{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0}
+.case-cover-img{width:60%;height:60%;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.6))}
 .case-glow{position:absolute;inset:0;background:radial-gradient(circle at center,var(--gc,rgba(192,132,252,0.15)) 0%,transparent 70%)}
 .case-em{font-size:64px;filter:drop-shadow(0 0 20px rgba(192,132,252,0.5));position:relative;z-index:1}
 .case-badge{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;z-index:2}
 .case-info{padding:10px 12px 12px}
 .case-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700}
-.case-price-row{display:flex;align-items:center;gap:4px;margin-top:6px}
+.case-price-row{display:flex;align-items:center;gap:3px;margin-top:6px}
 .case-pv{color:var(--gold2);font-weight:700;font-size:15px;font-family:'Rajdhani',sans-serif}
-/* MODAL */
+
+/* ── MODAL ── */
 .modal-ov{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.92);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 24px;display:none}
 .modal-ov.open{display:block}
 .modal-box{background:var(--bg2);border-radius:20px;border:1px solid var(--border);width:100%;max-width:480px;margin:0 auto}
@@ -61,14 +80,14 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .modal-ttl{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
 .modal-x{background:none;border:none;color:var(--text2);cursor:pointer;font-size:22px;line-height:1;padding:4px 8px}
 .step{display:none}.step.on{display:block}
-/* STEP0 */
-.open-screen{padding:20px 16px}
-.case-big-wrap{position:relative;width:120px;height:120px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+
+/* ── STEP 0 ── */
+.open-screen{padding:14px 16px 8px}
+.case-big-wrap{position:relative;width:110px;height:110px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center}
 .case-big-img{width:100%;height:100%;object-fit:contain;border-radius:16px;display:none}
-.case-big-em{font-size:80px;filter:drop-shadow(0 0 24px rgba(192,132,252,0.5))}
-.case-big-nm{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;text-align:center;margin-bottom:4px}
-.case-big-pr{text-align:center;color:var(--text2);font-size:14px;margin-bottom:20px}
-.cnt-tabs{display:flex;gap:6px;margin-bottom:16px}
+.case-big-em{font-size:76px;filter:drop-shadow(0 0 20px rgba(192,132,252,0.5))}
+.case-big-pr{text-align:center;color:var(--text2);font-size:14px;margin-bottom:14px}
+.cnt-tabs{display:flex;gap:6px;margin-bottom:12px}
 .cnt-tab{flex:1;padding:9px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--text2);cursor:pointer;text-align:center;transition:all 0.15s}
 .cnt-tab.on{background:rgba(192,132,252,0.15);border-color:var(--accent);color:var(--accent)}
 .open-btns{display:flex;flex-direction:column;gap:8px}
@@ -76,162 +95,95 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .btn-main:active{transform:scale(0.98)}.btn-main:disabled{opacity:0.5;cursor:not-allowed}
 .btn-fast{width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;cursor:pointer}
 .btn-fast:disabled{opacity:0.5;cursor:not-allowed}
-/* drops — gift grid style like Telegram Gift Drop */
-.drops-scroll{max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 12px 8px}
+
+/* баннер нехватки монет */
+.no-funds-banner{display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:12px;padding:11px 14px;margin-bottom:10px;font-size:13px;color:#fca5a5;text-align:center;line-height:1.5}
+.no-funds-banner.show{display:block}
+
+/* ── GIFT GRID (содержимое) — крупнее как на Gift Drop ── */
+.drops-scroll{max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 14px}
 .drops-scroll::-webkit-scrollbar{width:3px}
 .drops-scroll::-webkit-scrollbar-thumb{background:rgba(192,132,252,0.3);border-radius:4px}
-/* секция "Содержимое кейса" */
-.drops-label{font-size:12px;color:var(--text2);padding:8px 2px 6px;letter-spacing:0.5px}
-/* сетка подарков */
-.gifts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.gift-card{
-  position:relative;background:var(--bg3);border-radius:14px;
-  overflow:hidden;display:flex;flex-direction:column;align-items:center;
-  padding-bottom:10px;border:1px solid rgba(255,255,255,0.05);
-  cursor:default;
-}
-/* цена звёздочкой сверху слева */
-.gift-price{
-  position:absolute;top:7px;left:7px;z-index:2;
-  display:flex;align-items:center;gap:2px;
-  font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--text);
-  text-shadow:0 1px 3px rgba(0,0,0,0.8);
-}
-/* картинка/гиф/эмодзи */
-.gift-img-area{
-  width:100%;aspect-ratio:1;
-  display:flex;align-items:center;justify-content:center;
-  position:relative;overflow:hidden;
-}
-.gift-img-bg{position:absolute;inset:0;opacity:0.22;border-radius:14px 14px 0 0}
-.gift-emoji{font-size:48px;line-height:1;position:relative;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5))}
-.gift-img-area img{
-  width:70%;height:70%;object-fit:contain;
-  position:relative;z-index:1;
-  filter:drop-shadow(0 3px 10px rgba(0,0,0,0.55));
-}
-/* название + категория */
-.gift-name{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;text-align:center;padding:2px 5px 0;line-height:1.2}
-.gift-sub{font-size:10px;color:var(--text2);text-align:center;margin-top:1px;padding:0 4px;line-height:1.2}
-/* полоска редкости снизу */
+.drops-label{font-size:12px;color:var(--text2);padding:10px 0 8px;letter-spacing:0.5px}
+.gifts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gift-card{position:relative;background:var(--bg3);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding-bottom:12px;border:1px solid rgba(255,255,255,0.05)}
+.gift-price{position:absolute;top:8px;left:8px;z-index:2;display:flex;align-items:center;gap:2px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--text);text-shadow:0 1px 3px rgba(0,0,0,0.8)}
+.gift-img-area{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.gift-img-bg{position:absolute;inset:0;opacity:0.22}
+.gift-emoji{font-size:52px;line-height:1;position:relative;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.5))}
+.gift-img-area img{width:72%;height:72%;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.55))}
+.gift-name{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;text-align:center;padding:3px 5px 0;line-height:1.2}
+.gift-sub{font-size:10px;color:var(--text2);text-align:center;margin-top:2px;padding:0 4px;line-height:1.2}
 .gift-bar{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px}
 .gb-common{background:var(--gray)}.gb-uncommon{background:var(--blue)}.gb-rare{background:var(--accent2)}.gb-epic{background:var(--accent)}.gb-legendary{background:var(--gold)}
-/* фоны карточек по редкости */
-.gbg-common{background:rgba(107,114,128,0.18)}.gbg-uncommon{background:rgba(59,130,246,0.18)}.gbg-rare{background:rgba(129,140,248,0.18)}.gbg-epic{background:rgba(192,132,252,0.20)}.gbg-legendary{background:rgba(245,158,11,0.20)}
+.GIFT_BG_common{background:rgba(107,114,128,0.18)}.GIFT_BG_uncommon{background:rgba(59,130,246,0.18)}.GIFT_BG_rare{background:rgba(129,140,248,0.18)}.GIFT_BG_epic{background:rgba(192,132,252,0.20)}.GIFT_BG_legendary{background:rgba(245,158,11,0.20)}
 
-/* Баннер нехватки монет — показывается СРАЗУ над кнопками */
-.no-funds-banner{
-  display:none;
-  background:rgba(239,68,68,0.12);
-  border:1px solid rgba(239,68,68,0.35);
-  border-radius:12px;
-  padding:11px 14px;
-  margin-bottom:10px;
-  font-size:13px;
-  color:#fca5a5;
-  text-align:center;
-  line-height:1.5;
-}
-.no-funds-banner.show{display:block}
-/* ROULETTE */
+/* ── ROULETTE — крупнее ── */
+/* 1. Idle рулетка */
 .rl-wrap{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
-.rl-slot{background:var(--bg3);border-radius:10px;overflow:hidden}
-.rl-cont{width:100%;height:90px;position:relative;overflow:hidden;border-top:2px solid rgba(192,132,252,0.3);border-bottom:2px solid rgba(192,132,252,0.3)}
+.rl-slot{background:var(--bg3);border-radius:12px;overflow:hidden}
+/* крупная рулетка: высота 110px, ячейки 100px */
+.rl-cont{width:100%;height:110px;position:relative;overflow:hidden;border-top:2px solid rgba(192,132,252,0.35);border-bottom:2px solid rgba(192,132,252,0.35)}
 .rl-ptr{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--gold);z-index:10;pointer-events:none}
-.rl-ptr::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--gold)}
-.rl-ptr::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:8px solid var(--gold)}
-.rl-track{display:flex;height:90px;will-change:transform}
-.rl-item{flex-shrink:0;width:86px;height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:1px solid var(--border);position:relative}
-.rl-item-em{font-size:32px}
+.rl-ptr::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid var(--gold)}
+.rl-ptr::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:10px solid var(--gold)}
+.rl-track{display:flex;height:110px;will-change:transform}
+.rl-item{flex-shrink:0;width:100px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-right:1px solid var(--border);position:relative}
+.rl-item-em{display:flex;align-items:center;justify-content:center;font-size:38px}
+.rl-item-em img{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4))}
 .rl-item-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
 .ri-common{background:var(--gray)}.ri-uncommon{background:var(--blue)}.ri-rare{background:var(--accent2)}.ri-epic{background:var(--accent)}.ri-legendary{background:var(--gold)}
-/* idle roulette — медленная прокрутка когда кейс открыт, ещё не крутим */
-@keyframes rlIdle{0%{transform:translateX(0)}100%{transform:translateX(-860px)}}
-.rl-track.idle{animation:rlIdle 18s linear infinite}
-/* slot result */
-.rl-result{height:44px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 10px;opacity:0;pointer-events:none;transition:opacity 0.3s}
+/* idle — медленно */
+@keyframes rlIdle{0%{transform:translateX(0)}100%{transform:translateX(-1000px)}}
+.rl-track.idle{animation:rlIdle 20s linear infinite}
+/* результат слота */
+.rl-result{height:46px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 10px;opacity:0;pointer-events:none;transition:opacity 0.3s}
 .rl-result.show{opacity:1;pointer-events:auto}
-.rr-em{font-size:22px;flex-shrink:0}
+.rr-em{display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;width:30px}
+.rr-em img{width:30px;height:30px;object-fit:contain}
 .rr-info{flex:1;min-width:0}
 .rr-nm{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rr-val{font-size:10px;color:var(--text2)}
 .rr-sell{padding:5px 10px;background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Exo 2',sans-serif;flex-shrink:0}
-/* multi bar */
-.multi-bar{display:none;padding:10px 12px 14px;gap:8px;flex-direction:column}
+
+/* ── MULTI BAR (п.5) ── */
+.multi-bar{display:none;padding:10px 12px 4px;flex-direction:column;gap:8px}
 .multi-bar.show{display:flex}
 .multi-bar-btns{display:flex;gap:8px}
 .btn-sell-all{flex:1;padding:12px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
-.btn-again-multi{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
-/* step2 */
-.s2-wrap{padding:16px;text-align:center}
-.s2-em{width:110px;height:110px;margin:0 auto 10px;background:var(--bg3);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:58px;border:2px solid transparent;animation:winPop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
-@keyframes winPop{0%{transform:scale(0.5);opacity:0}100%{transform:scale(1);opacity:1}}
-.s2-nm{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:3px}
-.s2-model{font-size:12px;color:var(--text2);margin-bottom:3px}
-.s2-vl{font-size:13px;color:var(--text2);margin-bottom:14px}
-.s2-btns{display:flex;gap:8px}
-.btn-sell1{flex:1;padding:12px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
-.btn-again1{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
-/* WIN POPUP — стиль как на скрине "Поздравляем!" */
-.win-popup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.75);display:none;align-items:flex-end;justify-content:center;padding-bottom:0}
+.btn-keep-all{flex:1;padding:12px;background:var(--accent2);border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+/* кнопка "Ещё раз" по центру (п.3 и п.5) */
+.btn-again-center{display:none;width:100%;padding:13px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;cursor:pointer;text-align:center;margin:8px 0}
+.btn-again-center.show{display:block}
+
+/* ── WIN POPUP ── */
+.win-popup{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.78);display:none;align-items:flex-end;justify-content:center}
 .win-popup.show{display:flex}
-.win-popup-box{
-  background:linear-gradient(180deg,#1a0a2e 0%,#0d0d1a 100%);
-  border-radius:24px 24px 0 0;
-  border:1px solid rgba(192,132,252,0.2);
-  border-bottom:none;
-  padding:24px 24px 36px;
-  text-align:center;
-  width:100%;
-  max-width:480px;
-  position:relative;
-  animation:slideUp 0.35s cubic-bezier(0.34,1.2,0.64,1);
-}
+.win-popup-box{background:linear-gradient(180deg,#1a0a2e 0%,#0d0d1a 100%);border-radius:24px 24px 0 0;border:1px solid rgba(192,132,252,0.2);border-bottom:none;padding:24px 24px 36px;text-align:center;width:100%;max-width:480px;position:relative;animation:slideUp 0.35s cubic-bezier(0.34,1.2,0.64,1)}
 @keyframes slideUp{0%{transform:translateY(100%);opacity:0}100%{transform:translateY(0);opacity:1}}
-.win-congrats{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:20px;letter-spacing:1px}
-.win-gift-wrap{
-  width:120px;height:120px;margin:0 auto 20px;
-  position:relative;display:flex;align-items:center;justify-content:center;
-}
-.win-gift-glow{
-  position:absolute;inset:-20px;
-  background:radial-gradient(circle,rgba(245,158,11,0.35) 0%,transparent 70%);
-  animation:glowPulse 1.5s ease-in-out infinite;
-}
-@keyframes glowPulse{0%,100%{transform:scale(1);opacity:0.7}50%{transform:scale(1.1);opacity:1}}
-.win-gift-em{
-  font-size:80px;
-  animation:giftBounce 0.5s cubic-bezier(0.34,1.56,0.64,1);
-  position:relative;z-index:1;
-  filter:drop-shadow(0 4px 16px rgba(245,158,11,0.5));
-}
-@keyframes giftBounce{0%{transform:scale(0.3) rotate(-15deg);opacity:0}70%{transform:scale(1.1) rotate(5deg)}100%{transform:scale(1) rotate(0);opacity:1}}
-.win-popup-nm{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
-.win-popup-model{font-size:13px;color:var(--text2);margin-bottom:20px}
-.win-popup-btns{display:flex;flex-direction:column;gap:10px}
-.wp-sell{
-  width:100%;padding:14px;
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);
-  border:none;border-radius:14px;color:#fff;
-  font-family:'Exo 2',sans-serif;font-size:16px;font-weight:700;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-}
-.wp-keep{
-  width:100%;padding:11px;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:12px;color:var(--text2);
-  font-family:'Exo 2',sans-serif;font-size:14px;font-weight:600;cursor:pointer;
-}
-.win-close-x{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1;padding:4px}
-/* INVENTORY */
+.win-close-x{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.08);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:16px;cursor:pointer}
+.win-congrats{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:18px;letter-spacing:1px}
+.win-gift-wrap{width:120px;height:120px;margin:0 auto 16px;position:relative;display:flex;align-items:center;justify-content:center}
+.win-gift-glow{position:absolute;inset:-20px;background:radial-gradient(circle,rgba(252,192,60,0.3) 0%,transparent 70%);border-radius:50%;animation:glowP 1.8s ease-in-out infinite}
+@keyframes glowP{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.win-gift-em{width:110px;height:110px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:68px;position:relative;z-index:1;animation:giftBounce 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes giftBounce{0%{transform:scale(0.3) rotate(-15deg);opacity:0}60%{transform:scale(1.1) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.win-popup-nm{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:3px}
+.win-popup-model{font-size:13px;color:var(--text2);margin-bottom:18px}
+/* кнопки попапа */
+.win-popup-btns{display:flex;gap:8px;margin-bottom:10px}
+.wp-sell{flex:1;padding:13px;background:#3b82f6;border:none;border-radius:12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
+.wp-keep{flex:1;padding:13px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer}
+
+/* ── INVENTORY ── */
 .inv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .inv-item{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:10px 8px;text-align:center;position:relative}
 .inv-ov{position:absolute;inset:0;border-radius:12px;background:rgba(10,10,15,0.82);display:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px}
 .inv-item.wd-on .inv-ov{display:flex}
 .inv-item.wd-on .inv-acts{visibility:hidden}
 .ov-txt{font-size:10px;color:var(--text2);text-align:center;line-height:1.4}
-.inv-em{font-size:36px}
+.inv-em{font-size:36px;display:flex;align-items:center;justify-content:center;height:44px}
+.inv-em img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4))}
 .inv-nm{font-size:11px;font-weight:600;margin-top:4px;line-height:1.3}
 .inv-model{font-size:10px;color:var(--text2);margin-top:1px}
 .inv-vl{font-size:12px;color:var(--gold2);font-weight:700;margin-top:3px}
@@ -240,7 +192,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .ib-sell{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3)!important}
 .ib-wd{background:rgba(245,158,11,0.15);color:var(--gold2);border:1px solid rgba(245,158,11,0.3)!important}
 .empty-inv{text-align:center;padding:40px 20px;color:var(--text2);grid-column:1/-1}
-/* PROFILE */
+
+/* ── PROFILE ── */
 .prof-hdr{background:var(--bg2);border-radius:16px;border:1px solid var(--border);padding:20px;display:flex;align-items:center;gap:16px;margin-bottom:16px}
 .avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;flex-shrink:0}
 .stats-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
@@ -253,7 +206,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .ptab{flex:1;padding:9px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;text-align:center;transition:all 0.15s;font-family:'Exo 2',sans-serif}
 .ptab.on{background:rgba(192,132,252,0.15);border-color:var(--accent);color:var(--accent)}
 .psec{display:none}.psec.on{display:block}
-/* REF */
+
+/* ── REF ── */
 .ref-hero{background:linear-gradient(135deg,rgba(192,132,252,0.15),rgba(129,140,248,0.1));border:1px solid rgba(192,132,252,0.3);border-radius:16px;padding:20px;text-align:center;margin-bottom:14px}
 .ref-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px}
 .ref-bonus{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:20px;padding:6px 14px;font-weight:700;color:var(--gold2);font-size:14px;margin-bottom:12px}
@@ -265,7 +219,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .ref-inv-item{background:var(--bg2);border-radius:10px;border:1px solid var(--border);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .rs-ok{background:rgba(16,185,129,0.2);color:var(--green);font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
 .rs-pend{background:rgba(245,158,11,0.2);color:var(--gold2);font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
-/* ADMIN */
+
+/* ── ADMIN ── */
 .admin-badge{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;letter-spacing:1px;margin-left:8px}
 .admin-card{background:var(--bg2);border-radius:14px;border:1px solid rgba(239,68,68,0.25);padding:16px;margin-bottom:12px}
 .act{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--red);margin-bottom:12px;letter-spacing:1px}
@@ -273,6 +228,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .ai:focus{outline:none;border-color:rgba(239,68,68,0.5)}
 .ab{width:100%;padding:11px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:10px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:1px;margin-top:4px}
 .ab:disabled{opacity:0.5}
+.ab-green{background:linear-gradient(135deg,var(--green),#059669)!important}
+.ab-accent{background:linear-gradient(135deg,var(--accent),var(--accent2))!important}
 .a-users{display:flex;flex-direction:column;gap:6px}
 .a-urow{background:var(--bg3);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
 .a-ubal{color:var(--gold2);font-weight:700;font-family:'Rajdhani',sans-serif;font-size:16px}
@@ -305,7 +262,27 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .pg{padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;min-width:34px;text-align:center}
 .pg:disabled{opacity:0.3;cursor:not-allowed}.pg.cur{background:rgba(192,132,252,0.2);border-color:var(--accent);color:var(--accent)}
 .pg-info{font-size:12px;color:var(--text2);padding:0 4px}
-/* WD MODAL */
+
+/* 10. Промокоды */
+.promo-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.promo-row{background:var(--bg3);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.promo-code{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);letter-spacing:1px}
+.promo-info{font-size:11px;color:var(--text2)}
+.promo-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+.promo-used{font-size:10px;background:rgba(16,185,129,0.15);color:var(--green);border-radius:6px;padding:2px 6px}
+.promo-used-0{background:rgba(245,158,11,0.15);color:var(--gold2)}
+
+/* промокод ввод (плюсик) */
+.promo-modal{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.85);display:none;align-items:flex-end;justify-content:center}
+.promo-modal.open{display:flex}
+.promo-sheet{background:var(--bg2);border-radius:24px 24px 0 0;padding:24px;width:100%;max-width:480px;animation:slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1)}
+.promo-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;text-align:center}
+.promo-inp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:18px;letter-spacing:2px;text-align:center;margin-bottom:12px}
+.promo-inp:focus{outline:none;border-color:var(--accent)}
+.promo-submit{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;cursor:pointer;margin-bottom:10px}
+.promo-cancel{width:100%;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;cursor:pointer}
+
+/* ── WD MODAL ── */
 .wd-info{background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center}
 .wd-em-big{font-size:50px;margin-bottom:8px}
 .wd-itm-nm{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
@@ -313,7 +290,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .wd-ta{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:13px;resize:none;height:70px}
 .wd-ta:focus{outline:none;border-color:rgba(192,132,252,0.5)}
 .wd-sub{width:100%;padding:12px;background:linear-gradient(135deg,var(--gold),#d97706);border:none;border-radius:12px;color:#000;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;cursor:pointer;margin-top:10px}
-/* REJECT MODAL */
+
+/* ── REJECT MODAL ── */
 .rej-ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:20px}
 .rej-ov.open{display:flex}
 .rej-box{background:var(--bg2);border-radius:16px;border:1px solid rgba(239,68,68,0.3);padding:20px;width:100%;max-width:380px}
@@ -323,7 +301,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .rej-btns{display:flex;gap:8px}
 .rej-ok{flex:1;padding:11px;background:var(--red);border:none;border-radius:10px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
 .rej-cancel{flex:1;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
-/* TOAST */
+
+/* ── TOAST ── */
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px 20px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @keyframes spin2{to{transform:rotate(360deg)}}
@@ -339,14 +318,23 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-logo">NFTCASES</div>
   <div class="loading-spin"></div>
-  <div class="loading-txt" id="loadingTxt">Загрузка данных...</div>
+  <div class="loading-txt" id="loadingTxt">Загрузка...</div>
 </div>
 
+<!-- 8. Новый хедер: лого | плюсик + баланс + аватар -->
 <div class="header">
   <div class="logo">NFTCASES</div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <div class="sync-badge"><div class="sync-dot" id="syncDot"></div><span id="syncTxt"></span></div>
-    <div class="balance-badge"><div class="coin">₮</div><div class="bal-amt" id="balEl">0</div></div>
+  <div class="hdr-right">
+    <div class="sync-dot" id="syncDot"></div>
+    <!-- 11. Плюсик → промокод -->
+    <button class="hdr-plus" id="hdrPlus" onclick="openPromoModal()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.2"/><path d="M8 4.5v7M4.5 8h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+    <div class="balance-badge">
+      <span class="coin-t">₸</span>
+      <div class="bal-amt" id="balEl">0</div>
+    </div>
+    <div class="hdr-avatar" id="hdrAvatar">?</div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -386,8 +374,8 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="scard"><div class="sval" id="stWd">0</div><div class="slbl">Выведено</div></div>
     </div>
     <div class="stats-2">
-      <div class="scard"><div class="sval" id="stEr">0</div><div class="slbl">Заработано ₮</div></div>
-      <div class="scard"><div class="sval" id="stWv">0</div><div class="slbl">Выведено ₮</div></div>
+      <div class="scard"><div class="sval" id="stEr">0</div><div class="slbl">Заработано ₸</div></div>
+      <div class="scard"><div class="sval" id="stWv">0</div><div class="slbl">Выведено ₸</div></div>
     </div>
     <div class="sec-title">Лучший вывод</div>
     <div class="best-wd">
@@ -397,7 +385,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="sec-title">О приложении</div>
     <div style="background:var(--bg2);border-radius:14px;border:1px solid var(--border);padding:16px;font-size:13px;color:var(--text2);line-height:1.7">
       NFT Cases — Telegram Mini App.<br>Открывай кейсы, собирай подарки и выводи их.<br><br>
-      <span style="color:var(--accent)">Версия 5.3</span>
+      <span style="color:var(--accent)">Версия 6.0</span>
     </div>
   </div>
   <div class="psec" id="psec-ref">
@@ -405,7 +393,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div style="font-size:36px;margin-bottom:8px">🤝</div>
       <div class="ref-title">Реферальная программа</div>
       <div class="ref-bonus">🎁 +50 монет за каждого друга</div>
-      <div class="ref-rules"><b>Как получить бонус:</b><br>1. Скопируй реф. ссылку и отправь другу<br>2. Друг открывает приложение по ссылке<br>3. Когда ему пополнят баланс на ₮200+ — ты получаешь <b style="color:var(--gold2)">+50 монет</b><br>4. Бонус — <b>один раз</b> за каждого друга</div>
+      <div class="ref-rules"><b>Как получить бонус:</b><br>1. Скопируй реф. ссылку и отправь другу<br>2. Друг открывает приложение по ссылке<br>3. Когда ему пополнят баланс на ₸200+ — ты получаешь <b style="color:var(--gold2)">+50 монет</b><br>4. Бонус — <b>один раз</b> за каждого друга</div>
     </div>
     <div class="ref-link-box">
       <div style="font-size:12px;color:var(--text2)">Твоя реферальная ссылка:</div>
@@ -416,7 +404,7 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
     <div class="stats-2">
       <div class="scard"><div class="sval" id="stRfC">0</div><div class="slbl">Приглашено</div></div>
-      <div class="scard"><div class="sval" id="stRfE">0</div><div class="slbl">Заработано ₮</div></div>
+      <div class="scard"><div class="sval" id="stRfE">0</div><div class="slbl">Заработано ₸</div></div>
     </div>
     <div class="sec-title">Приглашённые</div>
     <div id="refList"><div style="text-align:center;color:var(--text2);font-size:13px;padding:20px">Ещё никого нет 👀</div></div>
@@ -454,6 +442,16 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
     <input class="ai" id="setAmt" placeholder="Новый баланс" type="number" min="0">
     <button class="ab" id="setBtn" onclick="doSetBal()">⚙️ Установить и уведомить</button>
   </div>
+  <!-- 10. ПРОМОКОДЫ -->
+  <div class="admin-card">
+    <div class="act">🎟️ Промокоды</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="ai" id="promoAmt" placeholder="Сумма ₸" type="number" min="1" style="margin-bottom:0;flex:1">
+      <input class="ai" id="promoUses" placeholder="Активаций" type="number" min="1" value="1" style="margin-bottom:0;flex:1">
+    </div>
+    <button class="ab ab-accent" onclick="createPromo()">🎟️ Создать промокод</button>
+    <div class="promo-list" id="promoList"></div>
+  </div>
   <div class="admin-card">
     <div class="act">📤 Заявки на вывод</div>
     <input class="wd-srch" id="wdSrch" placeholder="Поиск по @username или ID..." oninput="renderWdList()">
@@ -475,17 +473,17 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="modal-ttl" id="mTitle">Кейс</div>
       <button class="modal-x" onclick="closeCase()">✕</button>
     </div>
+    <!-- STEP 0 -->
     <div class="step on" id="s0">
-      <!-- Idle рулетка — показывается сразу при открытии кейса -->
+      <!-- 1. Idle рулетка сверху -->
       <div class="rl-wrap" id="rlWrapIdle" style="padding-bottom:0"></div>
       <div class="open-screen">
         <div class="case-big-wrap">
           <img class="case-big-img" id="s0img" src="" alt="">
           <div class="case-big-em" id="s0em"></div>
         </div>
-        <div class="case-big-nm" id="s0nm" style="display:none"></div>
         <div class="case-big-pr" id="s0pr"></div>
-        <div class="cnt-tabs" id="cntTabs">
+        <div class="cnt-tabs">
           <div class="cnt-tab on" onclick="setCnt(1,this)">×1</div>
           <div class="cnt-tab" onclick="setCnt(2,this)">×2</div>
           <div class="cnt-tab" onclick="setCnt(3,this)">×3</div>
@@ -497,34 +495,26 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
           <button class="btn-fast" id="btnFast" onclick="spin(true)">⚡ Быстро</button>
         </div>
       </div>
-      <div style="padding:0 14px 14px">
-        <div class="drops-label">Содержимое кейса</div>
+      <div style="padding:0 0 14px">
+        <div class="drops-label" style="padding-left:14px">Содержимое кейса</div>
         <div class="drops-scroll" id="drops0"></div>
       </div>
     </div>
+    <!-- STEP 1 — рулетки -->
     <div class="step" id="s1">
       <div class="rl-wrap" id="rlWrap"></div>
+      <!-- 5. Кнопки мульти -->
       <div class="multi-bar" id="mBar">
         <div class="multi-bar-btns">
-          <button class="btn-sell-all" id="btnSellAll" onclick="sellAll()">Продать все</button>
-          <button class="btn-again-multi" onclick="goBack()">↩ Ещё раз</button>
+          <button class="btn-sell-all" id="btnSellAll" onclick="multiSellAll()">Продать все</button>
+          <button class="btn-keep-all" id="btnKeepAll" onclick="multiKeepAll()">В инвентарь</button>
         </div>
+        <!-- 5. Кнопка "Ещё раз" появляется после выбора -->
+        <button class="btn-again-center" id="btnAgainMulti" onclick="goBackToCase()">🔄 Ещё раз</button>
       </div>
-      <div style="padding:0 12px 12px">
-        <div class="drops-label">Содержимое кейса</div>
+      <div style="padding:0 0 12px">
+        <div class="drops-label" style="padding-left:14px">Содержимое кейса</div>
         <div class="drops-scroll" id="drops1"></div>
-      </div>
-    </div>
-    <div class="step" id="s2">
-      <div class="s2-wrap">
-        <div class="s2-em" id="s2em"></div>
-        <div class="s2-nm" id="s2nm"></div>
-        <div class="s2-model" id="s2model"></div>
-        <div class="s2-vl" id="s2vl"></div>
-        <div class="s2-btns">
-          <button class="btn-sell1" onclick="sellSingle()">Продать</button>
-          <button class="btn-again1" onclick="goBack()">↩ Ещё раз</button>
-        </div>
       </div>
     </div>
   </div>
@@ -533,18 +523,31 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 <!-- WIN POPUP -->
 <div class="win-popup" id="winPopup">
   <div class="win-popup-box">
-    <button class="win-close-x" onclick="winClose()">✕</button>
-    <div class="win-congrats">Поздравляем!</div>
+    <button class="win-close-x" onclick="winCloseFn()">✕</button>
+    <div class="win-congrats">Поздравляем! 🎉</div>
     <div class="win-gift-wrap">
       <div class="win-gift-glow"></div>
       <div class="win-gift-em" id="wpEmoji">🎁</div>
     </div>
     <div class="win-popup-nm" id="wpName"></div>
     <div class="win-popup-model" id="wpModel"></div>
-    <div class="win-popup-btns">
-      <button class="wp-sell" id="wpSell">Продать</button>
-      <button class="wp-keep" id="wpKeep">Забрать в инвентарь</button>
+    <!-- 3. Кнопки попапа; после нажатия заменяются на "Ещё раз" -->
+    <div class="win-popup-btns" id="wpBtns">
+      <button class="wp-sell" id="wpSell">Продать ₸0</button>
+      <button class="wp-keep" id="wpKeep">В инвентарь</button>
     </div>
+    <!-- 3. Ещё раз по центру -->
+    <button class="btn-again-center" id="wpAgain" onclick="goBackToCase()">🔄 Ещё раз</button>
+  </div>
+</div>
+
+<!-- 10. Промокод ввод -->
+<div class="promo-modal" id="promoModal">
+  <div class="promo-sheet">
+    <div class="promo-title">🎟️ Введи промокод</div>
+    <input class="promo-inp" id="promoInput" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="20" oninput="formatPromoInput(this)">
+    <button class="promo-submit" onclick="submitPromo()">Активировать</button>
+    <button class="promo-cancel" onclick="closePromoModal()">Отмена</button>
   </div>
 </div>
 
@@ -600,57 +603,94 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 </nav>
 
 <script>
-// ============================================================
+// ════════════════════════════════════
 // CONFIG
-// ============================================================
+// ════════════════════════════════════
 const ADMIN_ID=780434845, REF_REWARD=50, REF_MIN=200;
+const IW=100; // ширина ячейки рулетки (обновлена под новый размер)
 
-// ============================================================
-// CASES — v5.1
-// ============================================================
-// cover: путь к изображению на GitHub (напр. 'covers/star.jpg')
-// Если cover не указан или файл не найден — показывается emoji
+// ════════════════════════════════════
+// 11. КЕЙСЫ
+// ════════════════════════════════════
+// cover     — обложка в сетке кейсов (img поверх фона)
+// coverBg   — фоновое изображение (заливает всю карточку)
+// items: png — путь к .png для рулетки/содержимого/инвентаря
+//        gif — путь к .gif только для win-попапа
+//
+// 11. Новый кейс Новогодний: файлы в gifts/NewYear/png/ и gifts/NewYear/gif/
+// ЧТОБЫ ДОБАВИТЬ ССЫЛКИ НА ФАЙЛЫ — измени поля png и gif у каждого item
+
 const CASES=[
-  {
-    id:'star', nm:'Звёздный', em:'⭐', price:222,
-    gc:'rgba(252,211,77,0.25)', hot:true,
-    cover:'covers/star.jpg',
-    items:[
-      {nm:'500 Звёзд',em:'🌟',r:'legendary',v:839,ch:0.3,model:null, gif:'gifts/stars.gif'},
-      {nm:'300 Звёзд',em:'💫',r:'epic',    v:525,ch:0.7,model:null, gif:'gifts/stars.gif'},
-      {nm:'200 Звёзд',em:'✨',r:'rare',    v:343,ch:4,  model:null, gif:'gifts/stars.gif'},
-      {nm:'150 Звёзд',em:'⭐',r:'common',  v:275,ch:12, model:null, gif:'gifts/stars.gif'},
-      {nm:'125 Звёзд',em:'🌠',r:'common',  v:244,ch:18, model:null, gif:'gifts/stars.gif'},
-      {nm:'100 Звёзд',em:'💥',r:'common',  v:213,ch:30, model:null, gif:'gifts/stars.gif'},
-      {nm:'75 Звёзд', em:'🔆',r:'common',  v:178,ch:35, model:null, gif:'gifts/stars.gif'},
-    ]
-  },
+  // 7. Бюджетный первым
   {
     id:'budget', nm:'Бюджетный', em:'🎁', price:79,
     gc:'rgba(99,179,237,0.18)', hot:false,
-    cover:'covers/budget.jpg',
+    cover:'covers/budget_item.png', // кастом картинка поверх фона
     items:[
-      {nm:'100 Звёзд',em:'🏆',r:'common',v:213,ch:0.67,model:'Кубок', gif:'gifts/kubok.gif'},
-      {nm:'100 Звёзд',em:'💍',r:'common',v:213,ch:0.67,model:'Кольцо', gif:'gifts/kolco.gif'},
-      {nm:'100 Звёзд',em:'💎',r:'common',v:213,ch:0.66,model:'Алмаз', gif:'gifts/almaz.gif'},
-      {nm:'50 Звёзд', em:'🎂',r:'common',v:107,ch:2.5, model:'Торт', gif:'gifts/tortik.gif'},
-      {nm:'50 Звёзд', em:'💐',r:'common',v:107,ch:2.5, model:'Букет', gif:'gifts/buket.gif'},
-      {nm:'50 Звёзд', em:'🚀',r:'common',v:107,ch:2.5, model:'Ракета', gif:'gifts/raketa.gif'},
-      {nm:'50 Звёзд', em:'🍾',r:'common',v:107,ch:2.5, model:'Шампанское', gif:'gifts/shampan.gif'},
-      {nm:'25 Звёзд', em:'📦',r:'common',v:53, ch:20,  model:'Подарок', gif:'gifts/podarok.gif'},
-      {nm:'25 Звёзд', em:'🌹',r:'common',v:53, ch:20,  model:'Роза', gif:'gifts/roza.gif'},
-      {nm:'15 Звёзд', em:'❤️',r:'common',v:32, ch:24,  model:'Сердце', gif:'gifts/serdechko.gif'},
-      {nm:'15 Звёзд', em:'🧸',r:'common',v:32, ch:24,  model:'Мишка', gif:'gifts/mishka.gif'},
+      {nm:'100 Звёзд',em:'🏆',r:'uncommon',v:213,ch:0.67,model:'Кубок',    png:'gifts/kubok.png',    gif:'gifts/kubok.gif'},
+      {nm:'100 Звёзд',em:'💍',r:'uncommon',v:213,ch:0.67,model:'Кольцо',   png:'gifts/kolco.png',    gif:'gifts/kolco.gif'},
+      {nm:'100 Звёзд',em:'💎',r:'uncommon',v:213,ch:0.66,model:'Алмаз',    png:'gifts/almaz.png',    gif:'gifts/almaz.gif'},
+      {nm:'50 Звёзд', em:'🎂',r:'common',  v:107,ch:2.5, model:'Торт',     png:'gifts/tortik.png',   gif:'gifts/tortik.gif'},
+      {nm:'50 Звёзд', em:'💐',r:'common',  v:107,ch:2.5, model:'Букет',    png:'gifts/buket.png',    gif:'gifts/buket.gif'},
+      {nm:'50 Звёзд', em:'🚀',r:'common',  v:107,ch:2.5, model:'Ракета',   png:'gifts/raketa.png',   gif:'gifts/raketa.gif'},
+      {nm:'50 Звёзд', em:'🍾',r:'common',  v:107,ch:2.5, model:'Шампанское',png:'gifts/shampan.png', gif:'gifts/shampan.gif'},
+      {nm:'25 Звёзд', em:'📦',r:'common',  v:53, ch:20,  model:'Подарок',  png:'gifts/podarok.png',  gif:'gifts/podarok.gif'},
+      {nm:'25 Звёзд', em:'🌹',r:'common',  v:53, ch:20,  model:'Роза',     png:'gifts/roza.png',     gif:'gifts/roza.gif'},
+      {nm:'15 Звёзд', em:'❤️',r:'common',  v:32, ch:24,  model:'Сердце',   png:'gifts/serdechko.png',gif:'gifts/serdechko.gif'},
+      {nm:'15 Звёзд', em:'🧸',r:'common',  v:32, ch:24,  model:'Мишка',    png:'gifts/mishka.png',   gif:'gifts/mishka.gif'},
+    ]
+  },
+  // 7. Звёздный вторым
+  {
+    id:'star', nm:'Звёздный', em:'⭐', price:222,
+    gc:'rgba(252,211,77,0.25)', hot:true,
+    cover:'covers/star_item.png',
+    items:[
+      {nm:'500 Звёзд',em:'🌟',r:'legendary',v:839, ch:0.3, model:null,png:'gifts/stars.png',gif:'gifts/stars.gif'},
+      {nm:'300 Звёзд',em:'💫',r:'epic',     v:525, ch:0.7, model:null,png:'gifts/stars.png',gif:'gifts/stars.gif'},
+      {nm:'200 Звёзд',em:'✨',r:'rare',     v:343, ch:4,   model:null,png:'gifts/stars.png',gif:'gifts/stars.gif'},
+      {nm:'150 Звёзд',em:'⭐',r:'common',   v:275, ch:12,  model:null,png:'gifts/stars.png',gif:'gifts/stars.gif'},
+      {nm:'125 Звёзд',em:'🌠',r:'common',   v:244, ch:18,  model:null,png:'gifts/stars.png',gif:'gifts/stars.gif'},
+      {nm:'100 Звёзд',em:'💥',r:'common',   v:213, ch:30,  model:null,png:'gifts/stars.png',gif:'gifts/stars.gif'},
+      {nm:'75 Звёзд', em:'🔆',r:'common',   v:178, ch:35,  model:null,png:'gifts/stars.png',gif:'gifts/stars.gif'},
+    ]
+  },
+  // 11. НОВОГОДНИЙ КЕЙС
+  // Файлы: gifts/NewYear/png/НАЗВАНИЕ.png и gifts/NewYear/gif/НАЗВАНИЕ.gif
+  // Замени пути на свои когда загрузишь файлы на GitHub
+  {
+    id:'newyear', nm:'Новогодний Азарт', em:'🎄', price:444,
+    gc:'rgba(34,197,94,0.2)', hot:true,
+    cover:'gifts/NewYear/png/cover.png', // обложка кейса
+    items:[
+      // Legendary (0% шанс — можно убрать из рулетки или оставить как 0.01)
+      {nm:'Toy Bear',        em:'🧸', r:'legendary',v:4155,ch:0.01,model:'Toy Bear',      png:'gifts/NewYear/png/toy_bear.png',       gif:'gifts/NewYear/gif/toy_bear.gif'},
+      // Epic
+      {nm:'Jingle Bells',   em:'🔔', r:'epic',     v:989, ch:0.5, model:'Jingle Bells',  png:'gifts/NewYear/png/jingle_bells.png',   gif:'gifts/NewYear/gif/jingle_bells.gif'},
+      {nm:'Desk Calendar',  em:'📅', r:'epic',     v:984, ch:0.5, model:'Desk Calendar', png:'gifts/NewYear/png/desk_calendar.png',  gif:'gifts/NewYear/gif/desk_calendar.gif'},
+      {nm:'Witch Hat',      em:'🎩', r:'epic',     v:769, ch:1.0, model:'Witch Hat',     png:'gifts/NewYear/png/witch_hat.png',      gif:'gifts/NewYear/gif/witch_hat.gif'},
+      // Rare
+      {nm:'Snow Mittens',   em:'🧤', r:'rare',     v:450, ch:5.0, model:'Snow Mittens',  png:'gifts/NewYear/png/snow_mittens.png',   gif:'gifts/NewYear/gif/snow_mittens.gif'},
+      {nm:'Snow Globe',     em:'🌨️', r:'rare',     v:380, ch:10.0,model:'Snow Globe',    png:'gifts/NewYear/png/snow_globe.png',     gif:'gifts/NewYear/gif/snow_globe.gif'},
+      {nm:'Santa Hat',      em:'🎅', r:'rare',     v:308, ch:13.0,model:'Santa Hat',     png:'gifts/NewYear/png/santa_hat.png',      gif:'gifts/NewYear/gif/santa_hat.gif'},
+      // Common
+      {nm:'Winter Wreath',  em:'🎄', r:'common',   v:290, ch:15.0,model:'Winter Wreath', png:'gifts/NewYear/png/winter_wreath.png',  gif:'gifts/NewYear/gif/winter_wreath.gif'},
+      {nm:'Big Year',       em:'🎆', r:'common',   v:257, ch:15.0,model:'Big Year',      png:'gifts/NewYear/png/big_year.png',       gif:'gifts/NewYear/gif/big_year.gif'},
+      {nm:'Xmas Stocking',  em:'🧦', r:'common',   v:256, ch:15.0,model:'Xmas Stocking', png:'gifts/NewYear/png/xmas_stocking.png',  gif:'gifts/NewYear/gif/xmas_stocking.gif'},
+      {nm:'Candy Cane',     em:'🍬', r:'common',   v:250, ch:10.0,model:'Candy Cane',    png:'gifts/NewYear/png/candy_cane.png',     gif:'gifts/NewYear/gif/candy_cane.gif'},
+      {nm:'Snake Box',      em:'📦', r:'common',   v:247, ch:8.0, model:'Snake Box',     png:'gifts/NewYear/png/snake_box.png',      gif:'gifts/NewYear/gif/snake_box.gif'},
+      {nm:'Vice Cream',     em:'🍦', r:'common',   v:245, ch:7.0, model:'Vice Cream',    png:'gifts/NewYear/png/vice_cream.png',     gif:'gifts/NewYear/gif/vice_cream.gif'},
     ]
   },
 ];
+
 const RC={common:'#9ca3af',uncommon:'#3b82f6',rare:'#818cf8',epic:'#c084fc',legendary:'#f59e0b'};
 const RN={common:'Обычный',uncommon:'Необычный',rare:'Редкий',epic:'Эпический',legendary:'Легендарный'};
-const IW=86;
+const GIFT_BG={common:'rgba(107,114,128,0.18)',uncommon:'rgba(59,130,246,0.18)',rare:'rgba(129,140,248,0.18)',epic:'rgba(192,132,252,0.20)',legendary:'rgba(245,158,11,0.20)'};
 
-// ============================================================
+// ════════════════════════════════════
 // BOT TOKEN
-// ============================================================
+// ════════════════════════════════════
 let BOT='';
 function initBot(){BOT=localStorage.getItem('nfc_tok')||'';}
 function saveTok(){
@@ -666,163 +706,96 @@ async function tgSend(cid,txt,kb){
   try{const b={chat_id:cid,text:txt,parse_mode:'HTML'};if(kb)b.reply_markup=kb;const r=await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const d=await r.json();return d.ok;}catch(e){return false;}
 }
 
-// ============================================================
-// TELEGRAM CLOUD STORAGE — основное хранилище
-// localStorage — только резерв для ПК/браузера
-// ============================================================
+// ════════════════════════════════════
+// TELEGRAM CLOUD STORAGE
+// ════════════════════════════════════
 const tg=window.Telegram?.WebApp;
-let uname='Игрок',uid='—',uun='',isAdmin=false;
+let uname='Игрок',uid='—',uun='',isAdmin=false,uPhoto='';
 if(tg){
   tg.ready();tg.expand();
   if(tg.initDataUnsafe?.user){
     const u=tg.initDataUnsafe.user;
     uname=u.first_name||'Игрок';uid=String(u.id);
     uun=u.username?('@'+u.username):'';isAdmin=(u.id===ADMIN_ID);
+    uPhoto=u.photo_url||'';
   }
 }
-
-// CloudStorage wrapper — returns Promise
 const CS=tg?.CloudStorage;
-function csGet(key){
-  return new Promise(res=>{
-    if(!CS){res(null);return;}
-    CS.getItem(key,(err,val)=>res(err?null:(val||null)));
-  });
-}
-function csSet(key,val){
-  return new Promise(res=>{
-    if(!CS){res(false);return;}
-    CS.setItem(key,val,(err)=>res(!err));
-  });
-}
+function csGet(k){return new Promise(r=>{if(!CS){r(null);return;}CS.getItem(k,(e,v)=>r(e?null:(v||null)));});}
+function csSet(k,v){return new Promise(r=>{if(!CS){r(false);return;}CS.setItem(k,v,e=>r(!e));});}
 
-// Global key — shared admin data (wdReqs, cmds, users, refRel, refInv)
-// Stored in ADMIN's CloudStorage AND in localStorage (for admin panel access)
 const GK='nfc_global';
-const LS_GK='nfc_global'; // localStorage backup
+function loadG(){try{const r=localStorage.getItem(GK);return r?JSON.parse(r):{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{},promos:{}};}catch(e){return{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{},promos:{}};}}
+function saveG(g){try{const s=JSON.stringify(g);localStorage.setItem(GK,s);if(isAdmin&&CS)csSet(GK,s);}catch(e){}}
 
-function loadG(){
-  try{const r=localStorage.getItem(LS_GK);return r?JSON.parse(r):{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
-  catch(e){return{users:{},wdReqs:[],cmds:[],refRel:{},refInv:{}};}
-}
-function saveG(g){
-  try{
-    const s=JSON.stringify(g);
-    localStorage.setItem(LS_GK,s);
-    // Admin also saves to their CloudStorage so it's accessible
-    if(isAdmin&&CS)csSet(GK,s);
-  }catch(e){}
-}
-
-// Per-user state key
-const UK='nfc_state';
 const LS_UK=uid&&uid!=='—'?'nfc_u_'+uid:'nfc_u_guest';
+function loadLsState(){try{const r=localStorage.getItem(LS_UK);return r?JSON.parse(r):null;}catch(e){return null;}}
+function saveLsState(d){try{localStorage.setItem(LS_UK,JSON.stringify(d));}catch(e){}}
 
-function loadLsState(){
-  try{const r=localStorage.getItem(LS_UK);return r?JSON.parse(r):null;}catch(e){return null;}
-}
-function saveLsState(data){
-  try{localStorage.setItem(LS_UK,JSON.stringify(data));}catch(e){}
-}
-
-// ============================================================
+// ════════════════════════════════════
 // STATE
-// ============================================================
+// ════════════════════════════════════
 const EMPTY_STATE={bal:0,inv:[],stats:{op:0,sl:0,er:0,wd:0,wv:0},tx:[],ref:{by:null,inv:[],er:0}};
-
 const U={
-  bal:0, inv:[], stats:{op:0,sl:0,er:0,wd:0,wv:0}, tx:[], ref:{by:null,inv:[],er:0},
-  _ready:false,
-
+  bal:0,inv:[],stats:{op:0,sl:0,er:0,wd:0,wv:0},tx:[],ref:{by:null,inv:[],er:0},_ready:false,
   add(a){this.bal=Math.round(this.bal+Math.round(a));renderBal();this.save();},
   sub(a){this.bal=Math.max(0,Math.round(this.bal-Math.round(a)));renderBal();this.save();},
   setBal(v){this.bal=Math.round(v);renderBal();this.save();},
-
-  fromObj(o){
-    this.bal=Math.round(o.bal||0);
-    this.inv=o.inv||[];
-    this.stats=o.stats||{op:0,sl:0,er:0,wd:0,wv:0};
-    this.tx=o.tx||[];
-    this.ref=o.ref||{by:null,inv:[],er:0};
-  },
-  toObj(){
-    return{bal:this.bal,inv:this.inv,stats:this.stats,tx:this.tx,ref:this.ref};
-  },
-
+  fromObj(o){this.bal=Math.round(o.bal||0);this.inv=o.inv||[];this.stats=o.stats||{op:0,sl:0,er:0,wd:0,wv:0};this.tx=o.tx||[];this.ref=o.ref||{by:null,inv:[],er:0};},
+  toObj(){return{bal:this.bal,inv:this.inv,stats:this.stats,tx:this.tx,ref:this.ref};},
   async save(){
-    const s=JSON.stringify(this.toObj());
-    saveLsState(this.toObj());
-    setSyncDot('loading');
-    if(CS){
-      const ok=await csSet(UK,s);
-      setSyncDot(ok?'ok':'err');
-    } else {
-      setSyncDot('ok');
-    }
+    const s=JSON.stringify(this.toObj());saveLsState(this.toObj());setSyncDot('loading');
+    if(CS){const ok=await csSet('nfc_state',s);setSyncDot(ok?'ok':'err');}else{setSyncDot('ok');}
     syncG();
   },
-
   async load(){
     setSyncDot('loading');
-    // Try CloudStorage first
-    if(CS){
-      const val=await csGet(UK);
-      if(val){
-        try{
-          const parsed=JSON.parse(val);
-          this.fromObj(parsed);
-          // Sync to localStorage as backup
-          saveLsState(parsed);
-          setSyncDot('ok');
-          this._ready=true;
-          return true;
-        }catch(e){}
-      }
-    }
-    // Fallback to localStorage
-    const ls=loadLsState();
-    if(ls){this.fromObj(ls);setSyncDot('ok');}
-    else{this.fromObj(EMPTY_STATE);}
-    this._ready=true;
-    return false;
+    if(CS){const val=await csGet('nfc_state');if(val){try{const p=JSON.parse(val);this.fromObj(p);saveLsState(p);setSyncDot('ok');this._ready=true;return;}catch(e){}}}
+    const ls=loadLsState();if(ls)this.fromObj(ls);else this.fromObj(EMPTY_STATE);
+    setSyncDot('ok');this._ready=true;
   }
 };
+if(isAdmin)document.getElementById('adminBtn').style.display='flex';
 
-if(isAdmin) document.getElementById('adminBtn').style.display='flex';
-
-// ============================================================
-// SYNC DOT
-// ============================================================
 function setSyncDot(state){
-  const d=document.getElementById('syncDot');const t=document.getElementById('syncTxt');if(!d)return;
+  const d=document.getElementById('syncDot');if(!d)return;
   d.className='sync-dot '+state;
-  if(t)t.textContent=state==='loading'?'Сохранение...':state==='ok'?'':state==='err'?'Ошибка':'';
-  if(state==='ok'||state==='err'){clearTimeout(d._t);d._t=setTimeout(()=>{d.className='sync-dot';if(t)t.textContent='';},2500);}
+  if(state==='ok'||state==='err'){clearTimeout(d._t);d._t=setTimeout(()=>d.className='sync-dot',2000);}
 }
-
-// ============================================================
-// GLOBAL SYNC — Poll global data (cmds for this user)
-// Admin saves global to their CS; other users read from localStorage
-// (they're on same device context via GitHub Pages)
-// For true cross-device: admin must be on same domain
-// ============================================================
 function syncG(){
   if(!uid||uid==='—')return;
   const g=loadG();if(!g.users)g.users={};
-  g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
-  saveG(g);
+  g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};saveG(g);
 }
-
-// Poll for admin commands every 10 seconds
 setInterval(()=>{if(!document.hidden)applyCmd();},10000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)applyCmd();});
 
-// ============================================================
+// ════════════════════════════════════
 // HELPERS
-// ============================================================
+// ════════════════════════════════════
 function renderBal(){document.getElementById('balEl').textContent=U.bal.toLocaleString('ru');}
 function toast(msg,color){const t=document.getElementById('toast');t.textContent=msg;t.style.color=color||'var(--text)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function wrand(items){const tot=items.reduce((s,i)=>s+i.ch,0);let r=Math.random()*tot;for(const x of items){r-=x.ch;if(r<=0)return x;}return items[items.length-1];}
+
+// 2. PNG для рулетки/содержимого/инвентаря
+function renderPng(item,size=46){
+  if(item.png){
+    return `<img src="${item.png}" alt="${item.nm}" style="width:${size}px;height:${size}px;object-fit:contain" onerror="this.outerHTML='<span style=font-size:${Math.round(size*0.75)}px>${item.em}</span>'">`;
+  }
+  return `<span class="gift-emoji" style="font-size:${size}px">${item.em}</span>`;
+}
+// 2. GIF только для win-попапа
+function renderGifEl(item){
+  const el=document.createElement(item.gif||item.png?'img':'span');
+  if(item.gif||item.png){
+    el.src=item.gif||item.png;el.alt=item.nm;
+    el.style.cssText='width:96px;height:96px;object-fit:contain;border-radius:12px;display:block';
+    el.onerror=function(){this.outerHTML='<span style="font-size:76px;line-height:1">'+item.em+'</span>';};
+  } else {
+    el.style.cssText='font-size:76px;line-height:1';el.textContent=item.em;
+  }
+  return el;
+}
 
 function goPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -838,22 +811,11 @@ function pTab(t,btn){
   btn.classList.add('on');document.getElementById('psec-'+t).classList.add('on');
   if(t==='ref')renderRef();
 }
-function showStep(n){[0,1,2].forEach(i=>document.getElementById('s'+i).classList.toggle('on',i===n));}
+function showStep(n){[0,1].forEach(i=>document.getElementById('s'+i).classList.toggle('on',i===n));}
 
-// ============================================================
-// GIFT GRID — стиль как Telegram Gift Drop (фото 2)
-// Поддерживает gif/png через item.gif, иначе emoji
-// ============================================================
-const GIFT_BG={common:'rgba(107,114,128,0.18)',uncommon:'rgba(59,130,246,0.18)',rare:'rgba(129,140,248,0.18)',epic:'rgba(192,132,252,0.20)',legendary:'rgba(245,158,11,0.20)'};
-
-function renderItemMedia(item, size=52){
-  // gif или png — показываем img; иначе emoji
-  if(item.gif){
-    return `<img src="${item.gif}" alt="${item.nm}" style="width:${size}px;height:${size}px;object-fit:contain" onerror="this.outerHTML='<span class=gift-emoji>${item.em}</span>'">`;
-  }
-  return `<span class="gift-emoji" style="font-size:${size}px">${item.em}</span>`;
-}
-
+// ════════════════════════════════════
+// GIFT GRID (содержимое)
+// ════════════════════════════════════
 function buildGiftsHtml(c){
   const sorted=[...c.items].sort((a,b)=>b.v-a.v);
   return '<div class="gifts-grid">'+sorted.map(it=>{
@@ -862,7 +824,7 @@ function buildGiftsHtml(c){
       <div class="gift-price">⭐ ${it.v.toLocaleString('ru')}</div>
       <div class="gift-img-area">
         <div class="gift-img-bg" style="background:${bg}"></div>
-        ${renderItemMedia(it,52)}
+        ${renderPng(it,56)}
       </div>
       <div class="gift-name">${it.nm}</div>
       <div class="gift-sub">${it.model||RN[it.r]}</div>
@@ -871,68 +833,69 @@ function buildGiftsHtml(c){
   }).join('')+'</div>';
 }
 
-// ============================================================
+// ════════════════════════════════════
 // CASES PAGE
-// ============================================================
+// ════════════════════════════════════
 function renderCases(){
   const g=document.getElementById('casesGrid');g.innerHTML='';
   CASES.forEach(c=>{
     const d=document.createElement('div');d.className='case-card'+(c.hot?' hot':'');
-    const imgHtml=c.cover?`<img class="case-cover" src="${c.cover}" alt="${c.nm}" onerror="this.style.display='none'" loading="lazy">`:'';
-    d.innerHTML=`<div class="case-img" style="--gc:${c.gc}">${imgHtml}<div class="case-glow"></div><div class="case-em">${c.em}</div>${c.hot?'<div class="case-badge">ХИТ</div>':''}</div><div class="case-info"><div class="case-name">${c.nm}</div><div class="case-price-row"><span style="font-size:14px">₮</span><span class="case-pv">${c.price}</span></div></div>`;
+    // 1. Кастом PNG поверх фона (case-cover-img) или emoji
+    const mediaHtml=c.cover
+      ? `<img class="case-cover-img" src="${c.cover}" alt="${c.nm}" onerror="this.style.display='none'">`
+      : `<div class="case-em">${c.em}</div>`;
+    d.innerHTML=`<div class="case-img" style="--gc:${c.gc}"><div class="case-glow"></div>${mediaHtml}${c.hot?'<div class="case-badge">ХИТ</div>':''}</div><div class="case-info"><div class="case-name">${c.nm}</div><div class="case-price-row"><span class="coin-t" style="font-size:14px">₸</span><span class="case-pv">${c.price}</span></div></div>`;
     d.onclick=()=>openCase(c);g.appendChild(d);
   });
 }
 
-// ============================================================
+// ════════════════════════════════════
 // CASE MODAL
-// ============================================================
-let CC=null,cnt=1,spinning=false,wonSlots=[],spinTm=[];
-let idleTimers=[];
+// ════════════════════════════════════
+let CC=null,cnt=1,spinning=false,wonSlots=[],spinTm=[],idleTimers=[];
 
 function openCase(c){
   CC=c;cnt=1;spinning=false;wonSlots=[];
   document.getElementById('mTitle').textContent=c.nm;
-  // Cover image
-  const img=document.getElementById('s0img');const em=document.getElementById('s0em');
+  const img=document.getElementById('s0img'),em=document.getElementById('s0em');
   if(c.cover){img.src=c.cover;img.style.display='block';em.style.display='none';}
   else{img.style.display='none';em.style.display='block';em.textContent=c.em;}
-  document.getElementById('s0pr').textContent='Цена: ₮'+c.price+' за 1 кейс';
+  document.getElementById('s0pr').textContent='Цена: ₸'+c.price+' за 1 кейс';
   document.querySelectorAll('.cnt-tab').forEach((t,i)=>t.classList.toggle('on',i===0));
   const gh=buildGiftsHtml(c);
   document.getElementById('drops0').innerHTML=gh;
   document.getElementById('drops1').innerHTML=gh;
-  // Строим idle-рулетку в step0
   buildIdleRoulette();
   updOpenBtns();showStep(0);
   document.getElementById('mBar').classList.remove('show');
+  document.getElementById('btnAgainMulti').classList.remove('show');
   document.getElementById('caseModal').classList.add('open');
   document.getElementById('caseModal').scrollTop=0;
   checkFunds();
 }
 
-// Idle рулетка — 1 трек, медленно крутится пока смотришь на кейс
+// 1. Idle рулетка
 function buildIdleRoulette(){
   const wrap=document.getElementById('rlWrapIdle');if(!wrap)return;
   wrap.innerHTML='';
-  const items=[];for(let j=0;j<16;j++)items.push(wrand(CC.items));// 16 = хватит для петли
-  const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderItemMedia(it,28)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
+  const items=[];for(let j=0;j<12;j++)items.push(wrand(CC.items));
+  const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderPng(it,38)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
   wrap.innerHTML=`<div class="rl-slot"><div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track idle" id="tr_idle">${trackHtml}</div></div></div>`;
 }
+function startIdle(id){const t=document.getElementById(id);if(t)t.classList.add('idle');}
+function stopIdle(){idleTimers.forEach(clearTimeout);idleTimers=[];document.querySelectorAll('.rl-track.idle').forEach(t=>t.classList.remove('idle'));}
+
 function updOpenBtns(){
   const tot=(CC.price*cnt).toLocaleString('ru');
-  document.getElementById('btnMain').textContent='🔓 ОТКРЫТЬ ×'+cnt+' — ₮'+tot;
-  document.getElementById('btnFast').textContent='⚡ Быстро ×'+cnt+' — ₮'+tot;
+  document.getElementById('btnMain').textContent='🔓 ОТКРЫТЬ ×'+cnt+' — ₸'+tot;
+  document.getElementById('btnFast').textContent='⚡ Быстро ×'+cnt+' — ₸'+tot;
   checkFunds();
 }
-// Проверка баланса — показываем баннер сразу если не хватает
 function checkFunds(){
-  const banner=document.getElementById('noFundsBanner');
-  if(!banner||!CC)return;
-  const need=CC.price*cnt;
-  const lack=need-U.bal;
+  const banner=document.getElementById('noFundsBanner');if(!banner||!CC)return;
+  const lack=(CC.price*cnt)-U.bal;
   if(lack>0){
-    banner.textContent='Для открытия не хватает ещё '+lack.toLocaleString('ru')+' ₮';
+    banner.textContent='Для открытия не хватает '+lack.toLocaleString('ru')+' ₸';
     banner.classList.add('show');
     document.getElementById('btnMain').disabled=true;
     document.getElementById('btnFast').disabled=true;
@@ -943,70 +906,95 @@ function checkFunds(){
   }
 }
 function setCnt(n,tab){if(spinning)return;cnt=n;document.querySelectorAll('.cnt-tab').forEach(t=>t.classList.remove('on'));tab.classList.add('on');updOpenBtns();}
+
 function closeCase(){
-  stopIdle();flushWon();wonSlots=[];spinning=false;
-  spinTm.forEach(clearTimeout);spinTm=[];
+  stopIdle();
+  // 9. Баг: сохраняем всё что не было обработано
+  flushWon();
+  wonSlots=[];spinning=false;spinTm.forEach(clearTimeout);spinTm=[];
   document.getElementById('caseModal').classList.remove('open');
+  document.getElementById('winPopup').classList.remove('show');
 }
-function goBack(){
+
+// 3/5. Вернуться НАЗАД в тот же кейс (не в меню!)
+function goBackToCase(){
   stopIdle();flushWon();wonSlots=[];spinning=false;
   spinTm.forEach(clearTimeout);spinTm=[];
-  showStep(0);updOpenBtns();
   document.getElementById('mBar').classList.remove('show');
+  document.getElementById('btnAgainMulti').classList.remove('show');
+  document.getElementById('winPopup').classList.remove('show');
+  // Перезапускаем idle и возвращаемся в шаг 0
+  buildIdleRoulette();
+  updOpenBtns();showStep(0);
+  document.getElementById('caseModal').scrollTop=0;
+  checkFunds();
 }
+
 function flushWon(){
   let any=false;
   wonSlots.forEach(s=>{if(s&&!s.handled){s.handled=true;U.inv.push({...s.item,uuid:Date.now()+Math.random()});any=true;}});
   if(any)U.save();
 }
 
-// IDLE roulette animation
-function startIdle(trackId){
-  const tr=document.getElementById(trackId);if(!tr)return;
-  tr.classList.add('idle');
-}
-function stopIdle(){
-  idleTimers.forEach(clearTimeout);idleTimers=[];
-  document.querySelectorAll('.rl-track.idle').forEach(t=>t.classList.remove('idle'));
-}
-
-// ============================================================
+// ════════════════════════════════════
 // SPIN
-// ============================================================
+// ════════════════════════════════════
 function spin(fast){
   if(spinning)return;
   const tot=CC.price*cnt;
   if(U.bal<tot){checkFunds();return;}
+  // 9. Деньги списываем СРАЗУ и сохраняем ДО рулетки
   U.sub(tot);U.stats.op+=cnt;U.save();
   wonSlots=[];for(let i=0;i<cnt;i++)wonSlots.push({item:wrand(CC.items),handled:false});
+  // 9. Сразу кладём предметы в инвентарь (handled=false — из winPopup уберём)
+  // Предметы будут добавлены в инвентарь только через "в инвентарь" или flushWon
 
   if(fast){
+    // 4. Быстрый прокрут — рулетка крутится быстро (0.8s) потом останавливается
+    buildSlots(false,true); // true = fast mode
+    showStep(1);
+    document.getElementById('mBar').classList.remove('show');
+    stopIdle();
     if(cnt===1){
+      // одна рулетка быстро
       const slot=wonSlots[0];
-      showWinPopup(slot.item, ()=>{
-        slot.handled=true;U.add(slot.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+slot.item.v);U.save();
-        toast('✅ Продано ₮'+slot.item.v,'var(--green)');
-        wonSlots=[];spinTm.forEach(clearTimeout);spinTm=[];
-        document.getElementById('caseModal').classList.remove('open');
-      }, ()=>{
-        slot.handled=true;
-        U.inv.push({...slot.item,uuid:Date.now()+Math.random()});
-        U.save();
-        toast('📦 Добавлено в инвентарь!');
-        wonSlots=[];spinTm.forEach(clearTimeout);spinTm=[];
-        document.getElementById('caseModal').classList.remove('open');
-      });
+      placeWinner(0,slot.item);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        const tr=document.getElementById('tr_0');if(!tr)return;
+        const cw=tr.parentElement.offsetWidth;
+        const WIN=46,jitter=Math.round((Math.random()-0.5)*10);
+        const fx=-(WIN*IW-cw/2+IW/2+jitter);
+        tr.style.transition='none';tr.style.transform='translateX(0)';
+        tr.getBoundingClientRect();
+        tr.style.transition='transform cubic-bezier(0.2,0.9,0.4,1) 0.7s'; // быстро
+        tr.style.transform=`translateX(${fx}px)`;
+      }));
+      spinTm.push(setTimeout(()=>{spinning=false;showWinPopup(slot);haptic();},900));
     } else {
-      buildSlots(true);showStep(1);wonSlots.forEach((_,i)=>showSlotRes(i));showMBar();
+      let done=0;
+      wonSlots.forEach((slot,i)=>{
+        placeWinner(i,slot.item);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          const tr=document.getElementById('tr_'+i);if(!tr)return;
+          const cw=tr.parentElement.offsetWidth;
+          const WIN=46,jitter=Math.round((Math.random()-0.5)*10);
+          const fx=-(WIN*IW-cw/2+IW/2+jitter);
+          tr.style.transition='none';tr.style.transform='translateX(0)';
+          tr.getBoundingClientRect();
+          tr.style.transition=`transform cubic-bezier(0.2,0.9,0.4,1) ${0.6+i*0.1}s`;
+          tr.style.transform=`translateX(${fx}px)`;
+        }));
+        spinTm.push(setTimeout(()=>{done++;showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}},800+i*150));
+      });
     }
-    haptic();return;
+    return;
   }
 
+  // Обычный спин (4s)
   spinning=true;
-  buildSlots(false);showStep(1);
+  buildSlots(false,false);showStep(1);
   document.getElementById('mBar').classList.remove('show');
   stopIdle();
-
   let done=0;spinTm=[];
   wonSlots.forEach((slot,i)=>{
     placeWinner(i,slot.item);
@@ -1022,50 +1010,29 @@ function spin(fast){
     }));
     spinTm.push(setTimeout(()=>{
       done++;
-      if(cnt===1){
-        spinning=false;
-        showWinPopup(slot.item, ()=>{
-          slot.handled=true;U.add(slot.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+slot.item.v);U.save();
-          toast('✅ Продано ₮'+slot.item.v,'var(--green)');
-          wonSlots=[];spinTm.forEach(clearTimeout);spinTm=[];
-          document.getElementById('caseModal').classList.remove('open');
-        }, ()=>{
-          slot.handled=true;
-          U.inv.push({...slot.item,uuid:Date.now()+Math.random()});
-          U.save();
-          toast('📦 Добавлено в инвентарь!');
-          wonSlots=[];spinTm.forEach(clearTimeout);spinTm=[];
-          document.getElementById('caseModal').classList.remove('open');
-        });
-      } else {
-        showSlotRes(i);
-        if(done===cnt){spinning=false;showMBar();haptic();}
-      }
+      if(cnt===1){spinning=false;showWinPopup(slot);haptic();}
+      else{showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}}
     },4300));
   });
 }
 
-let wpSellCb=null,wpKeepCb=null;
-function showWinPopup(item,onSell,onKeep){
+// ════════════════════════════════════
+// WIN POPUP (п.3)
+// ════════════════════════════════════
+let _wpSlot=null;
+function showWinPopup(slot){
+  _wpSlot=slot;
+  const item=slot.item;
   const emEl=document.getElementById('wpEmoji');
-  if(item.gif){
-    // Всегда используем <img> для gif/png — никакого текста
-    emEl.innerHTML='';
-    const img=document.createElement('img');
-    img.src=item.gif;
-    img.alt=item.nm;
-    img.style.cssText='width:90px;height:90px;object-fit:contain;border-radius:12px;display:block';
-    img.onerror=function(){this.outerHTML='<span style="font-size:80px;line-height:1">'+item.em+'</span>';};
-    emEl.appendChild(img);
-  } else {
-    emEl.innerHTML=`<span style="font-size:80px;line-height:1">${item.em}</span>`;
-  }
+  emEl.innerHTML='';
+  emEl.appendChild(renderGifEl(item));
   document.getElementById('wpName').textContent=item.nm;
   const modelEl=document.getElementById('wpModel');
-  modelEl.textContent=item.model||'';
-  modelEl.style.display=item.model?'block':'none';
-  document.getElementById('wpSell').innerHTML='Продать за '+item.v+' ⭐';
-  wpSellCb=onSell;wpKeepCb=onKeep;
+  modelEl.textContent=item.model||'';modelEl.style.display=item.model?'block':'none';
+  // 6. Валюта ₸
+  document.getElementById('wpSell').textContent='Продать ₸'+item.v.toLocaleString('ru');
+  document.getElementById('wpBtns').style.display='flex';
+  document.getElementById('wpAgain').classList.remove('show');
   document.getElementById('winPopup').classList.add('show');
   if(tg?.HapticFeedback){
     if(item.r==='legendary')tg.HapticFeedback.notificationOccurred('success');
@@ -1073,82 +1040,118 @@ function showWinPopup(item,onSell,onKeep){
     else tg.HapticFeedback.impactOccurred('medium');
   }
 }
-function winClose(){
+function winCloseFn(){
+  // крестик = "в инвентарь"
+  if(_wpSlot&&!_wpSlot.handled){
+    _wpSlot.handled=true;U.inv.push({..._wpSlot.item,uuid:Date.now()+Math.random()});U.save();
+  }
   document.getElementById('winPopup').classList.remove('show');
-  if(wpKeepCb){wpKeepCb();wpKeepCb=null;wpSellCb=null;}
+  _wpSlot=null;
 }
+// 3. Продать — кнопки заменяются на "Ещё раз"
 document.getElementById('wpSell').onclick=()=>{
-  document.getElementById('winPopup').classList.remove('show');
-  if(wpSellCb){wpSellCb();wpSellCb=null;wpKeepCb=null;}
+  if(!_wpSlot)return;
+  if(!_wpSlot.handled){
+    _wpSlot.handled=true;U.add(_wpSlot.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+_wpSlot.item.v);U.save();
+    toast('✅ Продано ₸'+_wpSlot.item.v,'var(--green)');
+  }
+  _wpSlot=null;
+  // 3. Кнопки → "Ещё раз"
+  document.getElementById('wpBtns').style.display='none';
+  document.getElementById('wpAgain').classList.add('show');
 };
 document.getElementById('wpKeep').onclick=()=>{
-  document.getElementById('winPopup').classList.remove('show');
-  if(wpKeepCb){wpKeepCb();wpKeepCb=null;wpSellCb=null;}
+  if(!_wpSlot)return;
+  if(!_wpSlot.handled){
+    _wpSlot.handled=true;U.inv.push({..._wpSlot.item,uuid:Date.now()+Math.random()});U.save();
+    toast('📦 В инвентарь!');
+  }
+  _wpSlot=null;
+  // 3. Кнопки → "Ещё раз"
+  document.getElementById('wpBtns').style.display='none';
+  document.getElementById('wpAgain').classList.add('show');
 };
 
-function buildSlots(instant){
+function buildSlots(instant,fastMode){
   const wrap=document.getElementById('rlWrap');wrap.innerHTML='';
   for(let i=0;i<cnt;i++){
     const items=[];for(let j=0;j<60;j++)items.push(wrand(CC.items));
-    const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderItemMedia(it,28)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
-    const resBar=cnt>1?`<div class="rl-result" id="rr_${i}"><div class="rr-em" id="rr_em_${i}"></div><div class="rr-info"><div class="rr-nm" id="rr_nm_${i}"></div><div class="rr-val" id="rr_vl_${i}"></div></div><button class="rr-sell" onclick="sellSlot(${i})">Продать ₮<span id="rr_pr_${i}"></span></button></div>`:'';
+    const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderPng(it,38)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
+    const resBar=cnt>1?`<div class="rl-result" id="rr_${i}"><div class="rr-em" id="rr_em_${i}"></div><div class="rr-info"><div class="rr-nm" id="rr_nm_${i}"></div><div class="rr-val" id="rr_vl_${i}"></div></div><button class="rr-sell" onclick="sellSlot(${i})">Продать ₸<span id="rr_pr_${i}"></span></button></div>`:'';
     const div=document.createElement('div');div.className='rl-slot';
     div.innerHTML=`<div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track" id="tr_${i}">${trackHtml}</div></div>${resBar}`;
     wrap.appendChild(div);
-    if(!instant){const t=setTimeout(()=>startIdle('tr_'+i),100);idleTimers.push(t);}
+    if(!instant&&!fastMode){const t=setTimeout(()=>startIdle('tr_'+i),100);idleTimers.push(t);}
   }
 }
 function placeWinner(i,won){
   const tr=document.getElementById('tr_'+i);if(!tr)return;
   tr.classList.remove('idle');
   const cell=tr.children[46];if(!cell)return;
-  cell.querySelector('.rl-item-em').innerHTML=renderItemMedia(won,28);
+  cell.querySelector('.rl-item-em').innerHTML=renderPng(won,38);
   cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;
 }
 function showSlotRes(i){
   const s=wonSlots[i];if(!s)return;const row=document.getElementById('rr_'+i);if(!row)return;
-  document.getElementById('rr_em_'+i).innerHTML=renderItemMedia(s.item,20);
+  document.getElementById('rr_em_'+i).innerHTML=renderPng(s.item,26);
   document.getElementById('rr_nm_'+i).textContent=s.item.nm;
   document.getElementById('rr_nm_'+i).className='rr-nm r'+({'uncommon':'un','legendary':'l'}[s.item.r]||s.item.r[0]);
   document.getElementById('rr_vl_'+i).textContent=RN[s.item.r]+(s.item.model?' · '+s.item.model:'');
   document.getElementById('rr_pr_'+i).textContent=s.item.v;
   row.classList.add('show');
 }
+// 5. Показ мульти-бара
 function showMBar(){
   const tot=wonSlots.filter(s=>s&&!s.handled).reduce((a,s)=>a+s.item.v,0);
-  document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');
+  document.getElementById('btnSellAll').textContent='Продать все — ₸'+tot.toLocaleString('ru');
   document.getElementById('mBar').classList.add('show');
-}
-function showS2(item){
-  document.getElementById('s2em').textContent=item.em;
-  document.getElementById('s2em').className='s2-em b-'+item.r;
-  document.getElementById('s2nm').textContent=item.nm;
-  document.getElementById('s2nm').className='s2-nm r'+({'uncommon':'un','legendary':'l'}[item.r]||item.r[0]);
-  const m=document.getElementById('s2model');m.textContent=item.model||'';m.style.display=item.model?'block':'none';
-  document.getElementById('s2vl').textContent=RN[item.r]+' · ₮'+item.v;
-  showStep(2);
 }
 function haptic(){if(!tg?.HapticFeedback)return;const b=wonSlots.reduce((a,s)=>(!a||s.item.v>a.item.v)?s:a,null);if(!b)return;if(b.item.r==='legendary')tg.HapticFeedback.notificationOccurred('success');else if(b.item.r==='epic')tg.HapticFeedback.impactOccurred('heavy');else tg.HapticFeedback.impactOccurred('light');}
 
-function sellSlot(i){const s=wonSlots[i];if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);U.save();const row=document.getElementById('rr_'+i);if(row)row.classList.remove('show');toast('✅ Продано ₮'+s.item.v,'var(--green)');const rem=wonSlots.filter(x=>x&&!x.handled);if(rem.length===0)document.getElementById('mBar').classList.remove('show');else{const tot=rem.reduce((a,x)=>a+x.item.v,0);document.getElementById('btnSellAll').textContent='Продать все — ₮'+tot.toLocaleString('ru');}}
-function sellAll(){wonSlots.forEach((_,i)=>sellSlot(i));document.getElementById('mBar').classList.remove('show');}
-function sellSingle(){const s=wonSlots[0];if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);U.save();toast('✅ Продано ₮'+s.item.v,'var(--green)');goBack();}
+// 5. Продать все → кнопки → "Ещё раз"
+function multiSellAll(){
+  wonSlots.forEach(s=>{if(!s||s.handled)return;s.handled=true;U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);});
+  U.save();toast('✅ Все продано','var(--green)');
+  document.getElementById('mBar').querySelector('.multi-bar-btns').style.display='none';
+  document.getElementById('btnAgainMulti').classList.add('show');
+}
+// 5. Забрать все в инвентарь → "Ещё раз"
+function multiKeepAll(){
+  wonSlots.forEach(s=>{if(!s||s.handled)return;s.handled=true;U.inv.push({...s.item,uuid:Date.now()+Math.random()});});
+  U.save();toast('📦 Все в инвентарь');
+  document.getElementById('mBar').querySelector('.multi-bar-btns').style.display='none';
+  document.getElementById('btnAgainMulti').classList.add('show');
+}
+function sellSlot(i){
+  const s=wonSlots[i];if(!s||s.handled)return;s.handled=true;
+  U.add(s.item.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+s.item.v);U.save();
+  const row=document.getElementById('rr_'+i);if(row)row.classList.remove('show');
+  toast('✅ Продано ₸'+s.item.v,'var(--green)');
+  const rem=wonSlots.filter(x=>x&&!x.handled);
+  if(rem.length===0){
+    document.getElementById('mBar').querySelector('.multi-bar-btns').style.display='none';
+    document.getElementById('btnAgainMulti').classList.add('show');
+  } else {
+    const tot=rem.reduce((a,x)=>a+x.item.v,0);
+    document.getElementById('btnSellAll').textContent='Продать все — ₸'+tot.toLocaleString('ru');
+  }
+}
 
-// ============================================================
+// ════════════════════════════════════
 // INVENTORY
-// ============================================================
+// ════════════════════════════════════
 function renderInv(){
   checkWdStatus();
   const grid=document.getElementById('invGrid'),tot=document.getElementById('invTotal');
   if(U.inv.length===0){grid.innerHTML='<div class="empty-inv"><div style="font-size:40px;margin-bottom:8px">📭</div><div>Инвентарь пуст</div></div>';tot.textContent='';return;}
-  tot.textContent='₮'+U.inv.reduce((a,i)=>a+i.v,0).toLocaleString('ru');
+  tot.textContent='₸'+U.inv.reduce((a,i)=>a+i.v,0).toLocaleString('ru');
   grid.innerHTML=U.inv.map(it=>`
     <div class="inv-item b-${it.r}${it.wdOn?' wd-on':''}">
       <div class="inv-ov"><div style="font-size:22px">⏳</div><div class="ov-txt">Ожидает выдачи</div></div>
-      <div class="inv-em">${it.gif?`<img src="${it.gif}" style="width:40px;height:40px;object-fit:contain" onerror="this.outerHTML='${it.em}'">`:it.em}</div>
+      <div class="inv-em">${it.png?`<img src="${it.png}" style="width:44px;height:44px;object-fit:contain" onerror="this.outerHTML='<span style=font-size:32px>${it.em||'🎁'}</span>'">`:it.em||'🎁'}</div>
       <div class="inv-nm">${it.nm}</div>
       ${it.model?`<div class="inv-model">${it.model}</div>`:''}
-      <div class="inv-vl">₮${it.v}</div>
+      <div class="inv-vl">₸${it.v}</div>
       <div class="inv-acts">
         <button class="inv-btn ib-sell" onclick="sellInv('${it.uuid}')">Продать</button>
         <button class="inv-btn ib-wd" onclick="openWdModal('${it.uuid}')">Вывод</button>
@@ -1157,60 +1160,114 @@ function renderInv(){
 }
 function checkWdStatus(){
   const g=loadG();const reqs=g.wdReqs||[];let ch=false;
-  U.inv.forEach(it=>{
-    if(!it.wdOn)return;
-    const req=it.wdRid?reqs.find(r=>r.id===it.wdRid):reqs.find(r=>String(r.uuid)===String(it.uuid)&&r.uid===uid&&r.st==='pending');
-    if(!req||req.st==='rejected'){it.wdOn=false;it.wdRid=null;ch=true;}
-  });
+  U.inv.forEach(it=>{if(!it.wdOn)return;const req=it.wdRid?reqs.find(r=>r.id===it.wdRid):reqs.find(r=>String(r.uuid)===String(it.uuid)&&r.uid===uid&&r.st==='pending');if(!req||req.st==='rejected'){it.wdOn=false;it.wdRid=null;ch=true;}});
   if(ch)U.save();
 }
 function sellInv(uuid){
   const idx=U.inv.findIndex(i=>String(i.uuid)===uuid);if(idx===-1)return;
-  const it=U.inv[idx];if(it.wdOn){toast('⚠️ Заявка на вывод активна','var(--gold)');return;}
-  U.inv.splice(idx,1);U.add(it.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+it.v);U.save();toast('✅ Продано ₮'+it.v,'var(--green)');renderInv();
+  const it=U.inv[idx];if(it.wdOn){toast('⚠️ Заявка активна','var(--gold)');return;}
+  U.inv.splice(idx,1);U.add(it.v);U.stats.sl++;U.stats.er=Math.round(U.stats.er+it.v);U.save();toast('✅ Продано ₸'+it.v,'var(--green)');renderInv();
 }
 
-// ============================================================
+// ════════════════════════════════════
 // WITHDRAW
-// ============================================================
+// ════════════════════════════════════
 let wdUuid=null;
 function openWdModal(uuid){
-  checkWdStatus();
-  const it=U.inv.find(i=>String(i.uuid)===uuid);if(!it)return;
+  checkWdStatus();const it=U.inv.find(i=>String(i.uuid)===uuid);if(!it)return;
   if(it.wdOn){toast('⚠️ Заявка уже на рассмотрении','var(--gold)');return;}
   const g=loadG();const ex=(g.wdReqs||[]).find(r=>String(r.uuid)===uuid&&r.uid===uid&&r.st==='pending');
   if(ex){it.wdOn=true;it.wdRid=ex.id;U.save();renderInv();toast('⚠️ Заявка уже на рассмотрении','var(--gold)');return;}
   wdUuid=uuid;
-  document.getElementById('wdEm').textContent=it.em;
+  document.getElementById('wdEm').textContent=it.em||'🎁';
   document.getElementById('wdNm').textContent=it.nm+(it.model?' — '+it.model:'');
-  document.getElementById('wdVl').textContent=RN[it.r]+' · ₮'+it.v;
+  document.getElementById('wdVl').textContent=RN[it.r]+' · ₸'+it.v;
   document.getElementById('wdContact').value='';
   document.getElementById('wdModal').classList.add('open');
 }
 function closeWd(){document.getElementById('wdModal').classList.remove('open');}
 async function submitWd(){
-  if(!wdUuid)return;
-  const contact=document.getElementById('wdContact').value.trim();
+  if(!wdUuid)return;const contact=document.getElementById('wdContact').value.trim();
   if(!contact){toast('⚠️ Укажи контакт!','var(--gold)');return;}
   const it=U.inv.find(i=>String(i.uuid)===wdUuid);
   if(!it){toast('⚠️ Предмет не найден','var(--red)');return;}
-  if(it.wdOn){toast('⚠️ Заявка уже отправлена!','var(--gold)');closeWd();return;}
+  if(it.wdOn){toast('⚠️ Уже отправлена!','var(--gold)');closeWd();return;}
   const rid='r'+Date.now().toString(36);
-  const req={id:rid,uuid:wdUuid,uid,unm:uname,unick:uun,
-    inm:it.nm+(it.model?' ('+it.model+')':''),iem:it.em,iv:it.v,ir:it.r,
-    contact,st:'pending',time:Date.now()};
+  const req={id:rid,uuid:wdUuid,uid,unm:uname,unick:uun,inm:it.nm+(it.model?' ('+it.model+')':''),iem:it.em||'🎁',iv:it.v,ir:it.r,contact,st:'pending',time:Date.now()};
   const g=loadG();if(!g.wdReqs)g.wdReqs=[];g.wdReqs.push(req);saveG(g);
-  it.wdOn=true;it.wdRid=rid;U.save();
-  closeWd();toast('📤 Заявка отправлена!','var(--gold2)');renderInv();
-  if(BOT){
-    const kb={inline_keyboard:[[{text:'✅ Я выдал',callback_data:'ok_'+rid},{text:'❌ Отклонить',callback_data:'no_'+rid}]]};
-    await tgSend(ADMIN_ID,`📤 <b>Заявка на вывод!</b>\n\n${it.em} <b>${it.nm}</b>${it.model?' ('+it.model+')':''} — ₮${it.v}\n👤 ${uname}${uun?' '+uun:''}\n🆔 ${uid}\n📬 ${contact}`,kb);
-  }
+  it.wdOn=true;it.wdRid=rid;U.save();closeWd();toast('📤 Заявка отправлена!','var(--gold2)');renderInv();
+  if(BOT){const kb={inline_keyboard:[[{text:'✅ Я выдал',callback_data:'ok_'+rid},{text:'❌ Отклонить',callback_data:'no_'+rid}]]};await tgSend(ADMIN_ID,`📤 <b>Заявка на вывод!</b>\n\n${it.em||'🎁'} <b>${it.nm}</b>${it.model?' ('+it.model+')':''} — ₸${it.v}\n👤 ${uname}${uun?' '+uun:''}\n🆔 ${uid}\n📬 ${contact}`,kb);}
 }
 
-// ============================================================
+// ════════════════════════════════════
+// 10. ПРОМОКОДЫ
+// ════════════════════════════════════
+function genPromoCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const seg=()=>Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  return `${seg()}-${seg()}-${seg()}-${seg()}`;
+}
+function createPromo(){
+  const amt=parseInt(document.getElementById('promoAmt').value);
+  const uses=parseInt(document.getElementById('promoUses').value)||1;
+  if(!amt||amt<=0){toast('⚠️ Укажи сумму','var(--gold)');return;}
+  const g=loadG();if(!g.promos)g.promos={};
+  const code=genPromoCode();
+  g.promos[code]={amt,maxUses:uses,uses:0,created:Date.now()};
+  saveG(g);
+  document.getElementById('promoAmt').value='';document.getElementById('promoUses').value='1';
+  toast('✅ Промокод создан: '+code,'var(--green)');
+  renderPromoList();
+}
+function renderPromoList(){
+  const g=loadG();const promos=g.promos||{};
+  const el=document.getElementById('promoList');if(!el)return;
+  const codes=Object.entries(promos).sort((a,b)=>b[1].created-a[1].created);
+  if(codes.length===0){el.innerHTML='<div style="color:var(--text2);font-size:12px;text-align:center;padding:8px">Нет промокодов</div>';return;}
+  el.innerHTML=codes.map(([code,p])=>`
+    <div class="promo-row">
+      <div>
+        <div class="promo-code">${code}</div>
+        <div class="promo-info">₸${p.amt} · активаций: ${p.uses}/${p.maxUses}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="promo-used ${p.uses>=p.maxUses?'':'promo-used-0'}">${p.uses>=p.maxUses?'Исчерпан':'Активен'}</span>
+        <button class="promo-del" onclick="deletePromo('${code}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+function deletePromo(code){
+  const g=loadG();if(g.promos)delete g.promos[code];saveG(g);renderPromoList();toast('🗑️ Промокод удалён');
+}
+
+// Открытие модалки промокода (плюсик)
+function openPromoModal(){document.getElementById('promoModal').classList.add('open');document.getElementById('promoInput').value='';}
+function closePromoModal(){document.getElementById('promoModal').classList.remove('open');}
+function formatPromoInput(el){
+  let v=el.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  let out='';for(let i=0;i<v.length&&i<16;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}
+  el.value=out;
+}
+function submitPromo(){
+  const code=document.getElementById('promoInput').value.trim().toUpperCase();
+  if(code.length<19){toast('⚠️ Введи полный код','var(--gold)');return;}
+  const g=loadG();const p=(g.promos||{})[code];
+  if(!p){toast('❌ Промокод не найден','var(--red)');return;}
+  if(p.uses>=p.maxUses){toast('❌ Промокод уже использован','var(--red)');return;}
+  // Проверяем не использовал ли этот юзер
+  if(!p.usedBy)p.usedBy=[];
+  if(p.usedBy.includes(uid)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
+  p.uses++;p.usedBy.push(uid);
+  saveG(g);
+  U.add(p.amt);
+  toast('✅ +₸'+p.amt+' зачислено!','var(--green)');
+  closePromoModal();
+  if(BOT)tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> использован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +₸${p.amt}`);
+}
+
+// ════════════════════════════════════
 // PROFILE
-// ============================================================
+// ════════════════════════════════════
 function renderProf(){
   document.getElementById('pAvatar').textContent=uname.slice(0,2).toUpperCase();
   document.getElementById('pName').textContent=uname+(isAdmin?' 👑':'');
@@ -1221,8 +1278,12 @@ function renderProf(){
   document.getElementById('stEr').textContent=(U.stats.er||0).toLocaleString('ru');
   document.getElementById('stWv').textContent=(U.stats.wv||0).toLocaleString('ru');
   const bw=U.stats.bw;
-  if(bw){document.getElementById('bwEm').textContent=bw.em;document.getElementById('bwNm').textContent=bw.nm+' (₮'+bw.v.toLocaleString('ru')+')';}
+  if(bw){document.getElementById('bwEm').textContent=bw.em||'🎁';document.getElementById('bwNm').textContent=bw.nm+' (₸'+bw.v.toLocaleString('ru')+')';}
   else{document.getElementById('bwEm').textContent='🎁';document.getElementById('bwNm').textContent='Ещё не было выводов';}
+  // 8. Аватарка из Telegram
+  const av=document.getElementById('hdrAvatar');
+  if(uPhoto){const img=new Image();img.src=uPhoto;img.onload=()=>{av.innerHTML='';av.appendChild(img);};img.style.cssText='width:34px;height:34px;border-radius:50%;object-fit:cover';}
+  else{av.textContent=uname.slice(0,2).toUpperCase();}
 }
 function renderRef(){
   const un=localStorage.getItem('nfc_bun')||'your_bot';
@@ -1231,224 +1292,109 @@ function renderRef(){
   document.getElementById('stRfE').textContent=U.ref.er||0;
   const el=document.getElementById('refList');
   if(!U.ref.inv||U.ref.inv.length===0){el.innerHTML='<div style="text-align:center;color:var(--text2);font-size:13px;padding:20px">Ещё никого нет 👀</div>';return;}
-  el.innerHTML=U.ref.inv.map(r=>`<div class="ref-inv-item"><div><div style="font-size:13px;font-weight:600">${r.nm}</div><div style="font-size:11px;color:var(--text2)">ID: ${r.id}</div></div><span class="${r.ok?'rs-ok':'rs-pend'}">${r.ok?'✅ +₮'+REF_REWARD:'⏳ Ожидает'}</span></div>`).join('');
+  el.innerHTML=U.ref.inv.map(r=>`<div class="ref-inv-item"><div><div style="font-size:13px;font-weight:600">${r.nm}</div><div style="font-size:11px;color:var(--text2)">ID: ${r.id}</div></div><span class="${r.ok?'rs-ok':'rs-pend'}">${r.ok?'✅ +₸'+REF_REWARD:'⏳ Ожидает'}</span></div>`).join('');
 }
 function copyRef(){const link=document.getElementById('refLink').textContent;if(navigator.clipboard?.writeText){navigator.clipboard.writeText(link).then(()=>toast('✅ Скопировано!','var(--green)')).catch(fb);}else fb();function fb(){const e=document.createElement('textarea');e.value=link;document.body.appendChild(e);e.select();document.execCommand('copy');document.body.removeChild(e);toast('✅ Скопировано!','var(--green)');}}
 
-// ============================================================
+// ════════════════════════════════════
 // ADMIN
-// ============================================================
+// ════════════════════════════════════
 let plCache=[],plPage=0,wdPage=0,selP=null;
 const PG=10;
-
-function resolvePlayer(raw){
-  raw=(raw||'').trim();if(!raw)return null;
-  const g=loadG();const users=g.users||{};
-  if(users[raw])return users[raw];
-  const un=raw.replace(/^@/,'').toLowerCase();
-  return Object.values(users).find(u=>(u.un||'').toLowerCase()===un)||null;
-}
-function onTopInput(){
-  const raw=document.getElementById('topId').value.trim();
-  const p=resolvePlayer(raw);
-  if(p){selP=p;document.getElementById('selNm').textContent=p.nm+(p.un?' @'+p.un:'');document.getElementById('selId').textContent='ID: '+p.id+' · ₮'+(p.bal||0).toLocaleString('ru');document.getElementById('selBox').style.display='flex';}
-  else clearSel();
-}
+function resolvePlayer(raw){raw=(raw||'').trim();if(!raw)return null;const g=loadG();const users=g.users||{};if(users[raw])return users[raw];const un=raw.replace(/^@/,'').toLowerCase();return Object.values(users).find(u=>(u.un||'').toLowerCase()===un)||null;}
+function onTopInput(){const raw=document.getElementById('topId').value.trim();const p=resolvePlayer(raw);if(p){selP=p;document.getElementById('selNm').textContent=p.nm+(p.un?' @'+p.un:'');document.getElementById('selId').textContent='ID: '+p.id+' · ₸'+(p.bal||0).toLocaleString('ru');document.getElementById('selBox').style.display='flex';}else clearSel();}
 function clearSel(){selP=null;document.getElementById('selBox').style.display='none';}
-function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();}
-
+function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();renderPromoList();}
 function renderWdList(){
-  const g=loadG();
-  const q=(document.getElementById('wdSrch')?.value||'').trim().toLowerCase();
-  let all=(g.wdReqs||[]).slice().reverse();
-  if(q)all=all.filter(r=>(r.unm||'').toLowerCase().includes(q)||String(r.uid||'').includes(q)||(r.unick||'').toLowerCase().includes(q)||(r.contact||'').toLowerCase().includes(q));
-  const pages=Math.max(1,Math.ceil(all.length/PG));
-  if(wdPage>=pages)wdPage=pages-1;
-  const sl=all.slice(wdPage*PG,(wdPage+1)*PG);
-  const el=document.getElementById('wdList');
+  const g=loadG();const q=(document.getElementById('wdSrch')?.value||'').trim().toLowerCase();
+  let all=(g.wdReqs||[]).slice().reverse();if(q)all=all.filter(r=>(r.unm||'').toLowerCase().includes(q)||String(r.uid||'').includes(q)||(r.unick||'').toLowerCase().includes(q)||(r.contact||'').toLowerCase().includes(q));
+  const pages=Math.max(1,Math.ceil(all.length/PG));if(wdPage>=pages)wdPage=pages-1;
+  const sl=all.slice(wdPage*PG,(wdPage+1)*PG);const el=document.getElementById('wdList');
   if(sl.length===0){el.innerHTML='<div style="color:var(--text2);font-size:13px;text-align:center;padding:10px">Нет заявок</div>';}
-  else el.innerHTML=sl.map(r=>`
-    <div class="wr-card">
-      <div class="wr-head">
-        <div class="wr-em">${r.iem}</div>
-        <div style="flex:1"><div class="wr-nm">${r.inm} <span style="color:var(--gold2)">₮${r.iv}</span></div><div class="wr-usr">👤 ${r.unm}${r.unick?' '+r.unick:''} · ID: ${r.uid}</div></div>
-        <span class="ws ws-${r.st==='pending'?'p':r.st==='approved'?'a':'r'}">${r.st==='pending'?'Ожидает':r.st==='approved'?'Выдано':'Отклонено'}</span>
-      </div>
-      <div class="wr-contact">📬 ${r.contact}</div>
-      ${r.reason?`<div class="wr-reason">❌ Причина: ${r.reason}</div>`:''}
-      ${r.st==='pending'?`<div class="wr-btns"><button class="wr-btn wr-ok" onclick="doApprove('${r.id}')">✅ Я выдал</button><button class="wr-btn wr-no" onclick="openRej('${r.id}')">❌ Отклонить</button></div>`:''}
-    </div>`).join('');
+  else el.innerHTML=sl.map(r=>`<div class="wr-card"><div class="wr-head"><div class="wr-em">${r.iem}</div><div style="flex:1"><div class="wr-nm">${r.inm} <span style="color:var(--gold2)">₸${r.iv}</span></div><div class="wr-usr">👤 ${r.unm}${r.unick?' '+r.unick:''} · ID: ${r.uid}</div></div><span class="ws ws-${r.st==='pending'?'p':r.st==='approved'?'a':'r'}">${r.st==='pending'?'Ожидает':r.st==='approved'?'Выдано':'Отклонено'}</span></div><div class="wr-contact">📬 ${r.contact}</div>${r.reason?`<div class="wr-reason">❌ Причина: ${r.reason}</div>`:''}${r.st==='pending'?`<div class="wr-btns"><button class="wr-btn wr-ok" onclick="doApprove('${r.id}')">✅ Я выдал</button><button class="wr-btn wr-no" onclick="openRej('${r.id}')">❌ Отклонить</button></div>`:''}</div>`).join('');
   pgn('wdPgn',wdPage,pages,'wd');
 }
-function renderPlayers(){
-  const g=loadG();plCache=Object.values(g.users||{});
-  document.getElementById('plCount').textContent='('+plCache.length+')';filterPlayers();
-}
+function renderPlayers(){const g=loadG();plCache=Object.values(g.users||{});document.getElementById('plCount').textContent='('+plCache.length+')';filterPlayers();}
 function filterPlayers(){
   const q=document.getElementById('plSrch').value.trim().toLowerCase();
   const arr=q?plCache.filter(u=>(u.nm||'').toLowerCase().includes(q)||String(u.id||'').includes(q)||(u.un||'').toLowerCase().includes(q)):plCache;
-  const pages=Math.max(1,Math.ceil(arr.length/PG));
-  if(plPage>=pages)plPage=pages-1;
-  const sl=arr.slice(plPage*PG,(plPage+1)*PG);
-  const el=document.getElementById('plList');
+  const pages=Math.max(1,Math.ceil(arr.length/PG));if(plPage>=pages)plPage=pages-1;
+  const sl=arr.slice(plPage*PG,(plPage+1)*PG);const el=document.getElementById('plList');
   if(sl.length===0)el.innerHTML='<div style="color:var(--text2);font-size:13px;text-align:center;padding:10px">Нет игроков</div>';
-  else el.innerHTML=sl.map(u=>`<div class="a-urow" onclick="selPlayer('${u.id}')"><div><div style="font-size:13px;font-weight:600">${u.nm}${u.un?' <span style="color:var(--accent2);font-size:11px">@'+u.un+'</span>':''}</div><div style="font-size:11px;color:var(--text2)">ID: ${u.id}</div></div><div class="a-ubal">₮${(u.bal||0).toLocaleString('ru')}</div></div>`).join('');
+  else el.innerHTML=sl.map(u=>`<div class="a-urow" onclick="selPlayer('${u.id}')"><div><div style="font-size:13px;font-weight:600">${u.nm}${u.un?' <span style="color:var(--accent2);font-size:11px">@'+u.un+'</span>':''}</div><div style="font-size:11px;color:var(--text2)">ID: ${u.id}</div></div><div class="a-ubal">₸${(u.bal||0).toLocaleString('ru')}</div></div>`).join('');
   pgn('plPgn',plPage,pages,'pl');
 }
-function pgn(cid,page,pages,key){
-  const el=document.getElementById(cid);if(!el)return;
-  if(pages<=1){el.innerHTML='';return;}
-  const mk=(p,lbl,dis,cur)=>`<button class="pg${cur?' cur':''}" ${dis?'disabled':''} data-pg="${key}" data-p="${p}" onclick="pgClick(this)">${lbl}</button>`;
-  let h=mk(0,'«',page===0,false)+mk(Math.max(0,page-1),'‹',page===0,false);
-  const st=Math.max(0,Math.min(page-1,pages-3)),en=Math.min(pages,st+3);
-  for(let i=st;i<en;i++)h+=mk(i,i+1,false,i===page);
-  h+=mk(Math.min(pages-1,page+1),'›',page===pages-1,false)+mk(pages-1,'»',page===pages-1,false);
-  h+=`<span class="pg-info">${page+1}/${pages}</span>`;
-  el.innerHTML=h;
-}
+function pgn(cid,page,pages,key){const el=document.getElementById(cid);if(!el)return;if(pages<=1){el.innerHTML='';return;}const mk=(p,lbl,dis,cur)=>`<button class="pg${cur?' cur':''}" ${dis?'disabled':''} data-pg="${key}" data-p="${p}" onclick="pgClick(this)">${lbl}</button>`;let h=mk(0,'«',page===0,false)+mk(Math.max(0,page-1),'‹',page===0,false);const st=Math.max(0,Math.min(page-1,pages-3)),en=Math.min(pages,st+3);for(let i=st;i<en;i++)h+=mk(i,i+1,false,i===page);h+=mk(Math.min(pages-1,page+1),'›',page===pages-1,false)+mk(pages-1,'»',page===pages-1,false);h+=`<span class="pg-info">${page+1}/${pages}</span>`;el.innerHTML=h;}
 function pgClick(btn){const key=btn.dataset.pg,p=parseInt(btn.dataset.p);if(key==='wd'){wdPage=p;renderWdList();}else if(key==='pl'){plPage=p;filterPlayers();}}
-function selPlayer(id){
-  const g=loadG();const u=(g.users||{})[id];if(!u)return;
-  selP=u;document.getElementById('topId').value=u.id;
-  document.getElementById('selNm').textContent=u.nm+(u.un?' @'+u.un:'');
-  document.getElementById('selId').textContent='ID: '+u.id+' · ₮'+(u.bal||0).toLocaleString('ru');
-  document.getElementById('selBox').style.display='flex';
-  document.getElementById('topAmt').focus();toast('👤 '+u.nm);
-}
-
-function doApprove(id){
-  const g=loadG();const req=(g.wdReqs||[]).find(r=>r.id===id);if(!req||req.st!=='pending')return;
-  req.st='approved';if(!g.cmds)g.cmds=[];
-  g.cmds.push({t:'rmWd',tid:req.uid,uuid:req.uuid,rid:id,iv:req.iv,inm:req.inm,iem:req.iem,ts:Date.now()});
-  saveG(g);if(BOT)tgSend(req.uid,`✅ <b>Предмет выдан!</b>\n\n${req.iem} <b>${req.inm}</b>\n\nСпасибо за игру! 🎉`);
-  toast('✅ Одобрено','var(--green)');renderWdList();if(req.uid===uid)applyCmd();
-}
+function selPlayer(id){const g=loadG();const u=(g.users||{})[id];if(!u)return;selP=u;document.getElementById('topId').value=u.id;document.getElementById('selNm').textContent=u.nm+(u.un?' @'+u.un:'');document.getElementById('selId').textContent='ID: '+u.id+' · ₸'+(u.bal||0).toLocaleString('ru');document.getElementById('selBox').style.display='flex';document.getElementById('topAmt').focus();toast('👤 '+u.nm);}
+function doApprove(id){const g=loadG();const req=(g.wdReqs||[]).find(r=>r.id===id);if(!req||req.st!=='pending')return;req.st='approved';if(!g.cmds)g.cmds=[];g.cmds.push({t:'rmWd',tid:req.uid,uuid:req.uuid,rid:id,iv:req.iv,inm:req.inm,iem:req.iem,ts:Date.now()});saveG(g);if(BOT)tgSend(req.uid,`✅ <b>Предмет выдан!</b>\n\n${req.iem} <b>${req.inm}</b>\n\nСпасибо за игру! 🎉`);toast('✅ Одобрено','var(--green)');renderWdList();if(req.uid===uid)applyCmd();}
 let rejId=null;
 function openRej(id){rejId=id;document.getElementById('rejReason').value='';document.getElementById('rejModal').classList.add('open');}
 function closeRej(){rejId=null;document.getElementById('rejModal').classList.remove('open');}
-function confirmRej(){
-  if(!rejId)return;
-  const reason=document.getElementById('rejReason').value.trim();
-  if(!reason){toast('⚠️ Укажи причину!','var(--gold)');return;}
-  const g=loadG();const req=(g.wdReqs||[]).find(r=>r.id===rejId);if(!req||req.st!=='pending')return;
-  req.st='rejected';req.reason=reason;if(!g.cmds)g.cmds=[];
-  g.cmds.push({t:'rejWd',tid:req.uid,uuid:req.uuid,rid:rejId,reason,ts:Date.now()});
-  saveG(g);if(BOT)tgSend(req.uid,`❌ <b>Заявка отклонена</b>\n\n${req.iem} <b>${req.inm}</b> возвращён в инвентарь.\n\n📝 Причина: ${reason}`);
-  toast('❌ Отклонено','var(--red)');closeRej();renderWdList();if(req.uid===uid)applyCmd();
-}
-
+function confirmRej(){if(!rejId)return;const reason=document.getElementById('rejReason').value.trim();if(!reason){toast('⚠️ Укажи причину!','var(--gold)');return;}const g=loadG();const req=(g.wdReqs||[]).find(r=>r.id===rejId);if(!req||req.st!=='pending')return;req.st='rejected';req.reason=reason;if(!g.cmds)g.cmds=[];g.cmds.push({t:'rejWd',tid:req.uid,uuid:req.uuid,rid:rejId,reason,ts:Date.now()});saveG(g);if(BOT)tgSend(req.uid,`❌ <b>Заявка отклонена</b>\n\n${req.iem} <b>${req.inm}</b> возвращён в инвентарь.\n\n📝 Причина: ${reason}`);toast('❌ Отклонено','var(--red)');closeRej();renderWdList();if(req.uid===uid)applyCmd();}
 async function doTopup(){
-  const btn=document.getElementById('topBtn');
-  const rawId=(document.getElementById('topId').value||'').trim();
-  const amt=parseInt(document.getElementById('topAmt').value);
+  const btn=document.getElementById('topBtn');const rawId=(document.getElementById('topId').value||'').trim();const amt=parseInt(document.getElementById('topAmt').value);
   if(!rawId||!amt||amt<=0){toast('⚠️ Заполни поля','var(--gold)');return;}
   const pl=selP||resolvePlayer(rawId);const tid=pl?pl.id:rawId;
   if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден','var(--red)');return;}
   btn.disabled=true;btn.innerHTML='<span class="spin2"></span>Отправляем...';
   const g=loadG();
-  if(tid===uid){U.add(amt);U.tx.push({amt,lbl:'Пополнение от администратора',ts:Date.now()});U.save();chkRef(g,tid,amt);saveG(g);}
-  else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'top',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=Math.round((g.users[tid].bal||0)+amt);chkRef(g,tid,amt);saveG(g);if(BOT)await tgSend(tid,`💰 <b>Баланс пополнен!</b>\n\n➕ +₮${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();}
+  if(tid===uid){U.add(amt);U.tx.push({amt,lbl:'Пополнение',ts:Date.now()});U.save();chkRef(g,tid,amt);saveG(g);}
+  else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'top',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=Math.round((g.users[tid].bal||0)+amt);chkRef(g,tid,amt);saveG(g);if(BOT)await tgSend(tid,`💰 <b>Баланс пополнен!</b>\n\n➕ +₸${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();}
   btn.disabled=false;btn.innerHTML='💰 Пополнить и уведомить';
-  toast(`✅ ₮${amt} → ${pl?pl.nm:'ID '+tid}`,'var(--green)');
+  toast(`✅ ₸${amt} → ${pl?pl.nm:'ID '+tid}`,'var(--green)');
   clearSel();document.getElementById('topId').value='';document.getElementById('topAmt').value='';
 }
 async function doSetBal(){
-  const btn=document.getElementById('setBtn');
-  const rawId=(document.getElementById('setId').value||'').trim();
-  const amt=parseInt(document.getElementById('setAmt').value);
+  const btn=document.getElementById('setBtn');const rawId=(document.getElementById('setId').value||'').trim();const amt=parseInt(document.getElementById('setAmt').value);
   if(!rawId||isNaN(amt)||amt<0){toast('⚠️ Заполни поля','var(--gold)');return;}
   const pl=resolvePlayer(rawId);const tid=pl?pl.id:rawId;
   if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден','var(--red)');return;}
   const g=loadG();btn.disabled=true;btn.innerHTML='<span class="spin2"></span>Применяем...';
-  if(tid===uid){U.setBal(amt);U.save();toast('⚙️ Баланс: ₮'+amt,'var(--accent)');}
-  else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'setbal',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=amt;saveG(g);if(BOT)await tgSend(tid,`⚙️ <b>Баланс изменён</b>\n\n₮${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();toast('✅ Установлено','var(--green)');}
+  if(tid===uid){U.setBal(amt);U.save();toast('⚙️ Баланс: ₸'+amt,'var(--accent)');}
+  else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'setbal',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=amt;saveG(g);if(BOT)await tgSend(tid,`⚙️ <b>Баланс изменён</b>\n\n₸${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();toast('✅ Установлено','var(--green)');}
   btn.disabled=false;btn.innerHTML='⚙️ Установить и уведомить';
   document.getElementById('setId').value='';document.getElementById('setAmt').value='';
 }
+function chkRef(g,tid,amt){if(!g.refRel)g.refRel={};const rel=g.refRel[tid];if(!rel||rel.ok)return;if(!rel.tot)rel.tot=0;rel.tot=Math.round(rel.tot+amt);if(rel.tot>=REF_MIN){rel.ok=true;const rb=rel.by;if(!g.cmds)g.cmds=[];g.cmds.push({t:'ref',tid:rb,amt:REF_REWARD,fid:tid,ts:Date.now()});if(g.users&&g.users[rb])g.users[rb].bal=Math.round((g.users[rb].bal||0)+REF_REWARD);if(!g.refInv)g.refInv={};if(!g.refInv[rb])g.refInv[rb]=[];if(!g.refInv[rb].find(x=>x.id===tid)){const fnm=g.users&&g.users[tid]?g.users[tid].nm:'Игрок';g.refInv[rb].push({id:tid,nm:fnm,ok:true});}if(BOT)tgSend(rb,`🎉 <b>Реферальный бонус +₸${REF_REWARD}!</b>\n\n<i>NFT Cases</i>`);}}
 
-function chkRef(g,tid,amt){
-  if(!g.refRel)g.refRel={};const rel=g.refRel[tid];if(!rel||rel.ok)return;
-  if(!rel.tot)rel.tot=0;rel.tot=Math.round(rel.tot+amt);
-  if(rel.tot>=REF_MIN){
-    rel.ok=true;const rb=rel.by;if(!g.cmds)g.cmds=[];
-    g.cmds.push({t:'ref',tid:rb,amt:REF_REWARD,fid:tid,ts:Date.now()});
-    if(g.users&&g.users[rb])g.users[rb].bal=Math.round((g.users[rb].bal||0)+REF_REWARD);
-    if(!g.refInv)g.refInv={};if(!g.refInv[rb])g.refInv[rb]=[];
-    if(!g.refInv[rb].find(x=>x.id===tid)){const fnm=g.users&&g.users[tid]?g.users[tid].nm:'Игрок';g.refInv[rb].push({id:tid,nm:fnm,ok:true});}
-    if(BOT)tgSend(rb,`🎉 <b>Реферальный бонус +₮${REF_REWARD}!</b>\n\nТвой приглашённый друг выполнил условие — пополнил баланс на ₮${REF_MIN}+.\n💰 Тебе начислено <b>+₮${REF_REWARD}</b>!\n\n<i>NFT Cases</i>`);
-  }
-}
-
-// ============================================================
-// APPLY ADMIN COMMANDS
-// ============================================================
+// ════════════════════════════════════
+// APPLY COMMANDS
+// ════════════════════════════════════
 function applyCmd(){
-  if(!uid||uid==='—')return;
-  const g=loadG();if(!g.cmds||g.cmds.length===0)return;
-  const mine=g.cmds.filter(c=>c.tid===uid);if(mine.length===0)return;
-  let changed=false;
+  if(!uid||uid==='—')return;const g=loadG();if(!g.cmds||g.cmds.length===0)return;
+  const mine=g.cmds.filter(c=>c.tid===uid);if(mine.length===0)return;let changed=false;
   mine.forEach(c=>{
     changed=true;
     if(c.t==='top'){U.bal=Math.round(U.bal+Math.round(c.amt));U.tx.push({amt:c.amt,lbl:'Пополнение от администратора',ts:c.ts});}
     else if(c.t==='setbal'){U.bal=Math.round(c.amt);}
-    else if(c.t==='rmWd'){const idx=U.inv.findIndex(i=>String(i.uuid)===String(c.uuid));if(idx!==-1){const it=U.inv[idx];U.inv.splice(idx,1);if(!U.stats.wd)U.stats.wd=0;if(!U.stats.wv)U.stats.wv=0;U.stats.wd++;U.stats.wv=Math.round(U.stats.wv+it.v);if(!U.stats.bw||it.v>U.stats.bw.v)U.stats.bw={nm:it.nm,em:it.em,v:it.v};}}
+    else if(c.t==='rmWd'){const idx=U.inv.findIndex(i=>String(i.uuid)===String(c.uuid));if(idx!==-1){const it=U.inv[idx];U.inv.splice(idx,1);if(!U.stats.wd)U.stats.wd=0;if(!U.stats.wv)U.stats.wv=0;U.stats.wd++;U.stats.wv=Math.round(U.stats.wv+it.v);if(!U.stats.bw||it.v>U.stats.bw.v)U.stats.bw={nm:it.nm,em:it.em||'🎁',v:it.v};}}
     else if(c.t==='rejWd'){const it=U.inv.find(i=>String(i.uuid)===String(c.uuid));if(it){it.wdOn=false;it.wdRid=null;}}
     else if(c.t==='ref'){U.bal=Math.round(U.bal+Math.round(c.amt));U.tx.push({amt:c.amt,lbl:'Реферальный бонус',ts:c.ts});if(!U.ref.inv)U.ref.inv=[];if(!U.ref.inv.find(x=>x.id===c.fid)){const g2=loadG();const fnm=g2.users&&g2.users[c.fid]?g2.users[c.fid].nm:'Игрок';U.ref.inv.push({id:c.fid,nm:fnm,ok:true});}U.ref.er=(U.ref.er||0)+c.amt;}
   });
   g.cmds=g.cmds.filter(c=>c.tid!==uid);saveG(g);
   if(changed){U.save();renderBal();setSyncDot('ok');}
 }
-
 function parseRef(){
-  try{
-    const sp=tg?.initDataUnsafe?.start_param||'';
-    if(!sp.startsWith('ref_'))return;
-    const rid=sp.replace('ref_','');
-    if(rid===uid||U.ref.by)return;
-    U.ref.by=rid;const g=loadG();if(!g.refRel)g.refRel={};
-    if(!g.refRel[uid]){
-      g.refRel[uid]={by:rid,ok:false,tot:0};
-      if(!g.refInv)g.refInv={};if(!g.refInv[rid])g.refInv[rid]=[];
-      if(!g.refInv[rid].find(x=>x.id===uid))g.refInv[rid].push({id:uid,nm:uname,ok:false});
-      saveG(g);U.save();
-      if(BOT)tgSend(rid,`👋 <b>Новый реферал!</b>\n\n${uname}${uun?' ('+uun+')':''} перешёл по твоей ссылке.\n\nКак только ему пополнят баланс на ₮${REF_MIN}+, ты получишь <b>+₮${REF_REWARD}</b>! 🎁`);
-    }else saveG(g);
-  }catch(e){}
+  try{const sp=tg?.initDataUnsafe?.start_param||'';if(!sp.startsWith('ref_'))return;const rid=sp.replace('ref_','');if(rid===uid||U.ref.by)return;U.ref.by=rid;const g=loadG();if(!g.refRel)g.refRel={};if(!g.refRel[uid]){g.refRel[uid]={by:rid,ok:false,tot:0};if(!g.refInv)g.refInv={};if(!g.refInv[rid])g.refInv[rid]=[];if(!g.refInv[rid].find(x=>x.id===uid))g.refInv[rid].push({id:uid,nm:uname,ok:false});saveG(g);U.save();if(BOT)tgSend(rid,`👋 <b>Новый реферал!</b>\n\n${uname}${uun?' ('+uun+')':''} перешёл по ссылке.`);}else saveG(g);}catch(e){}
 }
 
-// ============================================================
-// INIT — async, loads CloudStorage first
-// ============================================================
+// ════════════════════════════════════
+// INIT
+// ════════════════════════════════════
 async function init(){
   const loadEl=document.getElementById('loadingScreen');
-  const txtEl=document.getElementById('loadingTxt');
-
   initBot();
-
-  if(CS){
-    txtEl.textContent='Загрузка из Telegram Cloud...';
-    await U.load();
-  } else {
-    txtEl.textContent='Загрузка...';
-    // No CloudStorage (browser/PC) — use localStorage
-    const ls=loadLsState();
-    if(ls)U.fromObj(ls);
-    else U.fromObj(EMPTY_STATE);
-    U._ready=true;
-  }
-
-  parseRef();
-  applyCmd();
-  renderCases();
-  renderBal();
-  syncG();
-
-  // Hide loading screen
+  if(CS){document.getElementById('loadingTxt').textContent='Загрузка из Telegram Cloud...';await U.load();}
+  else{const ls=loadLsState();if(ls)U.fromObj(ls);else U.fromObj(EMPTY_STATE);U._ready=true;}
+  parseRef();applyCmd();renderCases();renderBal();syncG();
   loadEl.classList.add('hidden');
-
+  // 8. Аватарка
+  const av=document.getElementById('hdrAvatar');
+  if(uPhoto){const img=new Image();img.src=uPhoto;img.style.cssText='width:34px;height:34px;border-radius:50%;object-fit:cover';img.onload=()=>{av.innerHTML='';av.appendChild(img);};img.onerror=()=>{av.textContent=uname.slice(0,2).toUpperCase();};}
+  else av.textContent=uname.slice(0,2).toUpperCase();
   if(BOT)fetch(`https://api.telegram.org/bot${BOT}/getMe`).then(r=>r.json()).then(d=>{if(d.ok&&d.result?.username)localStorage.setItem('nfc_bun',d.result.username);}).catch(()=>{});
 }
-
 init();
 </script>
 </body>
