@@ -1008,41 +1008,27 @@ function spin(fast){
   // Предметы будут добавлены в инвентарь только через "в инвентарь" или flushWon
 
   if(fast){
-    // 4. Быстрый прокрут — рулетка крутится быстро (0.8s) потом останавливается
-    buildSlots(false,true); // true = fast mode
+    buildSlots(false,true);
     showStep(1);
     document.getElementById('mBar').classList.remove('show');
     stopIdle();
     if(cnt===1){
-      // одна рулетка быстро
       const slot=wonSlots[0];
       placeWinner(0,slot.item);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
         const tr=document.getElementById('tr_0');if(!tr)return;
-        const cw=tr.parentElement.offsetWidth;
-        const WIN=46,jitter=Math.round((Math.random()-0.5)*10);
-        const fx=-(WIN*IW-cw/2+IW/2+jitter);
-        tr.style.transition='none';tr.style.transform='translateX(0)';
-        tr.getBoundingClientRect();
-        tr.style.transition='transform cubic-bezier(0.2,0.9,0.4,1) 0.7s'; // быстро
-        tr.style.transform=`translateX(${fx}px)`;
+        spinTrack(tr,0,null,0.7);
       }));
-      spinTm.push(setTimeout(()=>{spinning=false;showWinPopup(slot);haptic();},900));
+      spinTm.push(setTimeout(()=>{spinning=false;showWinPopup(slot);haptic();},1100));
     } else {
       let done=0;
       wonSlots.forEach((slot,i)=>{
         placeWinner(i,slot.item);
         requestAnimationFrame(()=>requestAnimationFrame(()=>{
           const tr=document.getElementById('tr_'+i);if(!tr)return;
-          const cw=tr.parentElement.offsetWidth;
-          const WIN=46,jitter=Math.round((Math.random()-0.5)*10);
-          const fx=-(WIN*IW-cw/2+IW/2+jitter);
-          tr.style.transition='none';tr.style.transform='translateX(0)';
-          tr.getBoundingClientRect();
-          tr.style.transition=`transform cubic-bezier(0.2,0.9,0.4,1) ${0.6+i*0.1}s`;
-          tr.style.transform=`translateX(${fx}px)`;
+          spinTrack(tr,i,null,0.6+i*0.1);
         }));
-        spinTm.push(setTimeout(()=>{done++;showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}},800+i*150));
+        spinTm.push(setTimeout(()=>{done++;showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}},900+i*180));
       });
     }
     return;
@@ -1058,19 +1044,13 @@ function spin(fast){
     placeWinner(i,slot.item);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       const tr=document.getElementById('tr_'+i);if(!tr)return;
-      const cw=tr.parentElement.offsetWidth;
-      const WIN=46,jitter=Math.round((Math.random()-0.5)*20);
-      const fx=-(WIN*IW-cw/2+IW/2+jitter);
-      tr.style.transition='none';tr.style.transform='translateX(0)';
-      tr.getBoundingClientRect();
-      tr.style.transition='transform cubic-bezier(0.05,0.82,0.35,1) 4s';
-      tr.style.transform=`translateX(${fx}px)`;
+      spinTrack(tr,i,null,4);
     }));
     spinTm.push(setTimeout(()=>{
       done++;
       if(cnt===1){spinning=false;showWinPopup(slot);haptic();}
       else{showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}}
-    },4300));
+    },4400));
   });
 }
 
@@ -1133,7 +1113,7 @@ document.getElementById('wpKeep').onclick=()=>{
 function buildSlots(instant,fastMode){
   const wrap=document.getElementById('rlWrap');wrap.innerHTML='';
   for(let i=0;i<cnt;i++){
-  const items=[];for(let j=0;j<60;j++)items.push(wrand(CC.items,CC.id));
+    const items=[];for(let j=0;j<60;j++)items.push(wrand(CC.items,CC.id));
     const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderPng(it,38)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
     const resBar=cnt>1?`<div class="rl-result" id="rr_${i}"><div class="rr-em" id="rr_em_${i}"></div><div class="rr-info"><div class="rr-nm" id="rr_nm_${i}"></div><div class="rr-val" id="rr_vl_${i}"></div></div><button class="rr-sell" onclick="sellSlot(${i})">Продать ₸<span id="rr_pr_${i}"></span></button></div>`:'';
     const div=document.createElement('div');div.className='rl-slot';
@@ -1142,12 +1122,34 @@ function buildSlots(instant,fastMode){
     if(!instant&&!fastMode){const t=setTimeout(()=>startIdle('tr_'+i),100);idleTimers.push(t);}
   }
 }
+
+// WIN_IDX — индекс ячейки с победителем (из 60 ячеек)
+const WIN_IDX=45;
+
 function placeWinner(i,won){
   const tr=document.getElementById('tr_'+i);if(!tr)return;
   tr.classList.remove('idle');
-  const cell=tr.children[46];if(!cell)return;
+  const cell=tr.children[WIN_IDX];if(!cell)return;
   cell.querySelector('.rl-item-em').innerHTML=renderPng(won,38);
   cell.querySelector('.rl-item-bar').className='rl-item-bar ri-'+won.r;
+}
+
+function spinTrack(trEl, slotIdx, cb, duration){
+  // Вычисляем реальную ширину ячейки из DOM
+  const firstCell=trEl.children[0];
+  const cellW=firstCell?firstCell.offsetWidth:IW;
+  const contW=trEl.parentElement.offsetWidth;
+  // Jitter: чуть левее/правее центра ячейки (±15px)
+  const jitter=Math.round((Math.random()-0.5)*15);
+  // Финальная позиция: ячейка WIN_IDX по центру контейнера
+  const fx=-(WIN_IDX*cellW - contW/2 + cellW/2 + jitter);
+  trEl.style.transition='none';
+  trEl.style.transform='translateX(0)';
+  trEl.getBoundingClientRect(); // force reflow
+  const ease=duration<2?'cubic-bezier(0.2,0.9,0.4,1)':'cubic-bezier(0.05,0.82,0.35,1)';
+  trEl.style.transition=`transform ${ease} ${duration}s`;
+  trEl.style.transform=`translateX(${fx}px)`;
+  if(cb)setTimeout(cb,(duration*1000)+300);
 }
 function showSlotRes(i){
   const s=wonSlots[i];if(!s)return;const row=document.getElementById('rr_'+i);if(!row)return;
