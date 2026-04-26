@@ -302,6 +302,30 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 .rej-ok{flex:1;padding:11px;background:var(--red);border:none;border-radius:10px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
 .rej-cancel{flex:1;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
 
+/* idle рулетка — без отступов, крупнее */
+#rlWrapIdle{padding:0!important}
+#rlWrapIdle .rl-slot{border-radius:0}
+#rlWrapIdle .rl-cont{height:120px;border-radius:0}
+#rlWrapIdle .rl-track{height:120px}
+#rlWrapIdle .rl-item{height:120px;width:110px}
+#rlWrapIdle .rl-item-em img{width:60px;height:60px}
+/* основные рулетки тоже крупнее */
+.rl-cont{height:120px!important}
+.rl-track{height:120px!important}
+.rl-item{height:120px!important;width:110px}
+.rl-item-em img{width:56px;height:56px}
+/* содержимое крупнее — как на Gift Drop справа */
+.gifts-grid{grid-template-columns:repeat(3,1fr)!important;gap:8px!important}
+.gift-img-area{aspect-ratio:1.1!important}
+.gift-img-area img{width:80%!important;height:80%!important}
+.gift-emoji{font-size:58px!important}
+.gift-name{font-size:13px!important;font-weight:700!important;padding:4px 6px 0!important}
+.gift-sub{font-size:11px!important;margin-top:3px!important;color:var(--text)!important;opacity:0.7}
+.gift-price{font-size:13px!important;top:7px!important;left:7px!important}
+.gift-card{border-radius:16px!important;padding-bottom:14px!important}
+.drops-scroll{padding:4px 10px 14px!important;max-height:none!important}
+/* open-screen без лишних отступов */
+.open-screen{padding:8px 14px 8px!important}
 /* ── TOAST ── */
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px 20px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -473,15 +497,10 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="modal-ttl" id="mTitle">Кейс</div>
       <button class="modal-x" onclick="closeCase()">✕</button>
     </div>
-    <!-- STEP 0 -->
+    <!-- STEP 0 — idle рулетка сверху на весь блок -->
     <div class="step on" id="s0">
-      <!-- 1. Idle рулетка сверху -->
-      <div class="rl-wrap" id="rlWrapIdle" style="padding-bottom:0"></div>
+      <div class="rl-wrap" id="rlWrapIdle" style="padding-bottom:0;padding-top:0"></div>
       <div class="open-screen">
-        <div class="case-big-wrap">
-          <img class="case-big-img" id="s0img" src="" alt="">
-          <div class="case-big-em" id="s0em"></div>
-        </div>
         <div class="case-big-pr" id="s0pr"></div>
         <div class="cnt-tabs">
           <div class="cnt-tab on" onclick="setCnt(1,this)">×1</div>
@@ -775,7 +794,49 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)applyCmd()
 // ════════════════════════════════════
 function renderBal(){document.getElementById('balEl').textContent=U.bal.toLocaleString('ru');}
 function toast(msg,color){const t=document.getElementById('toast');t.textContent=msg;t.style.color=color||'var(--text)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-function wrand(items){const tot=items.reduce((s,i)=>s+i.ch,0);let r=Math.random()*tot;for(const x of items){r-=x.ch;if(r<=0)return x;}return items[items.length-1];}
+// ════════════════════════════════════
+// УМНЫЕ ШАНСЫ — Pseudo-Fair RNG
+// ════════════════════════════════════
+// Храним для каждого кейса: сколько подряд открытий без "хорошего" предмета
+// После N неудачных открытий — временно повышаем шанс редкого
+const _pityCounters={}; // {caseId: openCount}
+
+function wrand(items, caseId){
+  if(!_pityCounters[caseId]) _pityCounters[caseId]=0;
+  const pity=_pityCounters[caseId];
+
+  // Считаем "ожидаемую" стоимость кейса
+  const tot=items.reduce((s,i)=>s+i.ch,0);
+  const avgVal=items.reduce((s,i)=>s+(i.v*i.ch/tot),0);
+
+  // Pity-буст: после каждых 5 открытий без предмета дороже avgVal*1.5
+  // повышаем шанс дорогих предметов на 15-30%
+  let boostFactor=1;
+  if(pity>=5)  boostFactor=1.15;
+  if(pity>=10) boostFactor=1.30;
+  if(pity>=15) boostFactor=1.50;
+  if(pity>=20) boostFactor=1.80;
+
+  // Строим взвешенный массив с бустом
+  const threshold=avgVal*1.4; // предметы дороже этого — "хорошие"
+  const boostedItems=items.map(it=>({
+    ...it,
+    _ch: it.v >= threshold ? it.ch * boostFactor : it.ch
+  }));
+
+  const boostedTot=boostedItems.reduce((s,i)=>s+i._ch,0);
+  let r=Math.random()*boostedTot;
+  let result=items[items.length-1];
+  for(const x of boostedItems){r-=x._ch;if(r<=0){result=x;break;}}
+
+  // Обновляем счётчик
+  if(result.v >= threshold){
+    _pityCounters[caseId]=0; // сброс после хорошего предмета
+  } else {
+    _pityCounters[caseId]++;
+  }
+  return result;
+}
 
 // 2. PNG для рулетки/содержимого/инвентаря
 function renderPng(item,size=46){
@@ -857,9 +918,6 @@ let CC=null,cnt=1,spinning=false,wonSlots=[],spinTm=[],idleTimers=[];
 function openCase(c){
   CC=c;cnt=1;spinning=false;wonSlots=[];
   document.getElementById('mTitle').textContent=c.nm;
-  const img=document.getElementById('s0img'),em=document.getElementById('s0em');
-  if(c.cover){img.src=c.cover;img.style.display='block';em.style.display='none';}
-  else{img.style.display='none';em.style.display='block';em.textContent=c.em;}
   document.getElementById('s0pr').textContent='Цена: ₸'+c.price+' за 1 кейс';
   document.querySelectorAll('.cnt-tab').forEach((t,i)=>t.classList.toggle('on',i===0));
   const gh=buildGiftsHtml(c);
@@ -878,7 +936,7 @@ function openCase(c){
 function buildIdleRoulette(){
   const wrap=document.getElementById('rlWrapIdle');if(!wrap)return;
   wrap.innerHTML='';
-  const items=[];for(let j=0;j<12;j++)items.push(wrand(CC.items));
+  const items=[];for(let j=0;j<12;j++)items.push(wrand(CC.items,CC.id+'_idle'));
   const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderPng(it,38)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
   wrap.innerHTML=`<div class="rl-slot"><div class="rl-cont"><div class="rl-ptr"></div><div class="rl-track idle" id="tr_idle">${trackHtml}</div></div></div>`;
 }
@@ -945,7 +1003,7 @@ function spin(fast){
   if(U.bal<tot){checkFunds();return;}
   // 9. Деньги списываем СРАЗУ и сохраняем ДО рулетки
   U.sub(tot);U.stats.op+=cnt;U.save();
-  wonSlots=[];for(let i=0;i<cnt;i++)wonSlots.push({item:wrand(CC.items),handled:false});
+  wonSlots=[];for(let i=0;i<cnt;i++)wonSlots.push({item:wrand(CC.items,CC.id),handled:false});
   // 9. Сразу кладём предметы в инвентарь (handled=false — из winPopup уберём)
   // Предметы будут добавлены в инвентарь только через "в инвентарь" или flushWon
 
@@ -1075,7 +1133,7 @@ document.getElementById('wpKeep').onclick=()=>{
 function buildSlots(instant,fastMode){
   const wrap=document.getElementById('rlWrap');wrap.innerHTML='';
   for(let i=0;i<cnt;i++){
-    const items=[];for(let j=0;j<60;j++)items.push(wrand(CC.items));
+  const items=[];for(let j=0;j<60;j++)items.push(wrand(CC.items,CC.id));
     const trackHtml=items.map(it=>`<div class="rl-item"><div class="rl-item-em">${renderPng(it,38)}</div><div class="rl-item-bar ri-${it.r}"></div></div>`).join('');
     const resBar=cnt>1?`<div class="rl-result" id="rr_${i}"><div class="rr-em" id="rr_em_${i}"></div><div class="rr-info"><div class="rr-nm" id="rr_nm_${i}"></div><div class="rr-val" id="rr_vl_${i}"></div></div><button class="rr-sell" onclick="sellSlot(${i})">Продать ₸<span id="rr_pr_${i}"></span></button></div>`:'';
     const div=document.createElement('div');div.className='rl-slot';
@@ -1251,18 +1309,55 @@ function formatPromoInput(el){
 function submitPromo(){
   const code=document.getElementById('promoInput').value.trim().toUpperCase();
   if(code.length<19){toast('⚠️ Введи полный код','var(--gold)');return;}
-  const g=loadG();const p=(g.promos||{})[code];
-  if(!p){toast('❌ Промокод не найден','var(--red)');return;}
-  if(p.uses>=p.maxUses){toast('❌ Промокод уже использован','var(--red)');return;}
-  // Проверяем не использовал ли этот юзер
+  // Промокод в globalStorage — нужно загружать актуальные данные
+  const g=loadG();
+  // Если промокоды хранятся у админа в CS — попробуем из localStorage
+  const p=(g.promos||{})[code];
+  if(!p){
+    // Попробуем загрузить из CS если есть
+    if(CS){
+      setSyncDot('loading');
+      csGet(GK).then(val=>{
+        if(val){
+          try{
+            const fresh=JSON.parse(val);
+            const p2=(fresh.promos||{})[code];
+            if(!p2){toast('❌ Промокод не найден','var(--red)');setSyncDot('err');return;}
+            applyPromo(code,p2,fresh);
+          }catch(e){toast('❌ Ошибка','var(--red)');}
+        }else{toast('❌ Промокод не найден','var(--red)');}
+        setSyncDot('ok');
+      });
+    } else {
+      toast('❌ Промокод не найден','var(--red)');
+    }
+    return;
+  }
+  applyPromo(code,p,g);
+}
+
+function applyPromo(code,p,g){
+  if(p.uses>=p.maxUses){toast('❌ Промокод уже исчерпан','var(--red)');return;}
   if(!p.usedBy)p.usedBy=[];
-  if(p.usedBy.includes(uid)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
-  p.uses++;p.usedBy.push(uid);
+  // uid может быть '—' у нового игрока — используем fallback
+  const myId=uid&&uid!=='—'?uid:('guest_'+Date.now());
+  if(p.usedBy.includes(myId)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
+  p.uses++;p.usedBy.push(myId);
+  // Обновляем глобал
+  if(!g.promos)g.promos={};
+  g.promos[code]=p;
+  // Регистрируем команду пополнения для этого игрока
+  if(uid&&uid!=='—'){
+    // Если это текущий игрок — сразу начисляем
+    U.add(p.amt);
+    // Регистрируем игрока если его нет
+    if(!g.users)g.users={};
+    if(!g.users[uid])g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
+  }
   saveG(g);
-  U.add(p.amt);
-  toast('✅ +₸'+p.amt+' зачислено!','var(--green)');
+  if(uid&&uid!=='—')toast('✅ +₸'+p.amt+' зачислено!','var(--green)');
   closePromoModal();
-  if(BOT)tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> использован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +₸${p.amt}`);
+  if(BOT&&uid&&uid!=='—')tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> использован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +₸${p.amt}`);
 }
 
 // ════════════════════════════════════
@@ -1335,12 +1430,28 @@ function confirmRej(){if(!rejId)return;const reason=document.getElementById('rej
 async function doTopup(){
   const btn=document.getElementById('topBtn');const rawId=(document.getElementById('topId').value||'').trim();const amt=parseInt(document.getElementById('topAmt').value);
   if(!rawId||!amt||amt<=0){toast('⚠️ Заполни поля','var(--gold)');return;}
-  const pl=selP||resolvePlayer(rawId);const tid=pl?pl.id:rawId;
-  if(!pl&&!rawId.match(/^\d+$/)){toast('⚠️ Игрок не найден','var(--red)');return;}
+  const pl=selP||resolvePlayer(rawId);
+  // Если не нашли в users — пробуем как числовой ID напрямую
+  const tid=pl?pl.id:(rawId.match(/^\d+$/)?rawId:null);
+  if(!tid){toast('⚠️ Игрок не найден в базе.\nВведи цифровой Telegram ID','var(--red)');return;}
   btn.disabled=true;btn.innerHTML='<span class="spin2"></span>Отправляем...';
   const g=loadG();
-  if(tid===uid){U.add(amt);U.tx.push({amt,lbl:'Пополнение',ts:Date.now()});U.save();chkRef(g,tid,amt);saveG(g);}
-  else{if(!g.cmds)g.cmds=[];g.cmds.push({t:'top',tid,amt,ts:Date.now()});if(g.users&&g.users[tid])g.users[tid].bal=Math.round((g.users[tid].bal||0)+amt);chkRef(g,tid,amt);saveG(g);if(BOT)await tgSend(tid,`💰 <b>Баланс пополнен!</b>\n\n➕ +₸${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);renderPlayers();}
+  // Создаём запись в users если её нет (для нового игрока)
+  if(!g.users)g.users={};
+  if(!g.users[tid]){
+    g.users[tid]={nm:'Игрок '+tid,id:tid,bal:0,un:''};
+  }
+  if(tid===uid){
+    U.add(amt);U.tx.push({amt,lbl:'Пополнение',ts:Date.now()});U.save();
+    chkRef(g,tid,amt);saveG(g);
+  } else {
+    if(!g.cmds)g.cmds=[];
+    g.cmds.push({t:'top',tid,amt,ts:Date.now()});
+    g.users[tid].bal=Math.round((g.users[tid].bal||0)+amt);
+    chkRef(g,tid,amt);saveG(g);
+    if(BOT)await tgSend(tid,`💰 <b>Баланс пополнен!</b>\n\n➕ +₸${amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);
+    renderPlayers();
+  }
   btn.disabled=false;btn.innerHTML='💰 Пополнить и уведомить';
   toast(`✅ ₸${amt} → ${pl?pl.nm:'ID '+tid}`,'var(--green)');
   clearSel();document.getElementById('topId').value='';document.getElementById('topAmt').value='';
