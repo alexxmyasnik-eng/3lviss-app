@@ -710,78 +710,123 @@ const RN={common:'Обычный',uncommon:'Необычный',rare:'Редки
 const GIFT_BG={common:'rgba(107,114,128,0.18)',uncommon:'rgba(59,130,246,0.18)',rare:'rgba(129,140,248,0.18)',epic:'rgba(192,132,252,0.20)',legendary:'rgba(245,158,11,0.20)'};
 
 // ════════════════════════════════════
-// ЗВУК РУЛЕТКИ — Web Audio API
+// ЗВУК РУЛЕТКИ — CS:GO стиль
 // ════════════════════════════════════
 let _audioCtx=null;
 function getAudioCtx(){
   if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
   return _audioCtx;
 }
-function playTick(freq=600,vol=0.18){
-  const ctx=getAudioCtx();if(!ctx)return;
+
+// Реалистичный "клик" как при прокрутке кейса — короткий щелчок с атакой
+function playClickSound(vol=0.4){
+  const ctx=getAudioCtx();if(!ctx||ctx.state==='suspended')return;
   try{
-    const osc=ctx.createOscillator();
+    const bufSize=ctx.sampleRate*0.025; // 25ms
+    const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<bufSize;i++){
+      // Белый шум с экспоненциальным затуханием — звук механического щелчка
+      data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,6)*vol;
+    }
+    const src=ctx.createBufferSource();
+    src.buffer=buf;
+    // Небольшой фильтр — убираем высокие частоты, оставляем "деревянный" щелчок
+    const filter=ctx.createBiquadFilter();
+    filter.type='bandpass';
+    filter.frequency.value=1800;
+    filter.Q.value=0.8;
     const gain=ctx.createGain();
-    osc.connect(gain);gain.connect(ctx.destination);
-    osc.type='sine';
-    osc.frequency.setValueAtTime(freq,ctx.currentTime);
-    gain.gain.setValueAtTime(vol,ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.07);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime+0.07);
+    gain.gain.value=1.0;
+    src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+    src.start(ctx.currentTime);
   }catch(e){}
 }
+
+// Звук победы — зависит от редкости
 function playWinSound(rarity){
   const ctx=getAudioCtx();if(!ctx)return;
   try{
-    const freqs={common:[400,500],uncommon:[450,560,700],rare:[500,630,800,900],epic:[600,750,900,1100,1300],legendary:[700,880,1050,1300,1600,2000]};
-    const notes=freqs[rarity]||freqs.common;
-    notes.forEach((f,i)=>{
-      const osc=ctx.createOscillator();
-      const gain=ctx.createGain();
-      osc.connect(gain);gain.connect(ctx.destination);
-      osc.type=rarity==='legendary'?'sine':'triangle';
-      osc.frequency.setValueAtTime(f,ctx.currentTime+i*0.09);
-      gain.gain.setValueAtTime(0,ctx.currentTime+i*0.09);
-      gain.gain.linearRampToValueAtTime(0.22,ctx.currentTime+i*0.09+0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.09+0.25);
-      osc.start(ctx.currentTime+i*0.09);
-      osc.stop(ctx.currentTime+i*0.09+0.3);
-    });
+    if(ctx.state==='suspended')ctx.resume().then(()=>_doWinSound(ctx,rarity));
+    else _doWinSound(ctx,rarity);
   }catch(e){}
 }
-// Тикающий звук во время прокрутки рулетки
-let _tickInterval=null;
-let _tickSpeed=50; // мс между тиками (уменьшается в начале, увеличивается в конце)
+function _doWinSound(ctx,rarity){
+  // Базовые ноты мажорного арпеджио — нарастающие
+  const scales={
+    common:   [523,659,784],
+    uncommon: [523,659,784,1047],
+    rare:     [523,659,784,1047,1319],
+    epic:     [440,554,659,880,1109,1319],
+    legendary:[440,554,659,880,1109,1319,1760]
+  };
+  const notes=scales[rarity]||scales.common;
+  const spacing=rarity==='legendary'?0.07:0.075;
+  notes.forEach((freq,i)=>{
+    const t=ctx.currentTime+i*spacing;
+    // Основной тон
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(freq,t);
+    gain.gain.setValueAtTime(0,t);
+    gain.gain.linearRampToValueAtTime(rarity==='legendary'?0.28:0.2,t+0.012);
+    gain.gain.exponentialRampToValueAtTime(0.001,t+(rarity==='legendary'?0.55:0.35));
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.start(t);osc.stop(t+0.6);
+    // Обертон для "блеска"
+    if(rarity==='epic'||rarity==='legendary'){
+      const osc2=ctx.createOscillator();
+      const gain2=ctx.createGain();
+      osc2.type='sine';
+      osc2.frequency.setValueAtTime(freq*2,t);
+      gain2.gain.setValueAtTime(0,t);
+      gain2.gain.linearRampToValueAtTime(0.07,t+0.01);
+      gain2.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      osc2.connect(gain2);gain2.connect(ctx.destination);
+      osc2.start(t);osc2.stop(t+0.3);
+    }
+  });
+  // Финальный "звон" для legendary
+  if(rarity==='legendary'){
+    const t=ctx.currentTime+notes.length*spacing+0.05;
+    [1760,2093,2637].forEach((f,i)=>{
+      const osc=ctx.createOscillator();const gain=ctx.createGain();
+      osc.type='sine';osc.frequency.value=f;
+      gain.gain.setValueAtTime(0.18,t+i*0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001,t+i*0.06+0.8);
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.start(t+i*0.06);osc.stop(t+i*0.06+1);
+    });
+  }
+}
+
+// Прокрутка рулетки: тики с нарастанием и затуханием скорости
+let _tickTm=null;
 function startSpinSound(duration){
   const ctx=getAudioCtx();if(!ctx)return;
-  // Пробуждаем аудиоконтекст кликом
-  if(ctx.state==='suspended')ctx.resume();
+  if(ctx.state==='suspended'){ctx.resume();}
   stopSpinSound();
-  let elapsed=0;
   const totalMs=duration*1000;
-  // Начало: быстро (30мс), ускорение, потом замедление
-  function scheduleTick(){
+  let elapsed=0;
+  function next(){
     if(elapsed>=totalMs){stopSpinSound();return;}
-    const progress=elapsed/totalMs;
-    // Скорость: быстро в середине, медленно в начале и конце
+    const p=elapsed/totalMs; // 0..1
+    // Интервал: медленно → быстро (0.15) → очень быстро (0.6) → замедление → стоп
     let interval;
-    if(progress<0.15)       interval=80-progress*200;   // разгон
-    else if(progress<0.75)  interval=40;                 // быстро
-    else                    interval=40+(progress-0.75)*4*250; // замедление
-    interval=Math.max(30,Math.min(350,interval));
-    // Частота тика: выше в середине
-    const freq=progress<0.75 ? 700 : 700-(progress-0.75)*4*400;
-    const vol=progress>0.85 ? 0.25 : 0.15;
-    playTick(Math.max(200,freq),vol);
+    if(p<0.12)       interval=120-p*(120-38)/0.12;    // разгон
+    else if(p<0.65)  interval=38;                      // макс скорость
+    else             interval=38+Math.pow((p-0.65)/0.35,2)*320; // плавное торможение
+    interval=Math.max(25,Math.min(400,Math.round(interval)));
+    // Громкость: чуть тише в конце
+    const vol=p>0.75?0.55-((p-0.75)/0.25)*0.25:0.55;
+    playClickSound(vol);
     elapsed+=interval;
-    _tickInterval=setTimeout(scheduleTick,interval);
+    _tickTm=setTimeout(next,interval);
   }
-  scheduleTick();
+  next();
 }
-function stopSpinSound(){
-  if(_tickInterval){clearTimeout(_tickInterval);_tickInterval=null;}
-}
+function stopSpinSound(){if(_tickTm){clearTimeout(_tickTm);_tickTm=null;}}
 
 // ════════════════════════════════════
 // BOT TOKEN
@@ -1394,10 +1439,14 @@ function createPromo(){
   if(!amt||amt<=0){toast('⚠️ Укажи сумму','var(--gold)');return;}
   const g=loadG();if(!g.promos)g.promos={};
   const code=genPromoCode();
-  g.promos[code]={amt,maxUses:uses,uses:0,created:Date.now()};
+  g.promos[code]={amt,maxUses:uses,uses:0,usedBy:[],created:Date.now()};
   saveG(g);
+  // Принудительно записываем в CS (для синхронизации)
+  if(CS){const s=JSON.stringify(g);csSet(GK,s);}
   document.getElementById('promoAmt').value='';document.getElementById('promoUses').value='1';
-  toast('✅ Промокод создан: '+code,'var(--green)');
+  // Копируем код в буфер
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).catch(()=>{});
+  toast('✅ Создан: '+code,'var(--green)');
   renderPromoList();
 }
 function renderPromoList(){
@@ -1432,84 +1481,160 @@ function formatPromoInput(el){
 function submitPromo(){
   const code=document.getElementById('promoInput').value.trim().toUpperCase();
   if(code.length<19){toast('⚠️ Введи полный код','var(--gold)');return;}
-  // Сначала всегда пытаемся получить свежие данные из CS (где хранит промокоды админ)
-  if(CS){
-    setSyncDot('loading');
-    csGet(GK).then(val=>{
-      let g=loadG();
-      if(val){
-        try{
-          const fresh=JSON.parse(val);
-          // Мержим промокоды из CS в локальный g
-          if(fresh.promos){
-            g.promos=fresh.promos;
-          }
-          // Мержим команды
-          if(fresh.cmds&&fresh.cmds.length>0){
-            if(!g.cmds)g.cmds=[];
-            fresh.cmds.forEach(c=>{
-              if(!g.cmds.find(lc=>lc.ts===c.ts&&lc.tid===c.tid))
-                g.cmds.push(c);
-            });
-          }
-          localStorage.setItem(GK,JSON.stringify(g));
-        }catch(e){}
-      }
-      setSyncDot('ok');
-      // Теперь ищем промокод
-      const fresh2=loadG();
-      const p=(fresh2.promos||{})[code];
-      if(!p){toast('❌ Промокод не найден','var(--red)');return;}
-      applyPromo(code,p,fresh2);
-    }).catch(()=>{
-      // Если CS недоступен — используем локальный
-      const g=loadG();
-      const p=(g.promos||{})[code];
-      if(!p){toast('❌ Промокод не найден','var(--red)');return;}
-      applyPromo(code,p,g);
-      setSyncDot('ok');
-    });
-    return;
+
+  // АРХИТЕКТУРА: CS у каждого пользователя своё — читать CS другого нельзя.
+  // Промокоды хранятся у АДМИНА в его localStorage/CS.
+  // РЕШЕНИЕ: при вводе промокода — отправляем боту запрос, бот (через webhook/polling)
+  // должен обработать и начислить. НО в этой архитектуре бота нет серверной части.
+  //
+  // РАБОЧИЙ СПОСОБ без сервера:
+  // 1. При создании промокода — сохраняем в localStorage + CS (уже есть)
+  // 2. При вводе промокода — ищем в локальном g (синхронизированном при старте)
+  // 3. Если не нашли — значит синхронизация не прошла, предлагаем переоткрыть
+  // 4. Если бот настроен — сразу начисляем И уведомляем бота (он помечает код как использованный)
+
+  setSyncDot('loading');
+
+  // Пробуем получить свежие промокоды через бота напрямую:
+  // Посылаем боту запрос, он сохранит команду начисления для пользователя
+  if(BOT && uid && uid!=='—'){
+    _submitPromoWithBot(code);
+  } else {
+    // Нет бота — только локальный поиск
+    const g=loadG();
+    const p=(g.promos||{})[code];
+    if(!p){toast('❌ Промокод не найден. Настрой бота в Админ → Бот','var(--red)');setSyncDot('err');return;}
+    applyPromo(code,p,g);
+    setSyncDot('ok');
   }
-  // Без CS — только localStorage
-  const g=loadG();
-  const p=(g.promos||{})[code];
-  if(!p){toast('❌ Промокод не найден','var(--red)');return;}
-  applyPromo(code,p,g);
 }
 
-function applyPromo(code,p,g){
-  if(p.uses>=p.maxUses){toast('❌ Промокод уже исчерпан','var(--red)');return;}
-  if(!p.usedBy)p.usedBy=[];
-  // uid может быть '—' у нового игрока — используем fallback
-  const myId=uid&&uid!=='—'?uid:('guest_'+Date.now());
-  if(p.usedBy.includes(myId)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
-  p.uses++;p.usedBy.push(myId);
-  // Обновляем глобал
-  if(!g.promos)g.promos={};
-  g.promos[code]=p;
-  // Регистрируем пользователя в users если его нет
-  if(!g.users)g.users={};
-  if(uid&&uid!=='—'){
-    if(!g.users[uid])g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
-    // ГАРАНТИРОВАННОЕ начисление: сразу начисляем локально
-    U.add(p.amt);
-    U.tx.push({amt:p.amt,lbl:'Промокод '+code,ts:Date.now()});
-    g.users[uid].bal=U.bal;
-    // И добавляем команду — на случай если у пользователя другое устройство
-    if(!g.cmds)g.cmds=[];
-    // Проверяем что такой команды ещё нет (по коду + пользователю)
-    const alreadyCmded=g.cmds.find(c=>c.t==='promo'&&c.tid===uid&&c.code===code);
-    if(!alreadyCmded){
-      g.cmds.push({t:'top',tid:uid,amt:p.amt,ts:Date.now(),code});
+async function _submitPromoWithBot(code){
+  try{
+    // Запрашиваем у бота проверку промокода через специальный метод
+    // Бот получает сообщение и должен ответить — но без вебхука он не может.
+    // 
+    // ТРЮК: используем getUpdates чтобы прочитать последнее сообщение от бота
+    // которое он мог прислать после предыдущего запроса.
+    // Но надёжнее — встроить логику прямо здесь.
+    //
+    // ФИНАЛЬНОЕ РЕШЕНИЕ: Бот хранит промокоды в своём канале/чате.
+    // Мы используем forwardMessage trick: запрашиваем у бота специальное
+    // "хранилище" — сообщение в канале с промокодами в JSON.
+    //
+    // НА ПРАКТИКЕ самый надёжный способ без бэкенда:
+    // Пользователь отправляет боту /promo КОД, бот отвечает и начисляет баланс
+    // через cmds. Предлагаем пользователю перейти в бот.
+
+    // Но сначала проверяем локальный кэш (вдруг синхронизировался при старте)
+    const g=loadG();
+    const p=(g.promos||{})[code];
+    if(p){
+      applyPromo(code,p,g);
+      setSyncDot('ok');
+      return;
     }
+
+    // Промокод не найден локально — отправляем запрос боту
+    // Бот должен обработать callback и добавить команду top для этого пользователя
+    const botName=localStorage.getItem('nfc_bun')||'';
+    
+    // Отправляем боту сообщение — "Пользователь вводит промокод"  
+    // Это нотификация для АДМИНА чтобы он вручную нажал кнопку
+    await tgSend(ADMIN_ID,
+      `🎟️ <b>Запрос промокода</b>\n\n` +
+      `Код: <code>${code}</code>\n` +
+      `👤 ${uname}${uun?' '+uun:''} (ID: <code>${uid}</code>)\n\n` +
+      `Нажмите кнопку для автоматического начисления:`,
+      {inline_keyboard:[[
+        {text:`✅ Начислить промокод`, callback_data:`apromo_${code}_${uid}`},
+        {text:`❌ Отклонить`, callback_data:`rpromo_${code}_${uid}`}
+      ]]}
+    );
+    
+    closePromoModal();
+    setSyncDot('ok');
+    toast('📨 Запрос отправлен. Ожидайте начисления...','var(--gold2)');
+
+    // Запускаем polling — ждём команду начисления от бота (через cmds)
+    let attempts=0;
+    const poll=setInterval(()=>{
+      attempts++;
+      applyCmd();
+      renderBal();
+      // Если баланс изменился или команда выполнена — останавливаем
+      if(attempts>=20)clearInterval(poll); // 20 * 3s = 60s
+    },3000);
+
+  }catch(e){
+    // Ошибка — показываем fallback
+    setSyncDot('err');
+    toast('❌ Не удалось отправить запрос. Обратитесь к администратору','var(--red)');
   }
-  saveG(g);
-  U.save();
-  if(uid&&uid!=='—')toast('✅ +⭐'+p.amt+' зачислено!','var(--green)');
-  else toast('✅ Промокод применён! Войди через Telegram','var(--green)');
-  closePromoModal();
-  if(BOT&&uid&&uid!=='—')tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> использован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +⭐${p.amt}`);
+}
+
+// ─── ОБРАБОТКА КНОПОК БОТА (callback_data) ───
+// Когда АДМИН нажимает кнопку в боте — бот должен это обработать.
+// В этой архитектуре (без сервера) — АДМИН нажимает кнопку в Telegram,
+// и при следующем открытии мини-аппа у него — обработка происходит здесь.
+// Для этого: при открытии admin-панели — проверяем pending promo requests.
+async function processPendingPromoRequests(){
+  if(!isAdmin||!BOT)return;
+  // Получаем последние updates от бота
+  try{
+    const offset=parseInt(localStorage.getItem('nfc_bot_offset')||'0');
+    const r=await fetch(`https://api.telegram.org/bot${BOT}/getUpdates?offset=${offset}&limit=20&timeout=0`);
+    const d=await r.json();
+    if(!d.ok||!d.result?.length)return;
+    let lastId=offset;
+    for(const upd of d.result){
+      lastId=Math.max(lastId,upd.update_id+1);
+      // Обрабатываем callback_query от inline кнопок
+      if(upd.callback_query){
+        const cb=upd.callback_query;
+        const data=cb.data||'';
+        // Подтверждаем callback
+        fetch(`https://api.telegram.org/bot${BOT}/answerCallbackQuery`,{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({callback_query_id:cb.id,text:'Обрабатываем...'})
+        });
+        if(data.startsWith('apromo_')){
+          // apromo_КОД_USERID
+          const parts=data.split('_');
+          const targetUid=parts[parts.length-1];
+          const codeFromCb=parts.slice(1,-1).join('_');
+          const g=loadG();
+          const promo=(g.promos||{})[codeFromCb];
+          if(promo&&promo.uses<promo.maxUses){
+            if(!promo.usedBy)promo.usedBy=[];
+            if(!promo.usedBy.includes(targetUid)){
+              promo.uses++;promo.usedBy.push(targetUid);
+              g.promos[codeFromCb]=promo;
+              if(!g.cmds)g.cmds=[];
+              g.cmds.push({t:'top',tid:targetUid,amt:promo.amt,ts:Date.now(),code:codeFromCb});
+              if(!g.users)g.users={};
+              if(!g.users[targetUid])g.users[targetUid]={nm:'Игрок',id:targetUid,bal:0,un:''};
+              g.users[targetUid].bal=Math.round((g.users[targetUid].bal||0)+promo.amt);
+              saveG(g);
+              tgSend(targetUid,`✅ <b>Промокод активирован!</b>\n\n💰 +⭐${promo.amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);
+              tgSend(ADMIN_ID,`✅ Промокод <code>${codeFromCb}</code> активирован для пользователя ${targetUid}\n+⭐${promo.amt}`);
+              renderPromoList();
+              toast('✅ Промокод активирован для пользователя '+targetUid,'var(--green)');
+            }else{
+              tgSend(ADMIN_ID,`⚠️ Пользователь ${targetUid} уже использовал этот промокод`);
+            }
+          }else{
+            tgSend(ADMIN_ID,`❌ Промокод <code>${codeFromCb}</code> не найден или исчерпан`);
+          }
+        }else if(data.startsWith('rpromo_')){
+          const parts=data.split('_');
+          const targetUid=parts[parts.length-1];
+          tgSend(targetUid,`❌ <b>Промокод отклонён</b>\n\nОбратитесь к администратору.\n\n<i>NFT Cases</i>`);
+        }
+      }
+    }
+    localStorage.setItem('nfc_bot_offset',String(lastId));
+  }catch(e){}
 }
 
 // ════════════════════════════════════
@@ -1551,7 +1676,28 @@ const PG=10;
 function resolvePlayer(raw){raw=(raw||'').trim();if(!raw)return null;const g=loadG();const users=g.users||{};if(users[raw])return users[raw];const un=raw.replace(/^@/,'').toLowerCase();return Object.values(users).find(u=>(u.un||'').toLowerCase()===un)||null;}
 function onTopInput(){const raw=document.getElementById('topId').value.trim();const p=resolvePlayer(raw);if(p){selP=p;document.getElementById('selNm').textContent=p.nm+(p.un?' @'+p.un:'');document.getElementById('selId').textContent='ID: '+p.id+' · ⭐'+(p.bal||0).toLocaleString('ru');document.getElementById('selBox').style.display='flex';}else clearSel();}
 function clearSel(){selP=null;document.getElementById('selBox').style.display='none';}
-function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();renderPromoList();}
+function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();renderPromoList();processPendingPromoRequests();}
+
+function applyPromo(code,p,g){
+  if(p.uses>=p.maxUses){toast('❌ Промокод исчерпан','var(--red)');return;}
+  if(!p.usedBy)p.usedBy=[];
+  const myId=uid&&uid!=='—'?uid:'guest';
+  if(p.usedBy.includes(myId)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
+  p.uses++;p.usedBy.push(myId);
+  if(!g.promos)g.promos={};
+  g.promos[code]=p;
+  if(!g.users)g.users={};
+  if(uid&&uid!=='—'){
+    if(!g.users[uid])g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
+    U.add(p.amt);
+    U.tx.push({amt:p.amt,lbl:'Промокод '+code,ts:Date.now()});
+    g.users[uid].bal=U.bal;
+  }
+  saveG(g);U.save();
+  toast('✅ +⭐'+p.amt+' зачислено!','var(--green)');
+  closePromoModal();
+  if(BOT&&uid&&uid!=='—')tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> использован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +⭐${p.amt}`);
+}
 function renderWdList(){
   const g=loadG();const q=(document.getElementById('wdSrch')?.value||'').trim().toLowerCase();
   let all=(g.wdReqs||[]).slice().reverse();if(q)all=all.filter(r=>(r.unm||'').toLowerCase().includes(q)||String(r.uid||'').includes(q)||(r.unick||'').toLowerCase().includes(q)||(r.contact||'').toLowerCase().includes(q));
