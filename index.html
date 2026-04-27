@@ -710,6 +710,80 @@ const RN={common:'Обычный',uncommon:'Необычный',rare:'Редки
 const GIFT_BG={common:'rgba(107,114,128,0.18)',uncommon:'rgba(59,130,246,0.18)',rare:'rgba(129,140,248,0.18)',epic:'rgba(192,132,252,0.20)',legendary:'rgba(245,158,11,0.20)'};
 
 // ════════════════════════════════════
+// ЗВУК РУЛЕТКИ — Web Audio API
+// ════════════════════════════════════
+let _audioCtx=null;
+function getAudioCtx(){
+  if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  return _audioCtx;
+}
+function playTick(freq=600,vol=0.18){
+  const ctx=getAudioCtx();if(!ctx)return;
+  try{
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.type='sine';
+    osc.frequency.setValueAtTime(freq,ctx.currentTime);
+    gain.gain.setValueAtTime(vol,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.07);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime+0.07);
+  }catch(e){}
+}
+function playWinSound(rarity){
+  const ctx=getAudioCtx();if(!ctx)return;
+  try{
+    const freqs={common:[400,500],uncommon:[450,560,700],rare:[500,630,800,900],epic:[600,750,900,1100,1300],legendary:[700,880,1050,1300,1600,2000]};
+    const notes=freqs[rarity]||freqs.common;
+    notes.forEach((f,i)=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.type=rarity==='legendary'?'sine':'triangle';
+      osc.frequency.setValueAtTime(f,ctx.currentTime+i*0.09);
+      gain.gain.setValueAtTime(0,ctx.currentTime+i*0.09);
+      gain.gain.linearRampToValueAtTime(0.22,ctx.currentTime+i*0.09+0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.09+0.25);
+      osc.start(ctx.currentTime+i*0.09);
+      osc.stop(ctx.currentTime+i*0.09+0.3);
+    });
+  }catch(e){}
+}
+// Тикающий звук во время прокрутки рулетки
+let _tickInterval=null;
+let _tickSpeed=50; // мс между тиками (уменьшается в начале, увеличивается в конце)
+function startSpinSound(duration){
+  const ctx=getAudioCtx();if(!ctx)return;
+  // Пробуждаем аудиоконтекст кликом
+  if(ctx.state==='suspended')ctx.resume();
+  stopSpinSound();
+  let elapsed=0;
+  const totalMs=duration*1000;
+  // Начало: быстро (30мс), ускорение, потом замедление
+  function scheduleTick(){
+    if(elapsed>=totalMs){stopSpinSound();return;}
+    const progress=elapsed/totalMs;
+    // Скорость: быстро в середине, медленно в начале и конце
+    let interval;
+    if(progress<0.15)       interval=80-progress*200;   // разгон
+    else if(progress<0.75)  interval=40;                 // быстро
+    else                    interval=40+(progress-0.75)*4*250; // замедление
+    interval=Math.max(30,Math.min(350,interval));
+    // Частота тика: выше в середине
+    const freq=progress<0.75 ? 700 : 700-(progress-0.75)*4*400;
+    const vol=progress>0.85 ? 0.25 : 0.15;
+    playTick(Math.max(200,freq),vol);
+    elapsed+=interval;
+    _tickInterval=setTimeout(scheduleTick,interval);
+  }
+  scheduleTick();
+}
+function stopSpinSound(){
+  if(_tickInterval){clearTimeout(_tickInterval);_tickInterval=null;}
+}
+
+// ════════════════════════════════════
 // BOT TOKEN
 // ════════════════════════════════════
 let BOT='';
@@ -1006,6 +1080,8 @@ function flushWon(){
 // ════════════════════════════════════
 function spin(fast){
   if(spinning)return;
+  // Пробуждаем AudioContext при первом взаимодействии
+  const ctx=getAudioCtx();if(ctx&&ctx.state==='suspended')ctx.resume();
   const tot=CC.price*cnt;
   if(U.bal<tot){checkFunds();return;}
   // 9. Деньги списываем СРАЗУ и сохраняем ДО рулетки
@@ -1026,16 +1102,18 @@ function spin(fast){
         const tr=document.getElementById('tr_0');if(!tr)return;
         spinTrack(tr,0,null,0.7);
       }));
-      spinTm.push(setTimeout(()=>{spinning=false;showWinPopup(slot);haptic();},1100));
+      startSpinSound(0.7);
+      spinTm.push(setTimeout(()=>{spinning=false;stopSpinSound();showWinPopup(slot);haptic();},1100));
     } else {
       let done=0;
+      startSpinSound(1.0);
       wonSlots.forEach((slot,i)=>{
         placeWinner(i,slot.item);
         requestAnimationFrame(()=>requestAnimationFrame(()=>{
           const tr=document.getElementById('tr_'+i);if(!tr)return;
           spinTrack(tr,i,null,0.6+i*0.1);
         }));
-        spinTm.push(setTimeout(()=>{done++;showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}},900+i*180));
+        spinTm.push(setTimeout(()=>{done++;showSlotRes(i);if(done===cnt){spinning=false;stopSpinSound();showMBar();haptic();}},900+i*180));
       });
     }
     return;
@@ -1047,6 +1125,8 @@ function spin(fast){
   document.getElementById('mBar').classList.remove('show');
   stopIdle();
   let done=0;spinTm=[];
+  // Запускаем звук рулетки
+  startSpinSound(4);
   wonSlots.forEach((slot,i)=>{
     placeWinner(i,slot.item);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -1055,8 +1135,8 @@ function spin(fast){
     }));
     spinTm.push(setTimeout(()=>{
       done++;
-      if(cnt===1){spinning=false;showWinPopup(slot);haptic();}
-      else{showSlotRes(i);if(done===cnt){spinning=false;showMBar();haptic();}}
+      if(cnt===1){spinning=false;stopSpinSound();showWinPopup(slot);haptic();}
+      else{showSlotRes(i);if(done===cnt){spinning=false;stopSpinSound();showMBar();haptic();}}
     },4400));
   });
 }
@@ -1108,6 +1188,8 @@ function showWinPopup(slot){
     else if(item.r==='epic')tg.HapticFeedback.impactOccurred('heavy');
     else tg.HapticFeedback.impactOccurred('medium');
   }
+  // Звук победы
+  setTimeout(()=>playWinSound(item.r),100);
 }
 
 // 2. Крестик = в инвентарь + назад в кейс (не просто закрыть)
@@ -1350,30 +1432,49 @@ function formatPromoInput(el){
 function submitPromo(){
   const code=document.getElementById('promoInput').value.trim().toUpperCase();
   if(code.length<19){toast('⚠️ Введи полный код','var(--gold)');return;}
-  // Промокод в globalStorage — нужно загружать актуальные данные
-  const g=loadG();
-  // Если промокоды хранятся у админа в CS — попробуем из localStorage
-  const p=(g.promos||{})[code];
-  if(!p){
-    // Попробуем загрузить из CS если есть
-    if(CS){
-      setSyncDot('loading');
-      csGet(GK).then(val=>{
-        if(val){
-          try{
-            const fresh=JSON.parse(val);
-            const p2=(fresh.promos||{})[code];
-            if(!p2){toast('❌ Промокод не найден','var(--red)');setSyncDot('err');return;}
-            applyPromo(code,p2,fresh);
-          }catch(e){toast('❌ Ошибка','var(--red)');}
-        }else{toast('❌ Промокод не найден','var(--red)');}
-        setSyncDot('ok');
-      });
-    } else {
-      toast('❌ Промокод не найден','var(--red)');
-    }
+  // Сначала всегда пытаемся получить свежие данные из CS (где хранит промокоды админ)
+  if(CS){
+    setSyncDot('loading');
+    csGet(GK).then(val=>{
+      let g=loadG();
+      if(val){
+        try{
+          const fresh=JSON.parse(val);
+          // Мержим промокоды из CS в локальный g
+          if(fresh.promos){
+            g.promos=fresh.promos;
+          }
+          // Мержим команды
+          if(fresh.cmds&&fresh.cmds.length>0){
+            if(!g.cmds)g.cmds=[];
+            fresh.cmds.forEach(c=>{
+              if(!g.cmds.find(lc=>lc.ts===c.ts&&lc.tid===c.tid))
+                g.cmds.push(c);
+            });
+          }
+          localStorage.setItem(GK,JSON.stringify(g));
+        }catch(e){}
+      }
+      setSyncDot('ok');
+      // Теперь ищем промокод
+      const fresh2=loadG();
+      const p=(fresh2.promos||{})[code];
+      if(!p){toast('❌ Промокод не найден','var(--red)');return;}
+      applyPromo(code,p,fresh2);
+    }).catch(()=>{
+      // Если CS недоступен — используем локальный
+      const g=loadG();
+      const p=(g.promos||{})[code];
+      if(!p){toast('❌ Промокод не найден','var(--red)');return;}
+      applyPromo(code,p,g);
+      setSyncDot('ok');
+    });
     return;
   }
+  // Без CS — только localStorage
+  const g=loadG();
+  const p=(g.promos||{})[code];
+  if(!p){toast('❌ Промокод не найден','var(--red)');return;}
   applyPromo(code,p,g);
 }
 
@@ -1387,16 +1488,26 @@ function applyPromo(code,p,g){
   // Обновляем глобал
   if(!g.promos)g.promos={};
   g.promos[code]=p;
-  // Регистрируем команду пополнения для этого игрока
+  // Регистрируем пользователя в users если его нет
+  if(!g.users)g.users={};
   if(uid&&uid!=='—'){
-    // Если это текущий игрок — сразу начисляем
-    U.add(p.amt);
-    // Регистрируем игрока если его нет
-    if(!g.users)g.users={};
     if(!g.users[uid])g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
+    // ГАРАНТИРОВАННОЕ начисление: сразу начисляем локально
+    U.add(p.amt);
+    U.tx.push({amt:p.amt,lbl:'Промокод '+code,ts:Date.now()});
+    g.users[uid].bal=U.bal;
+    // И добавляем команду — на случай если у пользователя другое устройство
+    if(!g.cmds)g.cmds=[];
+    // Проверяем что такой команды ещё нет (по коду + пользователю)
+    const alreadyCmded=g.cmds.find(c=>c.t==='promo'&&c.tid===uid&&c.code===code);
+    if(!alreadyCmded){
+      g.cmds.push({t:'top',tid:uid,amt:p.amt,ts:Date.now(),code});
+    }
   }
   saveG(g);
+  U.save();
   if(uid&&uid!=='—')toast('✅ +⭐'+p.amt+' зачислено!','var(--green)');
+  else toast('✅ Промокод применён! Войди через Telegram','var(--green)');
   closePromoModal();
   if(BOT&&uid&&uid!=='—')tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> использован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +⭐${p.amt}`);
 }
@@ -1595,4 +1706,4 @@ async function init(){
 init();
 </script>
 </body>
-        </html>
+</html>
