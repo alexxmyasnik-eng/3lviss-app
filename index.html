@@ -471,6 +471,10 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
   <!-- 10. ПРОМОКОДЫ -->
   <div class="admin-card">
     <div class="act">🎟️ Промокоды</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.6;background:rgba(192,132,252,0.07);border:1px solid rgba(192,132,252,0.15);border-radius:10px;padding:10px">
+      📢 Промокоды хранятся в канале и обновляются автоматически.<br>
+      После использования счётчик сразу уменьшается — повторно активировать нельзя.
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <input class="ai" id="promoAmt" placeholder="Сумма ⭐" type="number" min="1" style="margin-bottom:0;flex:1">
       <input class="ai" id="promoUses" placeholder="Активаций" type="number" min="1" value="1" style="margin-bottom:0;flex:1">
@@ -628,7 +632,9 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
 // CONFIG
 // ════════════════════════════════════
 const ADMIN_ID=780434845, REF_REWARD=50, REF_MIN=200;
-const IW=100; // ширина ячейки рулетки (обновлена под новый размер)
+const IW=100;
+const PROMO_CHANNEL_ID='-1003856729659';
+let PROMO_MSG_ID=localStorage.getItem('nfc_promo_mid')||'';
 
 // ════════════════════════════════════
 // 11. КЕЙСЫ
@@ -1426,51 +1432,170 @@ async function submitWd(){
 }
 
 // ════════════════════════════════════
-// 10. ПРОМОКОДЫ
+// 10. ПРОМОКОДЫ — ЧЕРЕЗ TELEGRAM КАНАЛ
 // ════════════════════════════════════
+// Схема работы:
+// 1. Промокоды хранятся в одном сообщении бота в канале PROMO_CHANNEL_ID
+// 2. Формат строки: КОД|сумма|осталось_активаций
+// 3. При активации — бот редактирует сообщение, уменьшая счётчик
+// 4. При создании — бот отправляет/редактирует то же сообщение
+// 5. Каждый пользователь при вводе читает актуальное сообщение из канала
+
 function genPromoCode(){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const seg=()=>Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
-  return `${seg()}-${seg()}-${seg()}-${seg()}`;
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const s=()=>Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join('');
+  return`${s()}-${s()}-${s()}-${s()}`;
 }
-function createPromo(){
+
+// Парсим текст сообщения → объект {КОД: {amt, left, maxUses}}
+function parseChannelPromos(text){
+  const result={};
+  (text||'').split('\n').forEach(line=>{
+    line=line.trim();
+    if(!line||line.startsWith('#'))return;
+    const p=line.split('|');
+    if(p.length<3)return;
+    const code=p[0].trim().toUpperCase();
+    const amt=parseInt(p[1])||0;
+    const left=parseInt(p[2]);
+    const maxUses=parseInt(p[3])||left; // опциональное 4е поле — оригинальный макс
+    if(code.length===19&&amt>0&&!isNaN(left)){
+      result[code]={amt,left,maxUses:isNaN(parseInt(p[3]))?left:parseInt(p[3])};
+    }
+  });
+  return result;
+}
+
+// Строим текст сообщения из объекта промокодов
+function buildChannelText(promos){
+  const lines=['# NFT Cases — Промокоды (не редактируй вручную)',''];
+  Object.entries(promos).forEach(([code,p])=>{
+    // Формат: КОД|сумма|осталось|оригинал
+    lines.push(`${code}|${p.amt}|${p.left}|${p.maxUses}`);
+  });
+  return lines.join('\n');
+}
+
+// Читаем актуальные промокоды из канала
+async function fetchChannelPromos(){
+  if(!BOT)return null;
+  try{
+    // Читаем закреплённое сообщение канала через getChat
+    const r=await fetch(`https://api.telegram.org/bot${BOT}/getChat`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:PROMO_CHANNEL_ID})
+    });
+    const d=await r.json();
+    if(!d.ok)return null;
+    const pinned=d.result?.pinned_message;
+    if(pinned&&pinned.text&&pinned.text.includes('|')){
+      PROMO_MSG_ID=String(pinned.message_id);
+      localStorage.setItem('nfc_promo_mid',PROMO_MSG_ID);
+      return{promos:parseChannelPromos(pinned.text),text:pinned.text};
+    }
+    return null;
+  }catch(e){return null;}
+}
+
+// Сохраняем промокоды обратно в канал (редактируем сообщение)
+async function saveChannelPromos(promos){
+  if(!BOT)return false;
+  const text=buildChannelText(promos);
+  // Пробуем отредактировать существующее сообщение
+  if(PROMO_MSG_ID){
+    const r=await fetch(`https://api.telegram.org/bot${BOT}/editMessageText`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,message_id:parseInt(PROMO_MSG_ID),text})
+    });
+    const d=await r.json();
+    if(d.ok)return true;
+    // Если не получилось (сообщение удалено) — отправляем новое
+    PROMO_MSG_ID='';localStorage.removeItem('nfc_promo_mid');
+  }
+  // Отправляем новое сообщение
+  const r=await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,text})
+  });
+  const d=await r.json();
+  if(!d.ok)return false;
+  PROMO_MSG_ID=String(d.result.message_id);
+  localStorage.setItem('nfc_promo_mid',PROMO_MSG_ID);
+  // Закрепляем сообщение
+  fetch(`https://api.telegram.org/bot${BOT}/pinChatMessage`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,message_id:d.result.message_id,disable_notification:true})
+  });
+  return true;
+}
+
+// ── СОЗДАНИЕ промокода (только для админа)
+async function createPromo(){
   const amt=parseInt(document.getElementById('promoAmt').value);
   const uses=parseInt(document.getElementById('promoUses').value)||1;
   if(!amt||amt<=0){toast('⚠️ Укажи сумму','var(--gold)');return;}
-  const g=loadG();if(!g.promos)g.promos={};
+  if(!BOT){toast('⚠️ Сначала настрой Bot Token','var(--red)');return;}
+
+  toast('⏳ Создаём промокод...','var(--text2)');
+
+  // Читаем текущие промокоды из канала
+  const fetched=await fetchChannelPromos();
+  const promos=fetched?.promos||{};
+
+  // Добавляем новый
   const code=genPromoCode();
-  g.promos[code]={amt,maxUses:uses,uses:0,usedBy:[],created:Date.now()};
-  saveG(g);
-  // Принудительно записываем в CS (для синхронизации)
-  if(CS){const s=JSON.stringify(g);csSet(GK,s);}
-  document.getElementById('promoAmt').value='';document.getElementById('promoUses').value='1';
+  promos[code]={amt,left:uses,maxUses:uses};
+
+  // Сохраняем обратно в канал
+  const ok=await saveChannelPromos(promos);
+  if(!ok){toast('❌ Ошибка. Убедись что бот — администратор канала','var(--red)');return;}
+
   // Копируем код в буфер
   if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).catch(()=>{});
-  toast('✅ Создан: '+code,'var(--green)');
-  renderPromoList();
+  document.getElementById('promoAmt').value='';
+  document.getElementById('promoUses').value='1';
+  toast('✅ Создан: '+code+' (скопирован)','var(--green)');
+  renderPromoList(promos);
 }
-function renderPromoList(){
-  const g=loadG();const promos=g.promos||{};
+
+// ── УДАЛЕНИЕ промокода
+async function deletePromo(code){
+  if(!BOT){toast('⚠️ Нужен Bot Token','var(--red)');return;}
+  const fetched=await fetchChannelPromos();
+  const promos=fetched?.promos||{};
+  delete promos[code];
+  const ok=await saveChannelPromos(promos);
+  if(ok){toast('🗑️ Удалён','var(--text2)');renderPromoList(promos);}
+  else toast('❌ Ошибка удаления','var(--red)');
+}
+
+// ── РЕНДЕР списка промокодов в админке
+function renderPromoList(promosArg){
   const el=document.getElementById('promoList');if(!el)return;
-  const codes=Object.entries(promos).sort((a,b)=>b[1].created-a[1].created);
+  const promos=promosArg||null;
+  if(!promos){
+    // Загружаем из канала асинхронно
+    if(!BOT){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Настрой Bot Token для работы с промокодами</div>';return;}
+    el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px;text-align:center">⏳ Загрузка...</div>';
+    fetchChannelPromos().then(f=>renderPromoList(f?.promos||{}));
+    return;
+  }
+  const codes=Object.entries(promos);
   if(codes.length===0){el.innerHTML='<div style="color:var(--text2);font-size:12px;text-align:center;padding:8px">Нет промокодов</div>';return;}
   el.innerHTML=codes.map(([code,p])=>`
     <div class="promo-row">
       <div>
         <div class="promo-code">${code}</div>
-        <div class="promo-info">⭐${p.amt} · активаций: ${p.uses}/${p.maxUses}</div>
+        <div class="promo-info">⭐${p.amt} · осталось активаций: <b style="color:${p.left>0?'var(--green)':'var(--red)'}">${p.left}</b>/${p.maxUses}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
-        <span class="promo-used ${p.uses>=p.maxUses?'':'promo-used-0'}">${p.uses>=p.maxUses?'Исчерпан':'Активен'}</span>
+        <span class="promo-used ${p.left>0?'promo-used-0':''}">${p.left>0?'Активен':'Исчерпан'}</span>
         <button class="promo-del" onclick="deletePromo('${code}')">✕</button>
       </div>
     </div>`).join('');
 }
-function deletePromo(code){
-  const g=loadG();if(g.promos)delete g.promos[code];saveG(g);renderPromoList();toast('🗑️ Промокод удалён');
-}
 
-// Открытие модалки промокода (плюсик)
+// ── МОДАЛКА промокода (для обычного пользователя)
 function openPromoModal(){document.getElementById('promoModal').classList.add('open');document.getElementById('promoInput').value='';}
 function closePromoModal(){document.getElementById('promoModal').classList.remove('open');}
 function formatPromoInput(el){
@@ -1478,163 +1603,66 @@ function formatPromoInput(el){
   let out='';for(let i=0;i<v.length&&i<16;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}
   el.value=out;
 }
-function submitPromo(){
+
+// ── АКТИВАЦИЯ промокода пользователем
+async function submitPromo(){
   const code=document.getElementById('promoInput').value.trim().toUpperCase();
   if(code.length<19){toast('⚠️ Введи полный код','var(--gold)');return;}
+  if(!uid||uid==='—'){toast('⚠️ Войди через Telegram','var(--red)');return;}
+  if(!BOT){toast('❌ Сервис временно недоступен','var(--red)');return;}
 
-  // АРХИТЕКТУРА: CS у каждого пользователя своё — читать CS другого нельзя.
-  // Промокоды хранятся у АДМИНА в его localStorage/CS.
-  // РЕШЕНИЕ: при вводе промокода — отправляем боту запрос, бот (через webhook/polling)
-  // должен обработать и начислить. НО в этой архитектуре бота нет серверной части.
-  //
-  // РАБОЧИЙ СПОСОБ без сервера:
-  // 1. При создании промокода — сохраняем в localStorage + CS (уже есть)
-  // 2. При вводе промокода — ищем в локальном g (синхронизированном при старте)
-  // 3. Если не нашли — значит синхронизация не прошла, предлагаем переоткрыть
-  // 4. Если бот настроен — сразу начисляем И уведомляем бота (он помечает код как использованный)
+  // Проверяем — не использовал ли уже (локальная защита)
+  const myUsed=JSON.parse(localStorage.getItem('nfc_my_promos')||'[]');
+  if(myUsed.includes(code)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
 
   setSyncDot('loading');
+  toast('⏳ Проверяем...','var(--text2)');
 
-  // Пробуем получить свежие промокоды через бота напрямую:
-  // Посылаем боту запрос, он сохранит команду начисления для пользователя
-  if(BOT && uid && uid!=='—'){
-    _submitPromoWithBot(code);
-  } else {
-    // Нет бота — только локальный поиск
-    const g=loadG();
-    const p=(g.promos||{})[code];
-    if(!p){toast('❌ Промокод не найден. Настрой бота в Админ → Бот','var(--red)');setSyncDot('err');return;}
-    applyPromo(code,p,g);
-    setSyncDot('ok');
-  }
-}
-
-async function _submitPromoWithBot(code){
-  try{
-    // Запрашиваем у бота проверку промокода через специальный метод
-    // Бот получает сообщение и должен ответить — но без вебхука он не может.
-    // 
-    // ТРЮК: используем getUpdates чтобы прочитать последнее сообщение от бота
-    // которое он мог прислать после предыдущего запроса.
-    // Но надёжнее — встроить логику прямо здесь.
-    //
-    // ФИНАЛЬНОЕ РЕШЕНИЕ: Бот хранит промокоды в своём канале/чате.
-    // Мы используем forwardMessage trick: запрашиваем у бота специальное
-    // "хранилище" — сообщение в канале с промокодами в JSON.
-    //
-    // НА ПРАКТИКЕ самый надёжный способ без бэкенда:
-    // Пользователь отправляет боту /promo КОД, бот отвечает и начисляет баланс
-    // через cmds. Предлагаем пользователю перейти в бот.
-
-    // Но сначала проверяем локальный кэш (вдруг синхронизировался при старте)
-    const g=loadG();
-    const p=(g.promos||{})[code];
-    if(p){
-      applyPromo(code,p,g);
-      setSyncDot('ok');
-      return;
-    }
-
-    // Промокод не найден локально — отправляем запрос боту
-    // Бот должен обработать callback и добавить команду top для этого пользователя
-    const botName=localStorage.getItem('nfc_bun')||'';
-    
-    // Отправляем боту сообщение — "Пользователь вводит промокод"  
-    // Это нотификация для АДМИНА чтобы он вручную нажал кнопку
-    await tgSend(ADMIN_ID,
-      `🎟️ <b>Запрос промокода</b>\n\n` +
-      `Код: <code>${code}</code>\n` +
-      `👤 ${uname}${uun?' '+uun:''} (ID: <code>${uid}</code>)\n\n` +
-      `Нажмите кнопку для автоматического начисления:`,
-      {inline_keyboard:[[
-        {text:`✅ Начислить промокод`, callback_data:`apromo_${code}_${uid}`},
-        {text:`❌ Отклонить`, callback_data:`rpromo_${code}_${uid}`}
-      ]]}
-    );
-    
-    closePromoModal();
-    setSyncDot('ok');
-    toast('📨 Запрос отправлен. Ожидайте начисления...','var(--gold2)');
-
-    // Запускаем polling — ждём команду начисления от бота (через cmds)
-    let attempts=0;
-    const poll=setInterval(()=>{
-      attempts++;
-      applyCmd();
-      renderBal();
-      // Если баланс изменился или команда выполнена — останавливаем
-      if(attempts>=20)clearInterval(poll); // 20 * 3s = 60s
-    },3000);
-
-  }catch(e){
-    // Ошибка — показываем fallback
+  // Читаем актуальные промокоды из канала
+  const fetched=await fetchChannelPromos();
+  if(!fetched){
     setSyncDot('err');
-    toast('❌ Не удалось отправить запрос. Обратитесь к администратору','var(--red)');
+    toast('❌ Не удалось проверить промокод. Попробуй позже','var(--red)');
+    return;
   }
-}
 
-// ─── ОБРАБОТКА КНОПОК БОТА (callback_data) ───
-// Когда АДМИН нажимает кнопку в боте — бот должен это обработать.
-// В этой архитектуре (без сервера) — АДМИН нажимает кнопку в Telegram,
-// и при следующем открытии мини-аппа у него — обработка происходит здесь.
-// Для этого: при открытии admin-панели — проверяем pending promo requests.
-async function processPendingPromoRequests(){
-  if(!isAdmin||!BOT)return;
-  // Получаем последние updates от бота
-  try{
-    const offset=parseInt(localStorage.getItem('nfc_bot_offset')||'0');
-    const r=await fetch(`https://api.telegram.org/bot${BOT}/getUpdates?offset=${offset}&limit=20&timeout=0`);
-    const d=await r.json();
-    if(!d.ok||!d.result?.length)return;
-    let lastId=offset;
-    for(const upd of d.result){
-      lastId=Math.max(lastId,upd.update_id+1);
-      // Обрабатываем callback_query от inline кнопок
-      if(upd.callback_query){
-        const cb=upd.callback_query;
-        const data=cb.data||'';
-        // Подтверждаем callback
-        fetch(`https://api.telegram.org/bot${BOT}/answerCallbackQuery`,{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({callback_query_id:cb.id,text:'Обрабатываем...'})
-        });
-        if(data.startsWith('apromo_')){
-          // apromo_КОД_USERID
-          const parts=data.split('_');
-          const targetUid=parts[parts.length-1];
-          const codeFromCb=parts.slice(1,-1).join('_');
-          const g=loadG();
-          const promo=(g.promos||{})[codeFromCb];
-          if(promo&&promo.uses<promo.maxUses){
-            if(!promo.usedBy)promo.usedBy=[];
-            if(!promo.usedBy.includes(targetUid)){
-              promo.uses++;promo.usedBy.push(targetUid);
-              g.promos[codeFromCb]=promo;
-              if(!g.cmds)g.cmds=[];
-              g.cmds.push({t:'top',tid:targetUid,amt:promo.amt,ts:Date.now(),code:codeFromCb});
-              if(!g.users)g.users={};
-              if(!g.users[targetUid])g.users[targetUid]={nm:'Игрок',id:targetUid,bal:0,un:''};
-              g.users[targetUid].bal=Math.round((g.users[targetUid].bal||0)+promo.amt);
-              saveG(g);
-              tgSend(targetUid,`✅ <b>Промокод активирован!</b>\n\n💰 +⭐${promo.amt.toLocaleString('ru')}\n\n<i>NFT Cases</i>`);
-              tgSend(ADMIN_ID,`✅ Промокод <code>${codeFromCb}</code> активирован для пользователя ${targetUid}\n+⭐${promo.amt}`);
-              renderPromoList();
-              toast('✅ Промокод активирован для пользователя '+targetUid,'var(--green)');
-            }else{
-              tgSend(ADMIN_ID,`⚠️ Пользователь ${targetUid} уже использовал этот промокод`);
-            }
-          }else{
-            tgSend(ADMIN_ID,`❌ Промокод <code>${codeFromCb}</code> не найден или исчерпан`);
-          }
-        }else if(data.startsWith('rpromo_')){
-          const parts=data.split('_');
-          const targetUid=parts[parts.length-1];
-          tgSend(targetUid,`❌ <b>Промокод отклонён</b>\n\nОбратитесь к администратору.\n\n<i>NFT Cases</i>`);
-        }
-      }
-    }
-    localStorage.setItem('nfc_bot_offset',String(lastId));
-  }catch(e){}
+  const promos=fetched.promos;
+  const p=promos[code];
+
+  if(!p){setSyncDot('err');toast('❌ Промокод не найден','var(--red)');return;}
+  if(p.left<=0){setSyncDot('err');toast('❌ Промокод уже исчерпан','var(--red)');return;}
+
+  // Уменьшаем счётчик и сразу сохраняем в канал
+  promos[code]={...p,left:p.left-1};
+  const saved=await saveChannelPromos(promos);
+  if(!saved){
+    setSyncDot('err');
+    toast('❌ Ошибка активации. Попробуй ещё раз','var(--red)');
+    return;
+  }
+
+  // Начисляем баланс
+  U.add(p.amt);
+  U.tx.push({amt:p.amt,lbl:'Промокод '+code,ts:Date.now()});
+  U.save();
+
+  // Запоминаем что использовали этот код
+  myUsed.push(code);
+  localStorage.setItem('nfc_my_promos',JSON.stringify(myUsed));
+
+  // Обновляем пользователя в g
+  const g=loadG();
+  if(!g.users)g.users={};
+  if(!g.users[uid])g.users[uid]={nm:uname,id:uid,bal:0,un:uun.replace('@','')};
+  g.users[uid].bal=U.bal;
+  saveG(g);
+
+  setSyncDot('ok');
+  renderBal();
+  toast('✅ +⭐'+p.amt+' зачислено!','var(--green)');
+  closePromoModal();
+
+  if(BOT)tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> активирован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +⭐${p.amt}\n⏳ Осталось активаций: ${p.left-1}`);
 }
 
 // ════════════════════════════════════
@@ -1676,28 +1704,7 @@ const PG=10;
 function resolvePlayer(raw){raw=(raw||'').trim();if(!raw)return null;const g=loadG();const users=g.users||{};if(users[raw])return users[raw];const un=raw.replace(/^@/,'').toLowerCase();return Object.values(users).find(u=>(u.un||'').toLowerCase()===un)||null;}
 function onTopInput(){const raw=document.getElementById('topId').value.trim();const p=resolvePlayer(raw);if(p){selP=p;document.getElementById('selNm').textContent=p.nm+(p.un?' @'+p.un:'');document.getElementById('selId').textContent='ID: '+p.id+' · ⭐'+(p.bal||0).toLocaleString('ru');document.getElementById('selBox').style.display='flex';}else clearSel();}
 function clearSel(){selP=null;document.getElementById('selBox').style.display='none';}
-function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();renderPromoList();processPendingPromoRequests();}
-
-function applyPromo(code,p,g){
-  if(p.uses>=p.maxUses){toast('❌ Промокод исчерпан','var(--red)');return;}
-  if(!p.usedBy)p.usedBy=[];
-  const myId=uid&&uid!=='—'?uid:'guest';
-  if(p.usedBy.includes(myId)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
-  p.uses++;p.usedBy.push(myId);
-  if(!g.promos)g.promos={};
-  g.promos[code]=p;
-  if(!g.users)g.users={};
-  if(uid&&uid!=='—'){
-    if(!g.users[uid])g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
-    U.add(p.amt);
-    U.tx.push({amt:p.amt,lbl:'Промокод '+code,ts:Date.now()});
-    g.users[uid].bal=U.bal;
-  }
-  saveG(g);U.save();
-  toast('✅ +⭐'+p.amt+' зачислено!','var(--green)');
-  closePromoModal();
-  if(BOT&&uid&&uid!=='—')tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> использован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +⭐${p.amt}`);
-}
+function renderAdmin(){if(!isAdmin)return;renderWdList();renderPlayers();updTokSt();renderPromoList();}
 function renderWdList(){
   const g=loadG();const q=(document.getElementById('wdSrch')?.value||'').trim().toLowerCase();
   let all=(g.wdReqs||[]).slice().reverse();if(q)all=all.filter(r=>(r.unm||'').toLowerCase().includes(q)||String(r.uid||'').includes(q)||(r.unick||'').toLowerCase().includes(q)||(r.contact||'').toLowerCase().includes(q));
