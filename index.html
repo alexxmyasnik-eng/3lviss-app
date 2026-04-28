@@ -471,10 +471,6 @@ body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-h
   <!-- 10. ПРОМОКОДЫ -->
   <div class="admin-card">
     <div class="act">🎟️ Промокоды</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.6;background:rgba(192,132,252,0.07);border:1px solid rgba(192,132,252,0.15);border-radius:10px;padding:10px">
-      📢 Промокоды хранятся в канале и обновляются автоматически.<br>
-      После использования счётчик сразу уменьшается — повторно активировать нельзя.
-    </div>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <input class="ai" id="promoAmt" placeholder="Сумма ⭐" type="number" min="1" style="margin-bottom:0;flex:1">
       <input class="ai" id="promoUses" placeholder="Активаций" type="number" min="1" value="1" style="margin-bottom:0;flex:1">
@@ -678,8 +674,8 @@ const CASES=[
       {nm:'200 Звёзд',em:'✨',r:'rare',     v:343, ch:4,   model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
       {nm:'150 Звёзд',em:'⭐',r:'common',   v:275, ch:12,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
       {nm:'125 Звёзд',em:'🌠',r:'common',   v:244, ch:18,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
-      {nm:'100 Звёзд',em:'💥',r:'common',   v:189, ch:30,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
-      {nm:'75 Звёзд', em:'🔆',r:'common',   v:129, ch:35,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
+      {nm:'100 Звёзд',em:'💥',r:'common',   v:213, ch:30,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
+      {nm:'75 Звёзд', em:'🔆',r:'common',   v:178, ch:35,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
     ]
   },
   // 11. НОВОГОДНИЙ КЕЙС
@@ -691,22 +687,22 @@ const CASES=[
     cover:'gifts/NewYear/png/cover.png', // обложка кейса
     items:[
       // Legendary (0% шанс — можно убрать из рулетки или оставить как 0.01)
-      {nm:'Toy Bear',        em:'🧸', r:'legendary',v:4750,ch:0.01,model:'Snowman',      png:'case/NewYear/png/Toy Bear.png',       gif:'case/NewYear/gif/Toy Bear.gif'},
+      {nm:'Toy Bear',        em:'🧸', r:'legendary',v:4155,ch:0.01,model:'Snowman',      png:'case/NewYear/png/Toy Bear.png',       gif:'case/NewYear/gif/Toy Bear.gif'},
       // Epic
-      {nm:'Jingle Bells',   em:'🔔', r:'epic',     v:1255, ch:0.5, model:'Festive Duo',  png:'case/NewYear/png/Jingle Bells.png',   gif:'case/NewYear/gif/Jingle Bells.gif'},
-      {nm:'Desk Calendar',  em:'📅', r:'epic',     v:1249, ch:0.5, model:'December', png:'case/NewYear/png/Desk Calendar.png',  gif:'case/NewYear/gif/Desk Calendar.gif'},
-      {nm:'Witch Hat',      em:'🎩', r:'epic',     v:1022, ch:1.0, model:'Christmas',     png:'case/NewYear/png/Witch Hat.png',      gif:'case/NewYear/gif/Witch Hat.gif'},
+      {nm:'Jingle Bells',   em:'🔔', r:'epic',     v:989, ch:0.5, model:'Festive Duo',  png:'case/NewYear/png/Jingle Bells.png',   gif:'case/NewYear/gif/Jingle Bells.gif'},
+      {nm:'Desk Calendar',  em:'📅', r:'epic',     v:984, ch:0.5, model:'December', png:'case/NewYear/png/Desk Calendar.png',  gif:'case/NewYear/gif/Desk Calendar.gif'},
+      {nm:'Witch Hat',      em:'🎩', r:'epic',     v:769, ch:1.0, model:'Christmas',     png:'case/NewYear/png/Witch Hat.png',      gif:'case/NewYear/gif/Witch Hat.gif'},
       // Rare
-      {nm:'Snow Mittens',   em:'🧤', r:'rare',     v:684, ch:5.0, model:'Случайный',  png:'case/NewYear/png/Snow Mittens.png',   gif:'case/NewYear/gif/Snow Mittens.gif'},
-      {nm:'Snow Globe',     em:'🌨️', r:'rare',     v:610, ch:10.0,model:'Случайный',    png:'case/NewYear/png/Snow Globe.png',     gif:'case/NewYear/gif/Snow Globe.gif'},
-      {nm:'Santa Hat',      em:'🎅', r:'rare',     v:524, ch:13.0,model:'Случайный',     png:'case/NewYear/png/Santa Hat.png',      gif:'case/NewYear/gif/Santa Hat.gif'},
+      {nm:'Snow Mittens',   em:'🧤', r:'rare',     v:450, ch:5.0, model:'Случайный',  png:'case/NewYear/png/Snow Mittens.png',   gif:'case/NewYear/gif/Snow Mittens.gif'},
+      {nm:'Snow Globe',     em:'🌨️', r:'rare',     v:380, ch:10.0,model:'Случайный',    png:'case/NewYear/png/Snow Globe.png',     gif:'case/NewYear/gif/Snow Globe.gif'},
+      {nm:'Santa Hat',      em:'🎅', r:'rare',     v:308, ch:13.0,model:'Случайный',     png:'case/NewYear/png/Santa Hat.png',      gif:'case/NewYear/gif/Santa Hat.gif'},
       // Common
-      {nm:'Winter Wreath',  em:'🎄', r:'common',   v:445, ch:15.0,model:'Случайный', png:'case/NewYear/png/Winter Wreath.png',  gif:'case/NewYear/gif/Winter Wreath.gif'},
-      {nm:'Big Year',       em:'🎆', r:'common',   v:410, ch:15.0,model:'Christmas Carol',      png:'case/NewYear/png/Big Year.png',       gif:'case/NewYear/gif/Big Year.gif'},
-      {nm:'Xmas Stocking',  em:'🧦', r:'common',   v:409, ch:15.0,model:'Случайный', png:'case/NewYear/png/Xmas Stocking.png',  gif:'case/NewYear/gif/Xmas Stocking.gif'},
-      {nm:'Candy Cane',     em:'🍬', r:'common',   v:403, ch:10.0,model:'Случайный',    png:'case/NewYear/png/Candy Cane.png',     gif:'case/NewYear/gif/Candy Cane.gif'},
-      {nm:'Snake Box',      em:'📦', r:'common',   v:400, ch:8.0, model:'Случайный',     png:'case/NewYear/png/Snake Box.png',      gif:'case/NewYear/gif/Snake Box.gif'},
-      {nm:'Vice Cream',     em:'🍦', r:'common',   v:368, ch:7.0, model:'Iceman',    png:'case/NewYear/png/Vice Cream.png',     gif:'case/NewYear/gif/Vice Cream.gif'},
+      {nm:'Winter Wreath',  em:'🎄', r:'common',   v:290, ch:15.0,model:'Случайный', png:'case/NewYear/png/Winter Wreath.png',  gif:'case/NewYear/gif/Winter Wreath.gif'},
+      {nm:'Big Year',       em:'🎆', r:'common',   v:257, ch:15.0,model:'Christmas Carol',      png:'case/NewYear/png/Big Year.png',       gif:'case/NewYear/gif/Big Year.gif'},
+      {nm:'Xmas Stocking',  em:'🧦', r:'common',   v:256, ch:15.0,model:'Случайный', png:'case/NewYear/png/Xmas Stocking.png',  gif:'case/NewYear/gif/Xmas Stocking.gif'},
+      {nm:'Candy Cane',     em:'🍬', r:'common',   v:250, ch:10.0,model:'Случайный',    png:'case/NewYear/png/Candy Cane.png',     gif:'case/NewYear/gif/Candy Cane.gif'},
+      {nm:'Snake Box',      em:'📦', r:'common',   v:247, ch:8.0, model:'Случайный',     png:'case/NewYear/png/Snake Box.png',      gif:'case/NewYear/gif/Snake Box.gif'},
+      {nm:'Vice Cream',     em:'🍦', r:'common',   v:245, ch:7.0, model:'Iceman',    png:'case/NewYear/png/Vice Cream.png',     gif:'case/NewYear/gif/Vice Cream.gif'},
     ]
   },
 ];
@@ -719,116 +715,56 @@ const GIFT_BG={common:'rgba(107,114,128,0.18)',uncommon:'rgba(59,130,246,0.18)',
 // ЗВУК РУЛЕТКИ — CS:GO стиль
 // ════════════════════════════════════
 let _audioCtx=null;
-function getAudioCtx(){
-  if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
-  return _audioCtx;
-}
-
-// Реалистичный "клик" как при прокрутке кейса — короткий щелчок с атакой
+function getAudioCtx(){if(!_audioCtx){try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return _audioCtx;}
 function playClickSound(vol=0.4){
   const ctx=getAudioCtx();if(!ctx||ctx.state==='suspended')return;
   try{
-    const bufSize=ctx.sampleRate*0.025; // 25ms
-    const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
-    const data=buf.getChannelData(0);
-    for(let i=0;i<bufSize;i++){
-      // Белый шум с экспоненциальным затуханием — звук механического щелчка
-      data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,6)*vol;
-    }
-    const src=ctx.createBufferSource();
-    src.buffer=buf;
-    // Небольшой фильтр — убираем высокие частоты, оставляем "деревянный" щелчок
-    const filter=ctx.createBiquadFilter();
-    filter.type='bandpass';
-    filter.frequency.value=1800;
-    filter.Q.value=0.8;
-    const gain=ctx.createGain();
-    gain.gain.value=1.0;
-    src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
-    src.start(ctx.currentTime);
+    const bufSize=ctx.sampleRate*0.025;const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);const data=buf.getChannelData(0);
+    for(let i=0;i<bufSize;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/bufSize,6)*vol;
+    const src=ctx.createBufferSource();src.buffer=buf;
+    const filter=ctx.createBiquadFilter();filter.type='bandpass';filter.frequency.value=1800;filter.Q.value=0.8;
+    const gain=ctx.createGain();gain.gain.value=1.0;
+    src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);src.start(ctx.currentTime);
   }catch(e){}
 }
-
-// Звук победы — зависит от редкости
 function playWinSound(rarity){
   const ctx=getAudioCtx();if(!ctx)return;
-  try{
-    if(ctx.state==='suspended')ctx.resume().then(()=>_doWinSound(ctx,rarity));
-    else _doWinSound(ctx,rarity);
-  }catch(e){}
+  try{if(ctx.state==='suspended')ctx.resume().then(()=>_doWinSound(ctx,rarity));else _doWinSound(ctx,rarity);}catch(e){}
 }
 function _doWinSound(ctx,rarity){
-  // Базовые ноты мажорного арпеджио — нарастающие
-  const scales={
-    common:   [523,659,784],
-    uncommon: [523,659,784,1047],
-    rare:     [523,659,784,1047,1319],
-    epic:     [440,554,659,880,1109,1319],
-    legendary:[440,554,659,880,1109,1319,1760]
-  };
-  const notes=scales[rarity]||scales.common;
-  const spacing=rarity==='legendary'?0.07:0.075;
+  const scales={common:[523,659,784],uncommon:[523,659,784,1047],rare:[523,659,784,1047,1319],epic:[440,554,659,880,1109,1319],legendary:[440,554,659,880,1109,1319,1760]};
+  const notes=scales[rarity]||scales.common;const spacing=rarity==='legendary'?0.07:0.075;
   notes.forEach((freq,i)=>{
     const t=ctx.currentTime+i*spacing;
-    // Основной тон
-    const osc=ctx.createOscillator();
-    const gain=ctx.createGain();
-    osc.type='sine';
-    osc.frequency.setValueAtTime(freq,t);
-    gain.gain.setValueAtTime(0,t);
-    gain.gain.linearRampToValueAtTime(rarity==='legendary'?0.28:0.2,t+0.012);
-    gain.gain.exponentialRampToValueAtTime(0.001,t+(rarity==='legendary'?0.55:0.35));
-    osc.connect(gain);gain.connect(ctx.destination);
-    osc.start(t);osc.stop(t+0.6);
-    // Обертон для "блеска"
+    const osc=ctx.createOscillator();const gain=ctx.createGain();
+    osc.type='sine';osc.frequency.setValueAtTime(freq,t);
+    gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(rarity==='legendary'?0.28:0.2,t+0.012);gain.gain.exponentialRampToValueAtTime(0.001,t+(rarity==='legendary'?0.55:0.35));
+    osc.connect(gain);gain.connect(ctx.destination);osc.start(t);osc.stop(t+0.6);
     if(rarity==='epic'||rarity==='legendary'){
-      const osc2=ctx.createOscillator();
-      const gain2=ctx.createGain();
-      osc2.type='sine';
-      osc2.frequency.setValueAtTime(freq*2,t);
-      gain2.gain.setValueAtTime(0,t);
-      gain2.gain.linearRampToValueAtTime(0.07,t+0.01);
-      gain2.gain.exponentialRampToValueAtTime(0.001,t+0.25);
-      osc2.connect(gain2);gain2.connect(ctx.destination);
-      osc2.start(t);osc2.stop(t+0.3);
+      const o2=ctx.createOscillator();const g2=ctx.createGain();o2.type='sine';o2.frequency.setValueAtTime(freq*2,t);
+      g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(0.07,t+0.01);g2.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      o2.connect(g2);g2.connect(ctx.destination);o2.start(t);o2.stop(t+0.3);
     }
   });
-  // Финальный "звон" для legendary
   if(rarity==='legendary'){
     const t=ctx.currentTime+notes.length*spacing+0.05;
-    [1760,2093,2637].forEach((f,i)=>{
-      const osc=ctx.createOscillator();const gain=ctx.createGain();
-      osc.type='sine';osc.frequency.value=f;
-      gain.gain.setValueAtTime(0.18,t+i*0.06);
-      gain.gain.exponentialRampToValueAtTime(0.001,t+i*0.06+0.8);
-      osc.connect(gain);gain.connect(ctx.destination);
-      osc.start(t+i*0.06);osc.stop(t+i*0.06+1);
-    });
+    [1760,2093,2637].forEach((f,i)=>{const o=ctx.createOscillator();const g=ctx.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.18,t+i*0.06);g.gain.exponentialRampToValueAtTime(0.001,t+i*0.06+0.8);o.connect(g);g.connect(ctx.destination);o.start(t+i*0.06);o.stop(t+i*0.06+1);});
   }
 }
-
-// Прокрутка рулетки: тики с нарастанием и затуханием скорости
 let _tickTm=null;
 function startSpinSound(duration){
-  const ctx=getAudioCtx();if(!ctx)return;
-  if(ctx.state==='suspended'){ctx.resume();}
-  stopSpinSound();
-  const totalMs=duration*1000;
-  let elapsed=0;
+  const ctx=getAudioCtx();if(!ctx)return;if(ctx.state==='suspended')ctx.resume();
+  stopSpinSound();const totalMs=duration*1000;let elapsed=0;
   function next(){
     if(elapsed>=totalMs){stopSpinSound();return;}
-    const p=elapsed/totalMs; // 0..1
-    // Интервал: медленно → быстро (0.15) → очень быстро (0.6) → замедление → стоп
+    const p=elapsed/totalMs;
     let interval;
-    if(p<0.12)       interval=120-p*(120-38)/0.12;    // разгон
-    else if(p<0.65)  interval=38;                      // макс скорость
-    else             interval=38+Math.pow((p-0.65)/0.35,2)*320; // плавное торможение
+    if(p<0.12)      interval=120-p*(120-38)/0.12;
+    else if(p<0.65) interval=38;
+    else            interval=38+Math.pow((p-0.65)/0.35,2)*320;
     interval=Math.max(25,Math.min(400,Math.round(interval)));
-    // Громкость: чуть тише в конце
     const vol=p>0.75?0.55-((p-0.75)/0.25)*0.25:0.55;
-    playClickSound(vol);
-    elapsed+=interval;
-    _tickTm=setTimeout(next,interval);
+    playClickSound(vol);elapsed+=interval;_tickTm=setTimeout(next,interval);
   }
   next();
 }
@@ -922,47 +858,94 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)applyCmd()
 function renderBal(){document.getElementById('balEl').textContent=U.bal.toLocaleString('ru');}
 function toast(msg,color){const t=document.getElementById('toast');t.textContent=msg;t.style.color=color||'var(--text)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 // ════════════════════════════════════
-// УМНЫЕ ШАНСЫ — Pseudo-Fair RNG
+// УМНЫЕ ШАНСЫ — Profit/Loss Multiplier
 // ════════════════════════════════════
-// Храним для каждого кейса: сколько подряд открытий без "хорошего" предмета
-// После N неудачных открытий — временно повышаем шанс редкого
-const _pityCounters={}; // {caseId: openCount}
+// Множитель шансов зависит от того насколько игрок в плюсе или минусе.
+// Базовый множитель: 1.0x (нейтральный)
+// Чем глубже в минус — тем выше буст на дорогие предметы (до 2.5x)
+// Чем глубже в плюс — тем чуть ниже шанс (до 0.75x) — казино должно зарабатывать
+//
+// Схема множителей (по соотношению выиграно/потрачено):
+//  > 1.5  (большой плюс)  → 0.75x
+//  1.1–1.5 (небольшой плюс) → 0.90x
+//  0.9–1.1 (нейтрально)    → 1.00x  ← стандарт
+//  0.7–0.9 (небольшой минус) → 1.20x
+//  0.5–0.7 (минус)           → 1.50x
+//  0.3–0.5 (большой минус)   → 1.80x
+//  < 0.3  (очень большой минус) → 2.50x
+
+// Считаем сессионную статистику расходов/доходов
+const _session = {
+  spent: 0,   // потрачено на открытие кейсов за сессию
+  earned: 0,  // выиграно предметами за сессию (по стоимости)
+};
+
+function getMultiplier(){
+  // Если только начали — нейтральный
+  if(_session.spent < 50) return 1.0;
+
+  const ratio = _session.earned / _session.spent; // 0 = полный минус, 1 = безубыток, >1 = в плюсе
+
+  if(ratio > 1.5)  return 0.75;
+  if(ratio > 1.1)  return 0.90;
+  if(ratio > 0.9)  return 1.00;
+  if(ratio > 0.7)  return 1.20;
+  if(ratio > 0.5)  return 1.50;
+  if(ratio > 0.3)  return 1.80;
+  return 2.50;
+}
+
+// Pity-счётчик остаётся как дополнительная защита
+const _pityCounters={};
 
 function wrand(items, caseId){
   if(!_pityCounters[caseId]) _pityCounters[caseId]=0;
   const pity=_pityCounters[caseId];
 
-  // Считаем "ожидаемую" стоимость кейса
   const tot=items.reduce((s,i)=>s+i.ch,0);
   const avgVal=items.reduce((s,i)=>s+(i.v*i.ch/tot),0);
 
-  // Pity-буст: после каждых 5 открытий без предмета дороже avgVal*1.5
-  // повышаем шанс дорогих предметов на 15-30%
-  let boostFactor=1;
-  if(pity>=5)  boostFactor=1.15;
-  if(pity>=10) boostFactor=1.30;
-  if(pity>=15) boostFactor=1.50;
-  if(pity>=20) boostFactor=1.80;
+  // Основной буст — от profit/loss множителя
+  const mult=getMultiplier();
 
-  // Строим взвешенный массив с бустом
-  const threshold=avgVal*1.4; // предметы дороже этого — "хорошие"
-  const boostedItems=items.map(it=>({
+  // Дополнительный pity-буст (слабее чем раньше, т.к. mult уже помогает)
+  let pityBoost=1.0;
+  if(pity>=8)  pityBoost=1.15;
+  if(pity>=15) pityBoost=1.30;
+  if(pity>=25) pityBoost=1.50;
+
+  // Итоговый буст для дорогих предметов
+  const totalBoost = mult * pityBoost;
+
+  // Порог "хорошего" предмета — дороже средней стоимости в 1.3x
+  const threshold = avgVal * 1.3;
+
+  const boostedItems = items.map(it=>({
     ...it,
-    _ch: it.v >= threshold ? it.ch * boostFactor : it.ch
+    _ch: it.v >= threshold ? it.ch * totalBoost : it.ch
   }));
 
-  const boostedTot=boostedItems.reduce((s,i)=>s+i._ch,0);
-  let r=Math.random()*boostedTot;
-  let result=items[items.length-1];
-  for(const x of boostedItems){r-=x._ch;if(r<=0){result=x;break;}}
+  const boostedTot = boostedItems.reduce((s,i)=>s+i._ch, 0);
+  let r = Math.random() * boostedTot;
+  let result = items[items.length-1];
+  for(const x of boostedItems){ r -= x._ch; if(r<=0){result=x;break;} }
 
-  // Обновляем счётчик
+  // Обновляем сессионную статистику
+  _session.earned += result.v;
+
+  // Pity-счётчик: сброс если выпало хорошее
   if(result.v >= threshold){
-    _pityCounters[caseId]=0; // сброс после хорошего предмета
+    _pityCounters[caseId]=0;
   } else {
     _pityCounters[caseId]++;
   }
+
   return result;
+}
+
+// Трекаем расходы при каждом спине (вызывается в spin())
+function trackSpend(price, count){
+  _session.spent += price * count;
 }
 
 // 2. PNG для рулетки/содержимого/инвентаря
@@ -1131,15 +1114,15 @@ function flushWon(){
 // ════════════════════════════════════
 function spin(fast){
   if(spinning)return;
-  // Пробуждаем AudioContext при первом взаимодействии
+  // Пробуждаем AudioContext
   const ctx=getAudioCtx();if(ctx&&ctx.state==='suspended')ctx.resume();
   const tot=CC.price*cnt;
   if(U.bal<tot){checkFunds();return;}
   // 9. Деньги списываем СРАЗУ и сохраняем ДО рулетки
   U.sub(tot);U.stats.op+=cnt;U.save();
+  // Трекаем расходы для системы множителя
+  trackSpend(CC.price, cnt);
   wonSlots=[];for(let i=0;i<cnt;i++)wonSlots.push({item:wrand(CC.items,CC.id),handled:false});
-  // 9. Сразу кладём предметы в инвентарь (handled=false — из winPopup уберём)
-  // Предметы будут добавлены в инвентарь только через "в инвентарь" или flushWon
 
   if(fast){
     buildSlots(false,true);
@@ -1175,9 +1158,8 @@ function spin(fast){
   buildSlots(false,false);showStep(1);
   document.getElementById('mBar').classList.remove('show');
   stopIdle();
-  let done=0;spinTm=[];
-  // Запускаем звук рулетки
   startSpinSound(4);
+  let done=0;spinTm=[];
   wonSlots.forEach((slot,i)=>{
     placeWinner(i,slot.item);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -1239,7 +1221,6 @@ function showWinPopup(slot){
     else if(item.r==='epic')tg.HapticFeedback.impactOccurred('heavy');
     else tg.HapticFeedback.impactOccurred('medium');
   }
-  // Звук победы
   setTimeout(()=>playWinSound(item.r),100);
 }
 
@@ -1434,159 +1415,95 @@ async function submitWd(){
 // ════════════════════════════════════
 // 10. ПРОМОКОДЫ — ЧЕРЕЗ TELEGRAM КАНАЛ
 // ════════════════════════════════════
-// Схема работы:
-// 1. Промокоды хранятся в одном сообщении бота в канале PROMO_CHANNEL_ID
-// 2. Формат строки: КОД|сумма|осталось_активаций
-// 3. При активации — бот редактирует сообщение, уменьшая счётчик
-// 4. При создании — бот отправляет/редактирует то же сообщение
-// 5. Каждый пользователь при вводе читает актуальное сообщение из канала
-
 function genPromoCode(){
   const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const s=()=>Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join('');
   return`${s()}-${s()}-${s()}-${s()}`;
 }
-
-// Парсим текст сообщения → объект {КОД: {amt, left, maxUses}}
 function parseChannelPromos(text){
   const result={};
   (text||'').split('\n').forEach(line=>{
-    line=line.trim();
-    if(!line||line.startsWith('#'))return;
-    const p=line.split('|');
-    if(p.length<3)return;
+    line=line.trim();if(!line||line.startsWith('#'))return;
+    const p=line.split('|');if(p.length<3)return;
     const code=p[0].trim().toUpperCase();
     const amt=parseInt(p[1])||0;
     const left=parseInt(p[2]);
-    const maxUses=parseInt(p[3])||left; // опциональное 4е поле — оригинальный макс
-    if(code.length===19&&amt>0&&!isNaN(left)){
-      result[code]={amt,left,maxUses:isNaN(parseInt(p[3]))?left:parseInt(p[3])};
-    }
+    const maxUses=isNaN(parseInt(p[3]))?left:parseInt(p[3]);
+    if(code.length===19&&amt>0&&!isNaN(left))result[code]={amt,left,maxUses};
   });
   return result;
 }
-
-// Строим текст сообщения из объекта промокодов
 function buildChannelText(promos){
-  const lines=['# NFT Cases — Промокоды (не редактируй вручную)',''];
-  Object.entries(promos).forEach(([code,p])=>{
-    // Формат: КОД|сумма|осталось|оригинал
-    lines.push(`${code}|${p.amt}|${p.left}|${p.maxUses}`);
-  });
+  const lines=['# NFT Cases — Промокоды',''];
+  Object.entries(promos).forEach(([code,p])=>lines.push(`${code}|${p.amt}|${p.left}|${p.maxUses}`));
   return lines.join('\n');
 }
-
-// Читаем актуальные промокоды из канала
 async function fetchChannelPromos(){
   if(!BOT)return null;
   try{
-    // Читаем закреплённое сообщение канала через getChat
-    const r=await fetch(`https://api.telegram.org/bot${BOT}/getChat`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:PROMO_CHANNEL_ID})
-    });
-    const d=await r.json();
-    if(!d.ok)return null;
+    const r=await fetch(`https://api.telegram.org/bot${BOT}/getChat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:PROMO_CHANNEL_ID})});
+    const d=await r.json();if(!d.ok)return null;
     const pinned=d.result?.pinned_message;
     if(pinned&&pinned.text&&pinned.text.includes('|')){
-      PROMO_MSG_ID=String(pinned.message_id);
-      localStorage.setItem('nfc_promo_mid',PROMO_MSG_ID);
+      PROMO_MSG_ID=String(pinned.message_id);localStorage.setItem('nfc_promo_mid',PROMO_MSG_ID);
       return{promos:parseChannelPromos(pinned.text),text:pinned.text};
     }
     return null;
   }catch(e){return null;}
 }
-
-// Сохраняем промокоды обратно в канал (редактируем сообщение)
 async function saveChannelPromos(promos){
   if(!BOT)return false;
   const text=buildChannelText(promos);
-  // Пробуем отредактировать существующее сообщение
   if(PROMO_MSG_ID){
-    const r=await fetch(`https://api.telegram.org/bot${BOT}/editMessageText`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,message_id:parseInt(PROMO_MSG_ID),text})
-    });
-    const d=await r.json();
-    if(d.ok)return true;
-    // Если не получилось (сообщение удалено) — отправляем новое
+    const r=await fetch(`https://api.telegram.org/bot${BOT}/editMessageText`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,message_id:parseInt(PROMO_MSG_ID),text})});
+    const d=await r.json();if(d.ok)return true;
     PROMO_MSG_ID='';localStorage.removeItem('nfc_promo_mid');
   }
-  // Отправляем новое сообщение
-  const r=await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,text})
-  });
-  const d=await r.json();
-  if(!d.ok)return false;
-  PROMO_MSG_ID=String(d.result.message_id);
-  localStorage.setItem('nfc_promo_mid',PROMO_MSG_ID);
-  // Закрепляем сообщение
-  fetch(`https://api.telegram.org/bot${BOT}/pinChatMessage`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,message_id:d.result.message_id,disable_notification:true})
-  });
+  const r=await fetch(`https://api.telegram.org/bot${BOT}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,text})});
+  const d=await r.json();if(!d.ok)return false;
+  PROMO_MSG_ID=String(d.result.message_id);localStorage.setItem('nfc_promo_mid',PROMO_MSG_ID);
+  fetch(`https://api.telegram.org/bot${BOT}/pinChatMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:PROMO_CHANNEL_ID,message_id:d.result.message_id,disable_notification:true})});
   return true;
 }
-
-// ── СОЗДАНИЕ промокода (только для админа)
 async function createPromo(){
   const amt=parseInt(document.getElementById('promoAmt').value);
   const uses=parseInt(document.getElementById('promoUses').value)||1;
   if(!amt||amt<=0){toast('⚠️ Укажи сумму','var(--gold)');return;}
   if(!BOT){toast('⚠️ Сначала настрой Bot Token','var(--red)');return;}
-
-  toast('⏳ Создаём промокод...','var(--text2)');
-
-  // Читаем текущие промокоды из канала
+  toast('⏳ Создаём...','var(--text2)');
   const fetched=await fetchChannelPromos();
   const promos=fetched?.promos||{};
-
-  // Добавляем новый
   const code=genPromoCode();
   promos[code]={amt,left:uses,maxUses:uses};
-
-  // Сохраняем обратно в канал
   const ok=await saveChannelPromos(promos);
-  if(!ok){toast('❌ Ошибка. Убедись что бот — администратор канала','var(--red)');return;}
-
-  // Копируем код в буфер
+  if(!ok){toast('❌ Ошибка. Бот должен быть администратором канала','var(--red)');return;}
   if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).catch(()=>{});
-  document.getElementById('promoAmt').value='';
-  document.getElementById('promoUses').value='1';
+  document.getElementById('promoAmt').value='';document.getElementById('promoUses').value='1';
   toast('✅ Создан: '+code+' (скопирован)','var(--green)');
   renderPromoList(promos);
 }
-
-// ── УДАЛЕНИЕ промокода
 async function deletePromo(code){
   if(!BOT){toast('⚠️ Нужен Bot Token','var(--red)');return;}
-  const fetched=await fetchChannelPromos();
-  const promos=fetched?.promos||{};
+  const fetched=await fetchChannelPromos();const promos=fetched?.promos||{};
   delete promos[code];
   const ok=await saveChannelPromos(promos);
   if(ok){toast('🗑️ Удалён','var(--text2)');renderPromoList(promos);}
   else toast('❌ Ошибка удаления','var(--red)');
 }
-
-// ── РЕНДЕР списка промокодов в админке
 function renderPromoList(promosArg){
   const el=document.getElementById('promoList');if(!el)return;
-  const promos=promosArg||null;
-  if(!promos){
-    // Загружаем из канала асинхронно
-    if(!BOT){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Настрой Bot Token для работы с промокодами</div>';return;}
+  if(!promosArg){
+    if(!BOT){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Настрой Bot Token</div>';return;}
     el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px;text-align:center">⏳ Загрузка...</div>';
-    fetchChannelPromos().then(f=>renderPromoList(f?.promos||{}));
-    return;
+    fetchChannelPromos().then(f=>renderPromoList(f?.promos||{}));return;
   }
-  const codes=Object.entries(promos);
+  const codes=Object.entries(promosArg);
   if(codes.length===0){el.innerHTML='<div style="color:var(--text2);font-size:12px;text-align:center;padding:8px">Нет промокодов</div>';return;}
   el.innerHTML=codes.map(([code,p])=>`
     <div class="promo-row">
       <div>
         <div class="promo-code">${code}</div>
-        <div class="promo-info">⭐${p.amt} · осталось активаций: <b style="color:${p.left>0?'var(--green)':'var(--red)'}">${p.left}</b>/${p.maxUses}</div>
+        <div class="promo-info">⭐${p.amt} · осталось: <b style="color:${p.left>0?'var(--green)':'var(--red)'}">${p.left}</b>/${p.maxUses}</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <span class="promo-used ${p.left>0?'promo-used-0':''}">${p.left>0?'Активен':'Исчерпан'}</span>
@@ -1594,8 +1511,6 @@ function renderPromoList(promosArg){
       </div>
     </div>`).join('');
 }
-
-// ── МОДАЛКА промокода (для обычного пользователя)
 function openPromoModal(){document.getElementById('promoModal').classList.add('open');document.getElementById('promoInput').value='';}
 function closePromoModal(){document.getElementById('promoModal').classList.remove('open');}
 function formatPromoInput(el){
@@ -1603,66 +1518,33 @@ function formatPromoInput(el){
   let out='';for(let i=0;i<v.length&&i<16;i++){if(i>0&&i%4===0)out+='-';out+=v[i];}
   el.value=out;
 }
-
-// ── АКТИВАЦИЯ промокода пользователем
 async function submitPromo(){
   const code=document.getElementById('promoInput').value.trim().toUpperCase();
   if(code.length<19){toast('⚠️ Введи полный код','var(--gold)');return;}
   if(!uid||uid==='—'){toast('⚠️ Войди через Telegram','var(--red)');return;}
   if(!BOT){toast('❌ Сервис временно недоступен','var(--red)');return;}
-
-  // Проверяем — не использовал ли уже (локальная защита)
   const myUsed=JSON.parse(localStorage.getItem('nfc_my_promos')||'[]');
   if(myUsed.includes(code)){toast('❌ Вы уже использовали этот код','var(--red)');return;}
-
-  setSyncDot('loading');
-  toast('⏳ Проверяем...','var(--text2)');
-
-  // Читаем актуальные промокоды из канала
+  setSyncDot('loading');toast('⏳ Проверяем...','var(--text2)');
   const fetched=await fetchChannelPromos();
-  if(!fetched){
-    setSyncDot('err');
-    toast('❌ Не удалось проверить промокод. Попробуй позже','var(--red)');
-    return;
-  }
-
-  const promos=fetched.promos;
-  const p=promos[code];
-
+  if(!fetched){setSyncDot('err');toast('❌ Не удалось проверить. Попробуй позже','var(--red)');return;}
+  const p=fetched.promos[code];
   if(!p){setSyncDot('err');toast('❌ Промокод не найден','var(--red)');return;}
-  if(p.left<=0){setSyncDot('err');toast('❌ Промокод уже исчерпан','var(--red)');return;}
-
-  // Уменьшаем счётчик и сразу сохраняем в канал
-  promos[code]={...p,left:p.left-1};
-  const saved=await saveChannelPromos(promos);
-  if(!saved){
-    setSyncDot('err');
-    toast('❌ Ошибка активации. Попробуй ещё раз','var(--red)');
-    return;
-  }
-
+  if(p.left<=0){setSyncDot('err');toast('❌ Промокод исчерпан','var(--red)');return;}
+  // Уменьшаем счётчик в канале СРАЗУ
+  fetched.promos[code]={...p,left:p.left-1};
+  const saved=await saveChannelPromos(fetched.promos);
+  if(!saved){setSyncDot('err');toast('❌ Ошибка активации. Попробуй ещё раз','var(--red)');return;}
   // Начисляем баланс
-  U.add(p.amt);
-  U.tx.push({amt:p.amt,lbl:'Промокод '+code,ts:Date.now()});
-  U.save();
-
-  // Запоминаем что использовали этот код
-  myUsed.push(code);
-  localStorage.setItem('nfc_my_promos',JSON.stringify(myUsed));
-
-  // Обновляем пользователя в g
-  const g=loadG();
-  if(!g.users)g.users={};
+  U.add(p.amt);U.tx.push({amt:p.amt,lbl:'Промокод '+code,ts:Date.now()});U.save();
+  myUsed.push(code);localStorage.setItem('nfc_my_promos',JSON.stringify(myUsed));
+  const g=loadG();if(!g.users)g.users={};
   if(!g.users[uid])g.users[uid]={nm:uname,id:uid,bal:0,un:uun.replace('@','')};
-  g.users[uid].bal=U.bal;
-  saveG(g);
-
-  setSyncDot('ok');
-  renderBal();
+  g.users[uid].bal=U.bal;saveG(g);
+  setSyncDot('ok');renderBal();
   toast('✅ +⭐'+p.amt+' зачислено!','var(--green)');
   closePromoModal();
-
-  if(BOT)tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> активирован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +⭐${p.amt}\n⏳ Осталось активаций: ${p.left-1}`);
+  if(BOT)tgSend(ADMIN_ID,`🎟️ Промокод <b>${code}</b> активирован\n👤 ${uname}${uun?' '+uun:''} (${uid})\n💰 +⭐${p.amt}\n⏳ Осталось: ${p.left-1}`);
 }
 
 // ════════════════════════════════════
@@ -1859,4 +1741,4 @@ async function init(){
 init();
 </script>
 </body>
-</html>
+  </html>
