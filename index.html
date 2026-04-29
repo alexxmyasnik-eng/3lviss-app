@@ -960,39 +960,7 @@ function wrand(items, caseId) {
   return result;
 }
 
-// ════════════════════════════════════════════════════════════════
-// ИНСТРУКЦИЯ ПО ПРИМЕНЕНИЮ:
-//
-// 1. Найди в index.html блок "// CONFIG" — замени его
-//    целиком на содержимое этого файла вплоть до строки
-//    "const RC = {"
-//
-// 2. Найди функцию wrand(items, caseId) — замени на новую выше
-//
-// 3. Готово! Проверь в консоли браузера:
-//    calcRTP(444, CASES[2].items)  // должно вернуть ~62%
-//
-// НАСТРОЙКА ПОД СЕБЯ:
-//
-// Хочешь более жёсткое казино (меньше возвратов)?
-//   → Уменьши цены common предметов на 10-20%
-//   → Например: v: 200 → v: 170
-//
-// Хочешь чаще epic?
-//   → PITY_EPIC_GUARANTEE = 25 (раз в 25 вместо 35)
-//
-// Хочешь больший хайп от legendary?
-//   → Увеличь цену legendary в 2x
-//   → Уменьши ch: 0.5 → ch: 0.2
-//
-// ФОРМУЛА ПРОВЕРКИ RTP:
-// Открой консоль → вставь:
-//
-// const c = CASES[2]; // твой кейс
-// const tot = c.items.reduce((s,i)=>s+i.ch, 0);
-// const ev = c.items.reduce((s,i)=>s+(i.v*i.ch/tot), 0);
-// console.log('RTP:', (ev/c.price*100).toFixed(1)+'%');
-//
+
 // ════════════════════════════════════════════════════════════════
 // ════════════════════════════════════
 // ЗВУК РУЛЕТКИ — CS:GO стиль
@@ -2077,62 +2045,64 @@ function parseRef(){
 // ════════════════════════════════════
 // INIT
 // ════════════════════════════════════
-async function init(){
-  const loadEl=document.getElementById('loadingScreen');
+async function init() {
+  const loadEl = document.getElementById('loadingScreen');
   initBot();
-  if(CS){
-    document.getElementById('loadingTxt').textContent='Загрузка из Telegram Cloud...';
-    await U.load();
-    // 5. Синхронизируем глобальные данные из CS (промокоды, команды)
-    // Если пользователь новый — его нет в localStorage, но промокоды у админа в CS
-    const csGlobal=await csGet(GK);
-    if(csGlobal){
-      try{
-        const fresh=JSON.parse(csGlobal);
-        const local=loadG();
-        // Мержим промокоды из CS в localStorage
-        if(fresh.promos){
-          local.promos=fresh.promos;
-        }
-        // Мержим команды
-        if(fresh.cmds&&fresh.cmds.length>0){
-          if(!local.cmds)local.cmds=[];
-          fresh.cmds.forEach(c=>{
-            if(!local.cmds.find(lc=>lc.ts===c.ts&&lc.tid===c.tid))
-              local.cmds.push(c);
-          });
-        }
-        localStorage.setItem(GK,JSON.stringify(local));
-      }catch(e){}
+
+  // Таймаут на загрузку — если CS завис, падаем на localStorage
+  const loadWithTimeout = async () => {
+    if (CS) {
+      document.getElementById('loadingTxt').textContent = 'Загрузка...';
+      const timeout = new Promise(resolve => setTimeout(resolve, 3000)); // 3 сек макс
+      const load = U.load();
+      await Promise.race([load, timeout]);
     }
-  } else {
-    const ls=loadLsState();if(ls)U.fromObj(ls);else U.fromObj(EMPTY_STATE);U._ready=true;
+    if (!U._ready) {
+      // Fallback на localStorage
+      const ls = loadLsState();
+      if (ls) U.fromObj(ls);
+      else U.fromObj(EMPTY_STATE);
+      U._ready = true;
+    }
+  };
+
+  try {
+    await loadWithTimeout();
+  } catch (e) {
+    U.fromObj(EMPTY_STATE);
+    U._ready = true;
   }
+
   parseRef();
   applyCmd();
   renderCases();
   renderBal();
-  // 5. Регистрируем игрока в users СРАЗУ при старте — чтобы бот его видел
-  if(uid&&uid!=='—'){
-    const g=loadG();
-    if(!g.users)g.users={};
-    // Обновляем данные пользователя
-    g.users[uid]={nm:uname,id:uid,bal:U.bal,un:uun.replace('@','')};
+
+  if (uid && uid !== '—') {
+    const g = loadG();
+    if (!g.users) g.users = {};
+    g.users[uid] = { nm: uname, id: uid, bal: U.bal, un: uun.replace('@', '') };
     saveG(g);
   }
-  loadEl.classList.add('hidden');
-  // 8. Аватарка
-  const av=document.getElementById('hdrAvatar');
-  if(uPhoto){
-    const img=new Image();img.src=uPhoto;
-    img.style.cssText='width:34px;height:34px;border-radius:50%;object-fit:cover';
-    img.onload=()=>{av.innerHTML='';av.appendChild(img);};
-    img.onerror=()=>{av.textContent=uname.slice(0,2).toUpperCase();};
+
+  loadEl.classList.add('hidden'); // убираем загрузку
+
+  const av = document.getElementById('hdrAvatar');
+  if (uPhoto) {
+    const img = new Image();
+    img.src = uPhoto;
+    img.style.cssText = 'width:34px;height:34px;border-radius:50%;object-fit:cover';
+    img.onload = () => { av.innerHTML = ''; av.appendChild(img); };
+    img.onerror = () => { av.textContent = uname.slice(0, 2).toUpperCase(); };
   } else {
-    av.textContent=uname.slice(0,2).toUpperCase();
+    av.textContent = uname.slice(0, 2).toUpperCase();
   }
-  if(BOT)fetch(`https://api.telegram.org/bot${BOT}/getMe`).then(r=>r.json()).then(d=>{if(d.ok&&d.result?.username)localStorage.setItem('nfc_bun',d.result.username);}).catch(()=>{});
-  // 5. Повторная проверка команд после синхронизации
+
+  if (BOT) fetch(`https://api.telegram.org/bot${BOT}/getMe`)
+    .then(r => r.json())
+    .then(d => { if (d.ok && d.result?.username) localStorage.setItem('nfc_bun', d.result.username); })
+    .catch(() => {});
+
   setTimeout(applyCmd, 1000);
 }
 init();
