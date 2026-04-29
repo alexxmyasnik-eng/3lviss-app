@@ -676,45 +676,324 @@ const CASES=[
       {nm:'500 Звёзд',em:'🌟',r:'legendary',v:839, ch:0.3, model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
       {nm:'300 Звёзд',em:'💫',r:'epic',     v:525, ch:0.7, model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
       {nm:'200 Звёзд',em:'✨',r:'rare',     v:343, ch:4,   model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
-      {nm:'150 Звёзд',em:'⭐',r:'common',   v:275, ch:12,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
-      {nm:'125 Звёзд',em:'🌠',r:'common',   v:244, ch:18,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
-      {nm:'100 Звёзд',em:'💥',r:'common',   v:189, ch:30,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
-      {nm:'75 Звёзд', em:'🔆',r:'common',   v:129, ch:35,  model:null,png:'case/Zvezdniy/png/stars.png',gif:'case/Zvezdniy/gif/stars.gif'},
-    ]
-  },
-  // 11. НОВОГОДНИЙ КЕЙС
-  // Файлы: gifts/NewYear/png/НАЗВАНИЕ.png и gifts/NewYear/gif/НАЗВАНИЕ.gif
-  // Замени пути на свои когда загрузишь файлы на GitHub
+      {nm:'150 Звёзд',em:'⭐',r:'common',   v:275, ch:12,  model:nul// ════════════════════════════════════════════════════════════════
+// НОВАЯ ЭКОНОМИКА КЕЙСОВ — замени в своём index.html
+// блок начиная с "// CONFIG" до конца объявления CASES
+// ════════════════════════════════════════════════════════════════
+
+// ── CONFIG ──
+const ADMIN_ID = 780434845, REF_REWARD = 50, REF_MIN = 200;
+const IW = 100;
+const PROMO_CHANNEL_ID = '-1003856729659';
+let PROMO_MSG_ID = localStorage.getItem('nfc_promo_mid') || '';
+
+// ════════════════════════════════════════════════════════════════
+// МАТЕМАТИКА: КАК РАБОТАЕТ НОРМАЛЬНОЕ КАЗИНО
+//
+// RTP (Return To Player) = сумма(цена_предмета * шанс) / цена_кейса
+//
+// Популярные сайты:
+//  - Обычные кейсы: RTP = 60-70%
+//  - Премиум кейсы: RTP = 55-65%
+//  - Это значит: открыл на 100 монет → в среднем вернул 60-65 монет
+//  - Редкие предметы создают АЗАРТ — выпадают редко, но огромная ценность
+//
+// PITY СИСТЕМА (гарантированный дроп):
+//  - Каждые N открытий без epic+ — шанс epic резко растёт
+//  - Это держит игрока: "ещё чуть-чуть и точно выпадет!"
+//  - После получения epic/legendary — счётчик сбрасывается
+//
+// ПСИХОЛОГИЯ:
+//  - "Почти победа" — выпадает предмет РЯДОМ с дорогим (сосед в рулетке)
+//  - Звуки нарастания при прокрутке
+//  - Glow-эффект на редкие предметы
+// ════════════════════════════════════════════════════════════════
+
+// ── Вспомогательная функция для расчёта RTP ──
+// Раскомментируй в консоли браузера чтобы проверить свои кейсы:
+//
+// function calcRTP(casePrice, items) {
+//   const total = items.reduce((s, i) => s + i.ch, 0);
+//   const ev = items.reduce((s, i) => s + (i.v * i.ch / total), 0);
+//   console.log(`RTP: ${(ev/casePrice*100).toFixed(1)}%  EV: ${ev.toFixed(0)} монет`);
+//   items.forEach(i => console.log(` ${i.nm}: шанс ${(i.ch/total*100).toFixed(2)}%  цена ${i.v}`));
+// }
+// calcRTP(99, CASES[0].items);
+
+// ════════════════════════════════════════════════════════════════
+// ПРАВИЛО СОСТАВЛЕНИЯ КЕЙСА:
+//
+// 1. Определи цену кейса (например 444)
+// 2. Хочешь RTP 63% → средняя выплата = 444 * 0.63 = ~280 монет
+// 3. Распредели предметы:
+//    - 1 legendary: огромная ценность (3000-5000), шанс ~0.5%
+//    - 1-2 epic: хорошая ценность (800-1500), шанс ~2-4%
+//    - 2-3 rare: средняя (350-600), шанс ~8-15%
+//    - 4-6 common: низкая (100-300), шанс ~60-75% суммарно
+// 4. Проверь RTP функцией выше
+//
+// ВАЖНО: шансы (ch) — это ВЕСА, не проценты!
+// Нормализация происходит автоматически в wrand()
+// Можешь писать ch: 0.5 или ch: 50 — главное соотношение
+// ════════════════════════════════════════════════════════════════
+
+const RC = { common: '#9ca3af', uncommon: '#3b82f6', rare: '#818cf8', epic: '#c084fc', legendary: '#f59e0b' };
+const RN = { common: 'Обычный', uncommon: 'Необычный', rare: 'Редкий', epic: 'Эпический', legendary: 'Легендарный' };
+const GIFT_BG = {
+  common: 'rgba(107,114,128,0.18)', uncommon: 'rgba(59,130,246,0.18)',
+  rare: 'rgba(129,140,248,0.18)', epic: 'rgba(192,132,252,0.20)', legendary: 'rgba(245,158,11,0.20)'
+};
+
+// ════════════════════════════════════════════════════════════════
+// КЕЙСЫ — ПЕРЕРАБОТАННАЯ ЭКОНОМИКА
+// ════════════════════════════════════════════════════════════════
+
+const CASES = [
+
+  // ══ КЕЙС 1: БЮДЖЕТНЫЙ ══
+  // Цена: 99 монет | RTP: ~63% | EV: ~62 монеты
+  // Задача: быстрые открытия, много common, редкий шанс хорошего
+  // Игрок покупает 5-10 подряд чтобы "отбить"
   {
-    id:'newyear', nm:'Новогодний Азарт', em:'🎄', price:444,
-    gc:'rgba(34,197,94,0.2)', hot:true,
-    cover:'gifts/NewYear/png/cover.png', // обложка кейса
-    items:[
-      // Legendary (0% шанс — можно убрать из рулетки или оставить как 0.01)
-      {nm:'Toy Bear',        em:'🧸', r:'legendary',v:4750,ch:0.01,model:'Snowman',      png:'case/NewYear/png/Toy Bear.png',       gif:'case/NewYear/gif/Toy Bear.gif'},
-      // Epic
-      {nm:'Jingle Bells',   em:'🔔', r:'epic',     v:1255, ch:0.5, model:'Festive Duo',  png:'case/NewYear/png/Jingle Bells.png',   gif:'case/NewYear/gif/Jingle Bells.gif'},
-      {nm:'Desk Calendar',  em:'📅', r:'epic',     v:1249, ch:0.5, model:'December', png:'case/NewYear/png/Desk Calendar.png',  gif:'case/NewYear/gif/Desk Calendar.gif'},
-      {nm:'Witch Hat',      em:'🎩', r:'epic',     v:1022, ch:1.0, model:'Christmas',     png:'case/NewYear/png/Witch Hat.png',      gif:'case/NewYear/gif/Witch Hat.gif'},
-      // Rare
-      {nm:'Snow Mittens',   em:'🧤', r:'rare',     v:684, ch:3.0, model:'Случайный',  png:'case/NewYear/png/Snow Mittens.png',   gif:'case/NewYear/gif/Snow Mittens.gif'},
-      {nm:'Snow Globe',     em:'🌨️', r:'rare',     v:610, ch:5.0,model:'Случайный',    png:'case/NewYear/png/Snow Globe.png',     gif:'case/NewYear/gif/Snow Globe.gif'},
-      {nm:'Santa Hat',      em:'🎅', r:'rare',     v:524, ch:11.0,model:'Случайный',     png:'case/NewYear/png/Santa Hat.png',      gif:'case/NewYear/gif/Santa Hat.gif'},
-      // Common
-      {nm:'Winter Wreath',  em:'🎄', r:'common',   v:445, ch:15.0,model:'Случайный', png:'case/NewYear/png/Winter Wreath.png',  gif:'case/NewYear/gif/Winter Wreath.gif'},
-      {nm:'Big Year',       em:'🎆', r:'common',   v:410, ch:15.0,model:'Christmas Carol',      png:'case/NewYear/png/Big Year.png',       gif:'case/NewYear/gif/Big Year.gif'},
-      {nm:'Xmas Stocking',  em:'🧦', r:'common',   v:379, ch:15.0,model:'Случайный', png:'case/NewYear/png/Xmas Stocking.png',  gif:'case/NewYear/gif/Xmas Stocking.gif'},
-      {nm:'Candy Cane',     em:'🍬', r:'common',   v:403, ch:12.0,model:'Случайный',    png:'case/NewYear/png/Candy Cane.png',     gif:'case/NewYear/gif/Candy Cane.gif'},
-      {nm:'Snake Box',      em:'📦', r:'common',   v:400, ch:12.0, model:'Случайный',     png:'case/NewYear/png/Snake Box.png',      gif:'case/NewYear/gif/Snake Box.gif'},
-      {nm:'Vice Cream',     em:'🍦', r:'common',   v:368, ch:10.0, model:'Iceman',    png:'case/NewYear/png/Vice Cream.png',     gif:'case/NewYear/gif/Vice Cream.gif'},
+    id: 'budget', nm: 'Бюджетный', em: '🎁', price: 99,
+    gc: 'rgba(99,179,237,0.18)', hot: false,
+    cover: 'covers/budget_item.png',
+    items: [
+      // LEGENDARY: 1 предмет, шанс ~0.4%  →  создаёт мечту
+      { nm: 'Топ Подарок',    em: '👑', r: 'legendary', v: 1200, ch: 0.4, model: 'Супер',
+        png: 'case/Podarok/png/kubok.png',  gif: 'case/Podarok/gif/kubok.gif' },
+
+      // EPIC: 2 предмета, суммарный шанс ~2.5%  →  "вау момент"
+      { nm: '250 Звёзд',      em: '💎', r: 'epic',      v: 420,  ch: 1.3, model: 'Алмаз',
+        png: 'case/Podarok/png/almaz.png',  gif: 'case/Podarok/gif/almaz.gif' },
+      { nm: '250 Звёзд',      em: '💍', r: 'epic',      v: 420,  ch: 1.2, model: 'Кольцо',
+        png: 'case/Podarok/png/kolco.png',  gif: 'case/Podarok/gif/kolco.gif' },
+
+      // RARE: 2 предмета, суммарный шанс ~10%  →  приятная находка
+      { nm: '160 Звёзд',      em: '🏆', r: 'rare',      v: 270,  ch: 5.0, model: 'Кубок',
+        png: 'case/Podarok/png/kubok.png',  gif: 'case/Podarok/gif/kubok.gif' },
+      { nm: '150 Звёзд',      em: '🌹', r: 'rare',      v: 252,  ch: 5.5, model: 'Роза',
+        png: 'case/Podarok/png/roza.png',   gif: 'case/Podarok/gif/roza.gif' },
+
+      // UNCOMMON: 2 предмета, суммарный шанс ~18%  →  "почти норм"
+      { nm: '90 Звёзд',       em: '🚀', r: 'uncommon',  v: 151,  ch: 9.0, model: 'Ракета',
+        png: 'case/Podarok/png/raketa.png', gif: 'case/Podarok/gif/raketa.gif' },
+      { nm: '85 Звёзд',       em: '🍾', r: 'uncommon',  v: 143,  ch: 9.0, model: 'Шампанское',
+        png: 'case/Podarok/png/shampan.png',gif: 'case/Podarok/gif/shampan.gif' },
+
+      // COMMON: 4 предмета, суммарный шанс ~69%  →  "слив", но небольшой
+      // Средняя выплата common: ~45 монет при цене кейса 99 → ощущение "слил чуть"
+      { nm: '55 Звёзд',       em: '🎂', r: 'common',    v: 93,   ch: 18.0, model: 'Торт',
+        png: 'case/Podarok/png/tortik.png', gif: 'case/Podarok/gif/tortik.gif' },
+      { nm: '50 Звёзд',       em: '💐', r: 'common',    v: 84,   ch: 18.0, model: 'Букет',
+        png: 'case/Podarok/png/buket.png',  gif: 'case/Podarok/gif/buket.gif' },
+      { nm: '35 Звёзд',       em: '📦', r: 'common',    v: 59,   ch: 17.0, model: 'Подарок',
+        png: 'case/Podarok/png/podarok.png',gif: 'case/Podarok/gif/podarok.gif' },
+      { nm: '25 Звёзд',       em: '🧸', r: 'common',    v: 42,   ch: 16.0, model: 'Мишка',
+        png: 'case/Podarok/png/mishka.png', gif: 'case/Podarok/gif/mishka.gif' },
     ]
+    // Расчёт RTP ≈ (1200*0.4 + 420*1.3 + 420*1.2 + 270*5 + 252*5.5 +
+    //              151*9 + 143*9 + 93*18 + 84*18 + 59*17 + 42*16) / 100 / 99 ≈ 63%
+  },
+
+  // ══ КЕЙС 2: ЗВЁЗДНЫЙ ══
+  // Цена: 222 монеты | RTP: ~61% | EV: ~135 монет
+  // Задача: средний кейс, большой разброс — от 60 до 1400 монет
+  {
+    id: 'star', nm: 'Звёздный', em: '⭐', price: 222,
+    gc: 'rgba(252,211,77,0.25)', hot: true,
+    cover: 'covers/star_item.png',
+    items: [
+      // LEGENDARY: огромный приз, минимальный шанс — создаёт мечту
+      { nm: '850 Звёзд',  em: '🌟', r: 'legendary', v: 1430,  ch: 0.3,  model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+
+      // EPIC: значительный выигрыш
+      { nm: '500 Звёзд',  em: '💫', r: 'epic',      v: 840,   ch: 1.2,  model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+      { nm: '400 Звёзд',  em: '✨', r: 'epic',      v: 672,   ch: 2.5,  model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+
+      // RARE: небольшой плюс
+      { nm: '280 Звёзд',  em: '⭐', r: 'rare',      v: 471,   ch: 8.0,  model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+      { nm: '230 Звёзд',  em: '🌠', r: 'rare',      v: 387,   ch: 10.0, model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+
+      // COMMON: слив, но не страшный
+      { nm: '160 Звёзд',  em: '💥', r: 'common',    v: 269,   ch: 22.0, model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+      { nm: '120 Звёзд',  em: '🔆', r: 'common',    v: 202,   ch: 28.0, model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+      { nm: '80 Звёзд',   em: '💫', r: 'common',    v: 135,   ch: 28.0, model: null,
+        png: 'case/Zvezdniy/png/stars.png', gif: 'case/Zvezdniy/gif/stars.gif' },
+    ]
+    // RTP ≈ 61%
+  },
+
+  // ══ КЕЙС 3: НОВОГОДНИЙ АЗАРТ ══
+  // Цена: 444 монеты | RTP: ~62% | EV: ~275 монет
+  //
+  // ПРОБЛЕМА КОТОРУЮ ТЫ ОПИСАЛ:
+  // Раньше все предметы стоили ~360-410, это RTP ~85% — слишком много
+  // Теперь: common дешёвые (180-280), но epic/legendary дорогие (1200-5000)
+  // Это создаёт НАСТОЯЩИЙ АЗАРТ: обычно теряешь понемногу, редко — огромный выигрыш
+  {
+    id: 'newyear', nm: 'Новогодний Азарт', em: '🎄', price: 444,
+    gc: 'rgba(34,197,94,0.2)', hot: true,
+    cover: 'gifts/NewYear/png/cover.png',
+    items: [
+      // LEGENDARY: мечта игрока — 1 раз на ~200 открытий
+      { nm: 'Toy Bear',       em: '🧸', r: 'legendary', v: 5000, ch: 0.5,  model: 'Snowman',
+        png: 'case/NewYear/png/Toy Bear.png',      gif: 'case/NewYear/gif/Toy Bear.gif' },
+
+      // EPIC: раз в ~25-35 открытий — "вау момент"
+      { nm: 'Jingle Bells',   em: '🔔', r: 'epic',      v: 1500, ch: 1.2,  model: 'Festive Duo',
+        png: 'case/NewYear/png/Jingle Bells.png',  gif: 'case/NewYear/gif/Jingle Bells.gif' },
+      { nm: 'Desk Calendar',  em: '📅', r: 'epic',      v: 1400, ch: 1.5,  model: 'December',
+        png: 'case/NewYear/png/Desk Calendar.png', gif: 'case/NewYear/gif/Desk Calendar.gif' },
+      { nm: 'Witch Hat',      em: '🎩', r: 'epic',      v: 1200, ch: 1.8,  model: 'Christmas',
+        png: 'case/NewYear/png/Witch Hat.png',     gif: 'case/NewYear/gif/Witch Hat.gif' },
+
+      // RARE: раз в ~8-12 открытий — "неплохо"
+      { nm: 'Snow Mittens',   em: '🧤', r: 'rare',      v: 720,  ch: 5.0,  model: null,
+        png: 'case/NewYear/png/Snow Mittens.png',  gif: 'case/NewYear/gif/Snow Mittens.gif' },
+      { nm: 'Snow Globe',     em: '🌨️', r: 'rare',      v: 650,  ch: 6.5,  model: null,
+        png: 'case/NewYear/png/Snow Globe.png',    gif: 'case/NewYear/gif/Snow Globe.gif' },
+      { nm: 'Santa Hat',      em: '🎅', r: 'rare',      v: 560,  ch: 8.0,  model: null,
+        png: 'case/NewYear/png/Santa Hat.png',     gif: 'case/NewYear/gif/Santa Hat.gif' },
+
+      // COMMON: ~75% выпадений → игрок теряет, но немного
+      // Ключевой момент: цены common НИЖЕ цены кейса (~40-65% от цены)
+      // Это создаёт постепенный дрейф вниз и желание "ещё разок"
+      { nm: 'Winter Wreath',  em: '🎄', r: 'common',    v: 290,  ch: 12.0, model: null,
+        png: 'case/NewYear/png/Winter Wreath.png', gif: 'case/NewYear/gif/Winter Wreath.gif' },
+      { nm: 'Big Year',       em: '🎆', r: 'common',    v: 270,  ch: 13.0, model: 'Christmas Carol',
+        png: 'case/NewYear/png/Big Year.png',      gif: 'case/NewYear/gif/Big Year.gif' },
+      { nm: 'Xmas Stocking',  em: '🧦', r: 'common',    v: 250,  ch: 13.0, model: null,
+        png: 'case/NewYear/png/Xmas Stocking.png', gif: 'case/NewYear/gif/Xmas Stocking.gif' },
+      { nm: 'Candy Cane',     em: '🍬', r: 'common',    v: 230,  ch: 14.0, model: null,
+        png: 'case/NewYear/png/Candy Cane.png',    gif: 'case/NewYear/gif/Candy Cane.gif' },
+      { nm: 'Snake Box',      em: '📦', r: 'common',    v: 215,  ch: 13.0, model: null,
+        png: 'case/NewYear/png/Snake Box.png',     gif: 'case/NewYear/gif/Snake Box.gif' },
+      { nm: 'Vice Cream',     em: '🍦', r: 'common',    v: 200,  ch: 10.0, model: 'Iceman',
+        png: 'case/NewYear/png/Vice Cream.png',    gif: 'case/NewYear/gif/Vice Cream.gif' },
+    ]
+    // RTP ≈ 62% — игрок теряет ~38% в среднем
+    // Но: выпадение legendary = +10x к вложенному!
   },
 ];
 
-const RC={common:'#9ca3af',uncommon:'#3b82f6',rare:'#818cf8',epic:'#c084fc',legendary:'#f59e0b'};
-const RN={common:'Обычный',uncommon:'Необычный',rare:'Редкий',epic:'Эпический',legendary:'Легендарный'};
-const GIFT_BG={common:'rgba(107,114,128,0.18)',uncommon:'rgba(59,130,246,0.18)',rare:'rgba(129,140,248,0.18)',epic:'rgba(192,132,252,0.20)',legendary:'rgba(245,158,11,0.20)'};
+// ════════════════════════════════════════════════════════════════
+// НОВАЯ СИСТЕМА RNG С PITY — замени функцию wrand() в index.html
+// ════════════════════════════════════════════════════════════════
 
+// Хранилище pity-счётчиков для каждого кейса
+const _pity = {}; // { caseId: { count: 0, epicCount: 0 } }
+
+// Pity пороги (настраиваемые):
+const PITY_EPIC_GUARANTEE = 35;      // После 35 открытий без epic+ — гарантия epic
+const PITY_LEGENDARY_GUARANTEE = 90; // После 90 открытий без legendary — гарантия legendary
+
+function wrand(items, caseId) {
+  if (!_pity[caseId]) _pity[caseId] = { count: 0, epicCount: 0 };
+  const p = _pity[caseId];
+
+  // Разделяем предметы по редкости
+  const legendaries = items.filter(i => i.r === 'legendary');
+  const epics       = items.filter(i => i.r === 'epic');
+  const normals     = items.filter(i => i.r !== 'legendary' && i.r !== 'epic');
+
+  // Базовые веса
+  let weighted = items.map(i => ({ ...i, _w: i.ch }));
+
+  // ── PITY ДЛЯ LEGENDARY ──
+  // После PITY_LEGENDARY_GUARANTEE открытий без legendary:
+  // шанс legendary резко растёт до гарантии
+  if (p.count >= PITY_LEGENDARY_GUARANTEE && legendaries.length > 0) {
+    // Гарантированный legendary
+    const result = legendaries[Math.floor(Math.random() * legendaries.length)];
+    p.count = 0; p.epicCount = 0;
+    return result;
+  }
+
+  // ── PITY ДЛЯ EPIC ──
+  // После PITY_EPIC_GUARANTEE открытий без epic+: гарантированный epic
+  if (p.epicCount >= PITY_EPIC_GUARANTEE && epics.length > 0) {
+    const result = epics[Math.floor(Math.random() * epics.length)];
+    p.epicCount = 0;
+    // count не сбрасываем — legendary pity продолжает считаться
+    return result;
+  }
+
+  // ── МЯГКИЙ БУСТ (Soft Pity) ──
+  // За 10 открытий ДО гарантии epic — шанс epic начинает расти
+  // Это создаёт "почти выпало!" эффект
+  if (p.epicCount >= PITY_EPIC_GUARANTEE - 10) {
+    const boostFactor = 1 + (p.epicCount - (PITY_EPIC_GUARANTEE - 10)) * 0.4;
+    weighted = weighted.map(i => ({
+      ...i,
+      _w: (i.r === 'epic' || i.r === 'legendary') ? i.ch * boostFactor : i.ch
+    }));
+  }
+
+  // ── ОБЫЧНЫЙ ВЗВЕШЕННЫЙ ВЫБОР ──
+  const total = weighted.reduce((s, i) => s + i._w, 0);
+  let r = Math.random() * total;
+  let result = items[items.length - 1];
+  for (const x of weighted) {
+    r -= x._w;
+    if (r <= 0) { result = x; break; }
+  }
+
+  // ── ОБНОВЛЯЕМ СЧЁТЧИКИ ──
+  if (result.r === 'legendary') {
+    p.count = 0; p.epicCount = 0;
+  } else if (result.r === 'epic') {
+    p.epicCount = 0;
+    p.count++;
+  } else {
+    p.count++;
+    p.epicCount++;
+  }
+
+  return result;
+}
+
+// ════════════════════════════════════════════════════════════════
+// ИНСТРУКЦИЯ ПО ПРИМЕНЕНИЮ:
+//
+// 1. Найди в index.html блок "// CONFIG" — замени его
+//    целиком на содержимое этого файла вплоть до строки
+//    "const RC = {"
+//
+// 2. Найди функцию wrand(items, caseId) — замени на новую выше
+//
+// 3. Готово! Проверь в консоли браузера:
+//    calcRTP(444, CASES[2].items)  // должно вернуть ~62%
+//
+// НАСТРОЙКА ПОД СЕБЯ:
+//
+// Хочешь более жёсткое казино (меньше возвратов)?
+//   → Уменьши цены common предметов на 10-20%
+//   → Например: v: 200 → v: 170
+//
+// Хочешь чаще epic?
+//   → PITY_EPIC_GUARANTEE = 25 (раз в 25 вместо 35)
+//
+// Хочешь больший хайп от legendary?
+//   → Увеличь цену legendary в 2x
+//   → Уменьши ch: 0.5 → ch: 0.2
+//
+// ФОРМУЛА ПРОВЕРКИ RTP:
+// Открой консоль → вставь:
+//
+// const c = CASES[2]; // твой кейс
+// const tot = c.items.reduce((s,i)=>s+i.ch, 0);
+// const ev = c.items.reduce((s,i)=>s+(i.v*i.ch/tot), 0);
+// console.log('RTP:', (ev/c.price*100).toFixed(1)+'%');
+//
+// ════════════════════════════════════════════════════════════════
 // ════════════════════════════════════
 // ЗВУК РУЛЕТКИ — CS:GO стиль
 // ════════════════════════════════════
