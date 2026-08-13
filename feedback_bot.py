@@ -33,7 +33,6 @@ from aiogram.types import (
 # ==================== НАСТРОЙКИ (ВСТАВЬТЕ СВОИ ЗНАЧЕНИЯ) ====================
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 ADMIN_ID = int(os.environ["ADMIN_ID"])
-COMMUNITY_LINK = os.environ["COMMUNITY_LINK"]
 # =============================================================================
 
 logging.basicConfig(level=logging.INFO)
