@@ -3,14 +3,18 @@ Telegram-бот обратной связи и приёма заявок.
 Библиотека: aiogram 3.x
 
 Логика:
-1. /start — приветствие + правила + кнопка со ссылкой на вступление в сообщество.
+1. /start — приветствие + правила (ссылку на вступление впишите прямо в текст ниже).
 2. Любое сообщение от пользователя (текст, фото, видео, документ и т.д.)
    пересылается администратору, а пользователю приходит подтверждение.
 3. Администратор может ответить пользователю через reply на пересланное
-   сообщение — бот доставит ответ пользователю (опционально, включено ниже).
+   сообщение — бот доставит ответ пользователю.
 
 Установка зависимостей:
     pip install aiogram==3.*
+
+Переменные окружения (задаются на хостинге, например Render/Railway):
+    BOT_TOKEN  — токен бота от @BotFather
+    ADMIN_ID   — числовой Telegram ID администратора
 
 Запуск:
     python feedback_bot.py
@@ -24,15 +28,13 @@ from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram.types import (
-    Message,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-)
+from aiogram.types import Message
 
-# ==================== НАСТРОЙКИ (ВСТАВЬТЕ СВОИ ЗНАЧЕНИЯ) ====================
+# ==================== НАСТРОЙКИ (ИЗ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ) ====================
+
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 ADMIN_ID = int(os.environ["ADMIN_ID"])
+
 # =============================================================================
 
 logging.basicConfig(level=logging.INFO)
@@ -45,12 +47,13 @@ router = Router()
 # Формат: {message_id_у_админа: user_id}
 forwarded_map: dict[int, int] = {}
 
+# Впишите ссылку на вступление прямо в текст ниже (вручную).
 WELCOME_TEXT = (
     "Добро пожаловать! 👋\n"
     "Это прямой чат с Администратором нашего сообщества.\n\n"
+    "Ссылка на вступление: https://t.me/+xxxxxxxxxxxx\n\n"
     "Здесь вы можете:\n"
-    "• Отправить вопрос, отчёт или заявку — она будет передана администратору.\n"
-    "• Получить ссылку на вступление в сообщество (кнопка ниже).\n\n"
+    "• Отправить вопрос, отчёт или заявку — она будет передана администратору.\n\n"
     "Просто отправьте текстовое сообщение, фото или видео — оно автоматически "
     "будет переслано администратору на проверку."
 )
@@ -58,23 +61,11 @@ WELCOME_TEXT = (
 CONFIRMATION_TEXT = "Ваш отчёт получен и передан на проверку администратору ⏳"
 
 
-def get_start_keyboard() -> InlineKeyboardMarkup:
-    """Клавиатура с кнопкой вступления в сообщество."""
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="🔗 Вступить в сообщество", url=COMMUNITY_LINK)]
-        ]
-    )
-
-
 # ==================== ОБРАБОТЧИК /start ====================
 
 @router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
-    await message.answer(
-        WELCOME_TEXT,
-        reply_markup=get_start_keyboard(),
-    )
+    await message.answer(WELCOME_TEXT)
 
 
 # ==================== ОТВЕТ АДМИНА ПОЛЬЗОВАТЕЛЮ ====================
@@ -87,8 +78,7 @@ async def admin_reply_handler(message: Message, bot: Bot) -> None:
     user_id = forwarded_map.get(replied_id)
 
     if user_id is None:
-        # Это не ответ на пересланное сообщение — игнорируем /
-        # либо это обычное сообщение админа, не связанное с пересылкой.
+        # Это не ответ на пересланное сообщение — игнорируем.
         return
 
     try:
