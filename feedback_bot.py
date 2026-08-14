@@ -44,13 +44,7 @@ from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram.types import (
-    Message,
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-    ForceReply,
-)
+from aiogram.types import Message
 
 # ==================== НАСТРОЙКИ (ИЗ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ) ====================
 
@@ -68,7 +62,6 @@ router = Router()
 # message_id (пересланного сообщения у админа) -> user_id
 forwarded_map: dict[int, int] = {}
 # message_id (сообщения-запроса "введите ответ") -> user_id
-pending_replies: dict[int, int] = {}
 
 # Впишите ссылку на вступление прямо в текст ниже (вручную).
 WELCOME_TEXT = (
@@ -82,13 +75,6 @@ WELCOME_TEXT = (
 )
 
 
-def reply_button(user_id: int) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="✍️ Ответить", callback_data=f"reply:{user_id}")]
-        ]
-    )
-
 
 # ==================== /start ====================
 
@@ -99,21 +85,6 @@ async def cmd_start(message: Message) -> None:
 
 # ==================== КНОПКА "ОТВЕТИТЬ" ====================
 
-@router.callback_query(F.data.startswith("reply:"))
-async def on_reply_button(callback: CallbackQuery, bot: Bot) -> None:
-    if callback.from_user.id != ADMIN_ID:
-        await callback.answer()
-        return
-
-    user_id = int(callback.data.split(":")[1])
-
-    prompt = await bot.send_message(
-        chat_id=ADMIN_ID,
-        text=f"✏️ Введите ответ для пользователя (ID {user_id}):",
-        reply_markup=ForceReply(selective=True),
-    )
-    pending_replies[prompt.message_id] = user_id
-    await callback.answer()
 
 
 # ==================== ОТВЕТ АДМИНА ПОЛЬЗОВАТЕЛЮ ====================
@@ -124,7 +95,7 @@ async def on_reply_button(callback: CallbackQuery, bot: Bot) -> None:
 async def admin_reply_handler(message: Message, bot: Bot) -> None:
     replied_id = message.reply_to_message.message_id
 
-    user_id = pending_replies.pop(replied_id, None) or forwarded_map.get(replied_id)
+    user_id = forwarded_map.get(replied_id)
 
     if user_id is None:
         return
@@ -135,7 +106,6 @@ async def admin_reply_handler(message: Message, bot: Bot) -> None:
             from_chat_id=message.chat.id,
             message_id=message.message_id,
         )
-        await message.reply("✅ Ответ отправлен пользователю.")
     except Exception as e:
         logger.error(f"Не удалось отправить ответ пользователю {user_id}: {e}")
         await message.reply(f"❌ Не удалось отправить ответ: {e}")
@@ -163,7 +133,6 @@ async def forward_to_admin(message: Message, bot: Bot) -> None:
             await bot.send_message(
                 chat_id=ADMIN_ID,
                 text=f"{header}\n{message.text}",
-                reply_markup=reply_button(user.id),
             )
         else:
             # Медиа (фото/видео/документ/голос и т.д.) — шапка становится подписью
@@ -174,7 +143,6 @@ async def forward_to_admin(message: Message, bot: Bot) -> None:
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
                 caption=new_caption,
-                reply_markup=reply_button(user.id),
             )
 
     except Exception as e:
