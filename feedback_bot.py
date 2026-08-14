@@ -129,25 +129,24 @@ async def forward_to_admin(message: Message, bot: Bot) -> None:
 
     try:
         if message.text:
-            # Текстовое сообщение — объединяем шапку и текст в одно сообщение
-            await bot.send_message(
+            sent = await bot.send_message(
                 chat_id=ADMIN_ID,
                 text=f"{header}\n{message.text}",
             )
         else:
-            # Медиа (фото/видео/документ/голос и т.д.) — шапка становится подписью
             existing_caption = message.caption or ""
             new_caption = f"{header}\n{existing_caption}".strip()
-            await bot.copy_message(
+            sent = await bot.copy_message(
                 chat_id=ADMIN_ID,
                 from_chat_id=message.chat.id,
                 message_id=message.message_id,
                 caption=new_caption,
             )
 
+        forwarded_map[sent.message_id] = user.id
+
     except Exception as e:
         logger.error(f"Ошибка при пересылке сообщения от {user.id}: {e}")
-
 
 # ==================== МИНИ-ВЕБ-СЕРВЕР (для Render / cron-job.org) ====================
 
