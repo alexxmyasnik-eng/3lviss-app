@@ -22,7 +22,7 @@ from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
 # ==== НАСТРОЙКИ ====
-BOT_TOKEN = "ВСТАВЬТЕ_СЮДА_ВАШ_ТОКЕН"  # получить у @BotFather
+BOT_TOKEN = "8612824930:AAHvqxF3fp5Up2EJm7SQZO1GjTJzTTGuX9I"  # получить у @BotFather
 
 logging.basicConfig(level=logging.INFO)
 
