@@ -1,90 +1,188 @@
 """
-Бот для быстрого формирования текста подтверждения перед продажей Telegram Stars.
+Telegram-бот обратной связи и приёма заявок.
+Библиотека: aiogram 3.x
 
 Логика:
-1. Вы отправляете боту юзернейм покупателя (с @ или без).
-2. Бот НЕ обращается к API Telegram за поиском юзера (это невозможно без
-   предварительного контакта пользователя с ботом — ограничение платформы).
-   Вместо этого он просто красиво форматирует текст на основе введённого
-   вами юзернейма, который вы сразу пересылаете покупателю для проверки.
+1. /start — приветствие + правила (ссылку на вступление впишите прямо в текст ниже).
+2. Любое сообщение от пользователя (текст, фото, видео, документ и т.д.)
+   пересылается администратору ОДНИМ сообщением (инфо + контент вместе)
+   с кнопкой "✍️ Ответить".
+3. Админ жмёт кнопку "✍️ Ответить" -> бот просит ввести текст ответа ->
+   следующее сообщение админа автоматически уходит пользователю.
+   (Также работает classic reply: можно ответить на пересланное сообщение
+   через "Ответить" в Telegram — сработает тот же механизм.)
+4. Пользователю НЕ отправляется никаких служебных подтверждений.
 
-Требования: Python 3.10+, aiogram 3.x
+Установка зависимостей:
+    pip install aiogram==3.* aiohttp
+
+Переменные окружения (задаются на хостинге, например Render):
+    BOT_TOKEN  — токен бота от @BotFather
+    ADMIN_ID   — числовой Telegram ID администратора
+    PORT       — порт для веб-сервера (Render подставляет автоматически)
+
+Запуск:
+    python feedback_bot.py
+
+ВАЖНО ПРО RENDER:
+Render Web Service ждёт, что приложение откроет HTTP-порт, иначе деплой
+падает по таймауту, а сервис засыпает при неактивности. Поэтому здесь
+поднят простой aiohttp-сервер на "/", который:
+  - открывает порт (чтобы Render не убивал деплой по таймауту);
+  - отвечает 200 OK на пинги cron-job.org (чтобы инстанс не засыпал).
+На cron-job.org настрой пинг GET-запросом на твой URL (например,
+https://anonpeak-9eje.onrender.com/) каждые 5 минут.
 """
 
 import asyncio
 import logging
-import re
+import os
 
-from aiogram import Bot, Dispatcher
+from aiohttp import web
+
+from aiogram import Bot, Dispatcher, F, Router
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import Message
-from aiogram.enums import ParseMode
-from aiogram.client.default import DefaultBotProperties
 
-# ==== НАСТРОЙКИ ====
-BOT_TOKEN = "8612824930:AAHvqxF3fp5Up2EJm7SQZO1GjTJzTTGuX9I"  # получить у @BotFather
+# ==================== НАСТРОЙКИ (ИЗ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ) ====================
+
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+ADMIN_ID = int(os.environ["ADMIN_ID"])
+PORT = int(os.environ.get("PORT", 10000))
+
+# =============================================================================
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN))
-dp = Dispatcher()
+router = Router()
 
+# message_id (пересланного сообщения у админа) -> user_id
+forwarded_map: dict[int, int] = {}
+# message_id (сообщения-запроса "введите ответ") -> user_id
 
-def normalize_username(raw: str) -> str | None:
-    """
-    Приводит введённый текст к чистому виду username (без @, без пробелов).
-    Возвращает None, если строка не похожа на юзернейм.
-    """
-    raw = raw.strip()
-    # убираем @ в начале, если есть
-    if raw.startswith("@"):
-        raw = raw[1:]
-
-    # username в Telegram: латиница, цифры, подчёркивания, 5-32 символа
-    if re.fullmatch(r"[A-Za-z0-9_]{4,32}", raw):
-        return raw
-    return None
-
-
-@dp.message(CommandStart())
-async def cmd_start(message: Message):
-    await message.answer(
-        "👋 Привет!\n\n"
-        "Отправь мне юзернейм покупателя (например, *durov* или *@durov*), "
-        "и я сразу подготовлю текст для проверки, который можно переслать ему."
-    )
+# Впишите ссылку на вступление прямо в текст ниже (вручную).
+WELCOME_TEXT = (
+    "Привет! Добро пожаловать 👋\n"
+    "Это не просто бот, а твой личный анонимный чат с Администратором.\n"
+    "📌 Что делать дальше:\n"
+    "Подай заявку на вступление в закрытый канал по ссылке ниже.\n"
+    "Дальше бот - ваша личная переписка с Администратором\n"
+    "В закрытом канале будут выходить задания, а все выполненные фото/видео отчеты ты будешь отправлять прямо в этот чат. Всё полностью анонимно.\n"
+    "🔗 Ссылка на приватный канал: https://t.me/+w_L1inSVwUc2YTU1"
+)
 
 
-@dp.message()
-async def handle_username(message: Message):
-    text = message.text or ""
-    username = normalize_username(text)
 
-    if not username:
-        await message.answer(
-            "❌ Не похоже на юзернейм.\n"
-            "Отправь username в формате `@username` или `username` "
-            "(только латинские буквы, цифры и `_`, от 5 символов)."
-        )
+# ==================== /start ====================
+
+@router.message(CommandStart())
+async def cmd_start(message: Message) -> None:
+    await message.answer(WELCOME_TEXT)
+
+
+# ==================== КНОПКА "ОТВЕТИТЬ" ====================
+
+
+
+# ==================== ОТВЕТ АДМИНА ПОЛЬЗОВАТЕЛЮ ====================
+# Срабатывает как на reply к сообщению-запросу (после кнопки "Ответить"),
+# так и на обычный reply к пересланному сообщению пользователя.
+
+@router.message(F.from_user.id == ADMIN_ID, F.reply_to_message)
+async def admin_reply_handler(message: Message, bot: Bot) -> None:
+    replied_id = message.reply_to_message.message_id
+
+    user_id = forwarded_map.get(replied_id)
+
+    if user_id is None:
         return
 
-    # Формируем готовый текст для пересылки покупателю
-    reply_text = (
-        "⭐️ *Проверь данные для получения Stars:*\n\n"
-        f"🔗 *Юзернейм:* @{username}\n\n"
-        "❓ Это твой аккаунт?\n"
-        "Если всё верно, отправь *+*\n"
-        "Если данные неверны, отправь *-* и напиши точный @username."
+    try:
+        await bot.copy_message(
+            chat_id=user_id,
+            from_chat_id=message.chat.id,
+            message_id=message.message_id,
+        )
+    except Exception as e:
+        logger.error(f"Не удалось отправить ответ пользователю {user_id}: {e}")
+        await message.reply(f"❌ Не удалось отправить ответ: {e}")
+
+
+# ==================== ПЕРЕСЫЛКА СООБЩЕНИЙ ОТ ПОЛЬЗОВАТЕЛЯ АДМИНУ ====================
+
+@router.message(F.from_user.id != ADMIN_ID)
+async def forward_to_admin(message: Message, bot: Bot) -> None:
+    """
+    Пересылает сообщение пользователя администратору ОДНИМ сообщением
+    (шапка с данными пользователя + сам контент) и добавляет кнопку "Ответить".
+    Пользователю никакого подтверждения не отправляется.
+    """
+    user = message.from_user
+    header = (
+        f"📩 Новое сообщение\n"
+        f"От: {user.full_name} (@{user.username or 'без username'})\n"
+        f"ID: {user.id}\n"
     )
 
-    # Отправляем одним сообщением — Markdown позволяет копировать
-    # @username и остальной текст одним тапом на моноширинных/жирных частях.
-    await message.answer(reply_text)
+    try:
+        if message.text:
+            sent = await bot.send_message(
+                chat_id=ADMIN_ID,
+                text=f"{header}\n{message.text}",
+            )
+        else:
+            existing_caption = message.caption or ""
+            new_caption = f"{header}\n{existing_caption}".strip()
+            sent = await bot.copy_message(
+                chat_id=ADMIN_ID,
+                from_chat_id=message.chat.id,
+                message_id=message.message_id,
+                caption=new_caption,
+            )
+
+        forwarded_map[sent.message_id] = user.id
+
+    except Exception as e:
+        logger.error(f"Ошибка при пересылке сообщения от {user.id}: {e}")
+
+# ==================== МИНИ-ВЕБ-СЕРВЕР (для Render / cron-job.org) ====================
+
+async def handle_ping(request: web.Request) -> web.Response:
+    return web.Response(text="Bot is running")
 
 
-async def main():
+async def start_webserver() -> None:
+    app = web.Application()
+    app.router.add_get("/", handle_ping)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="0.0.0.0", port=PORT)
+    await site.start()
+    logger.info(f"Веб-сервер запущен на порту {PORT}")
+
+
+# ==================== ТОЧКА ВХОДА ====================
+
+async def main() -> None:
+    bot = Bot(
+        token=BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+    dp = Dispatcher()
+    dp.include_router(router)
+
+    await start_webserver()
+
+    logger.info("Бот запущен.")
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен.")
