@@ -319,11 +319,22 @@ async def show_shop(message: Message) -> None:
     if banned:
         await message.answer("⛔ Вы забанены, магазин недоступен.")
         return
+
+   # ДОБАВИТЬ ЭТОТ БЛОК:
+    min_tasks = 5
+    if user_data.get("balance", 0) >= SHOP_ITEMS[0]["price"] and user_data.get("completed", 0) < min_tasks:
+        await message.answer(
+            f"🎁 Вы почти готовы к первому подарку!\n"
+            f"Чтобы открыть покупки в магазине, нужно выполнить минимум {min_tasks} заданий "
+            f"(сейчас выполнено: {user_data.get('completed', 0)}).\n"
+            f"Продолжайте отправлять фото/видео/кружки/гс — и магазин откроется 💎"
+        )
+        return
+
     await message.answer(
         f"🛒 Магазин подарков (ваш баланс: {user_data.get('balance', 0)}💎):",
         reply_markup=shop_keyboard(),
     )
-
 
 @router.callback_query(F.data.startswith("buy:"))
 async def handle_buy(callback: CallbackQuery, bot: Bot) -> None:
@@ -335,6 +346,15 @@ async def handle_buy(callback: CallbackQuery, bot: Bot) -> None:
     banned, _ = ban_status(user_data)
     if banned:
         await callback.answer("⛔ Вы забанены.", show_alert=True)
+        return
+
+   # ДОБАВИТЬ ЭТОТ БЛОК:
+    min_tasks = 5
+    if user_data.get("completed", 0) < min_tasks:
+        await callback.answer(
+            f"Нужно выполнить минимум {min_tasks} заданий, чтобы покупать подарки.",
+            show_alert=True,
+        )
         return
 
     if user_data.get("balance", 0) < price:
