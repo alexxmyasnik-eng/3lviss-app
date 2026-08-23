@@ -93,8 +93,8 @@ WELCOME_TEXT = (
 )
 
 SHOP_ITEMS = [
-    {"stars": 15, "price": 50},
-    {"stars": 25, "price": 75},
+    {"stars": 15, "price": 30},
+    {"stars": 25, "price": 50},
     {"stars": 50, "price": 100},
     {"stars": 100, "price": 175},
 ]
@@ -319,11 +319,11 @@ async def show_shop(message: Message) -> None:
     if banned:
         await message.answer("⛔ Вы забанены, магазин недоступен.")
         return
+
     await message.answer(
         f"🛒 Магазин подарков (ваш баланс: {user_data.get('balance', 0)}💎):",
         reply_markup=shop_keyboard(),
     )
-
 
 @router.callback_query(F.data.startswith("buy:"))
 async def handle_buy(callback: CallbackQuery, bot: Bot) -> None:
@@ -339,6 +339,14 @@ async def handle_buy(callback: CallbackQuery, bot: Bot) -> None:
 
     if user_data.get("balance", 0) < price:
         await callback.answer("❌ Недостаточно 💎 на балансе.", show_alert=True)
+        return
+
+    min_tasks = 5
+    if user_data.get("completed", 0) < min_tasks:
+        await callback.answer(
+            f"Вы не выполнили минимум {min_tasks} заданий для покупки подарков.",
+            show_alert=True,
+        )
         return
 
     new_balance = await add_balance(user.id, -price)
