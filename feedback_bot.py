@@ -93,8 +93,8 @@ WELCOME_TEXT = (
 )
 
 SHOP_ITEMS = [
-    {"stars": 15, "price": 50},
-    {"stars": 25, "price": 75},
+    {"stars": 15, "price": 30},
+    {"stars": 25, "price": 50},
     {"stars": 50, "price": 100},
     {"stars": 100, "price": 175},
 ]
