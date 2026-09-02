@@ -15,7 +15,12 @@ Telegram-бот обратной связи и приёма заявок.
 4. У пользователей есть кнопки "👤 Профиль" (баланс + кол-во заданий) и
    "🛒 Магазин" (подарки за 💎). Покупка подарка уходит уведомлением админу.
 5. Админ-панель (/admin): бан (временный/навсегда), разбан, список забаненных,
-   список балансов всех, ручная выдача 💎 любому пользователю.
+   список балансов всех (без заблокировавших бота), ручная выдача 💎 любому
+   пользователю, глобальная рассылка всем пользователям.
+6. При первом /start пользователя админ получает уведомление о новичке.
+7. Если пользователь заблокировал бота, он помечается "blocked" и пропадает
+   из списка "Балансы"; при повторном обращении к боту (например, разблокировал
+   и написал заново) помечается снова активным.
 
 Установка зависимостей:
     pip install aiogram==3.* aiohttp
@@ -49,6 +54,7 @@ from aiohttp import web
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramForbiddenError
 from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -119,8 +125,18 @@ def _save_data(data: dict[str, Any]) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+async def user_exists(user_id: int) -> bool:
+    """Проверяет, есть ли уже запись о пользователе (не создавая её)."""
+    async with _data_lock:
+        data = _load_data()
+        return str(user_id) in data["users"]
+
+
 async def get_user(user_id: int, username: str | None = None, full_name: str | None = None) -> dict[str, Any]:
-    """Возвращает запись пользователя, создавая её при первом обращении."""
+    """Возвращает запись пользователя, создавая её при первом обращении.
+    Вызывается только из хендлеров реальной активности пользователя, поэтому
+    здесь же сбрасываем флаг "blocked" — раз пользователь взаимодействует
+    с ботом, значит бот у него не заблокирован."""
     async with _data_lock:
         data = _load_data()
         uid = str(user_id)
@@ -132,16 +148,19 @@ async def get_user(user_id: int, username: str | None = None, full_name: str | N
                 "completed": 0,
                 "ban_until": None,  # None | "forever" | timestamp (float)
                 "ban_reason": None,
+                "blocked": False,
             }
             _save_data(data)
         else:
-            # обновляем актуальные username/full_name
             changed = False
             if username is not None and data["users"][uid].get("username") != username:
                 data["users"][uid]["username"] = username
                 changed = True
             if full_name is not None and data["users"][uid].get("full_name") != full_name:
                 data["users"][uid]["full_name"] = full_name
+                changed = True
+            if data["users"][uid].get("blocked"):
+                data["users"][uid]["blocked"] = False
                 changed = True
             if changed:
                 _save_data(data)
@@ -160,6 +179,7 @@ async def update_user(user_id: int, **fields: Any) -> None:
                 "completed": 0,
                 "ban_until": None,
                 "ban_reason": None,
+                "blocked": False,
             }
         data["users"][uid].update(fields)
         _save_data(data)
@@ -177,6 +197,7 @@ async def add_balance(user_id: int, amount: int, add_completed: bool = False) ->
                 "completed": 0,
                 "ban_until": None,
                 "ban_reason": None,
+                "blocked": False,
             }
         data["users"][uid]["balance"] = data["users"][uid].get("balance", 0) + amount
         if add_completed:
@@ -189,6 +210,21 @@ async def get_all_users() -> dict[str, Any]:
     async with _data_lock:
         data = _load_data()
         return data["users"]
+
+
+async def notify_user(bot: Bot, user_id: int, text: str) -> bool:
+    """Отправляет сообщение пользователю. Если бот у него заблокирован —
+    помечает это в базе и возвращает False, ничего не выбрасывая наружу."""
+    try:
+        await bot.send_message(user_id, text)
+        return True
+    except TelegramForbiddenError:
+        await update_user(user_id, blocked=True)
+        logger.info(f"Пользователь {user_id} заблокировал бота.")
+        return False
+    except Exception as e:
+        logger.error(f"Не удалось уведомить пользователя {user_id}: {e}")
+        return False
 
 
 def ban_status(user: dict[str, Any]) -> tuple[bool, str]:
@@ -218,6 +254,7 @@ class AdminStates(StatesGroup):
     waiting_unban_id = State()      # ввод id для разбана
     waiting_give_id = State()       # ввод id для ручной выдачи 💎
     waiting_give_amount = State()   # ввод суммы для ручной выдачи 💎
+    waiting_broadcast = State()     # ввод текста глобальной рассылки
 
 
 # ==================== КЛАВИАТУРЫ ====================
@@ -236,7 +273,7 @@ def admin_main_keyboard() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="🚫 Забанить"), KeyboardButton(text="✅ Разбанить")],
             [KeyboardButton(text="📋 Забаненные"), KeyboardButton(text="📊 Балансы")],
-            [KeyboardButton(text="💎 Выдать 💎")],
+            [KeyboardButton(text="💎 Выдать 💎"), KeyboardButton(text="📢 Рассылка")],
         ],
         resize_keyboard=True,
     )
@@ -273,15 +310,27 @@ def _is_admin(message: Message) -> bool:
 # ==================== /start ====================
 
 @router.message(CommandStart())
-async def cmd_start(message: Message) -> None:
+async def cmd_start(message: Message, bot: Bot) -> None:
     if _is_admin(message):
         await message.answer("Админ-панель готова 👇", reply_markup=admin_main_keyboard())
         return
 
     user = message.from_user
-    await get_user(user.id, user.username, user.full_name)
+    is_new = not await user_exists(user.id)
+    user_data = await get_user(user.id, user.username, user.full_name)
 
-    banned, status_text = ban_status(await get_user(user.id))
+    if is_new:
+        try:
+            await bot.send_message(
+                ADMIN_ID,
+                f"🆕 Новый пользователь запустил бота\n"
+                f"Имя: {user.full_name} (@{user.username or 'без username'})\n"
+                f"ID: {user.id}",
+            )
+        except Exception as e:
+            logger.error(f"Не удалось уведомить админа о новом пользователе: {e}")
+
+    banned, status_text = ban_status(user_data)
     if banned:
         await message.answer(f"⛔ Вы забанены. Статус: {status_text}")
         return
@@ -441,13 +490,7 @@ async def process_task_amount(message: Message, state: FSMContext, bot: Bot) -> 
     await state.clear()
 
     await message.answer(f"✅ Начислено {amount}💎 пользователю {user_id}. Новый баланс: {new_balance}💎")
-    try:
-        await bot.send_message(
-            user_id,
-            f"✅ Ваше задание принято!\nНачислено: {amount}💎",
-        )
-    except Exception as e:
-        logger.error(f"Не удалось уведомить пользователя {user_id}: {e}")
+    await notify_user(bot, user_id, f"✅ Ваше задание принято!\nНачислено: {amount}💎")
 
 
 @router.message(StateFilter(AdminStates.waiting_task_reason), F.from_user.id == ADMIN_ID)
@@ -459,13 +502,7 @@ async def process_task_reason(message: Message, state: FSMContext, bot: Bot) -> 
     await state.clear()
 
     await message.answer(f"❌ Отказ отправлен пользователю {user_id}.")
-    try:
-        await bot.send_message(
-            user_id,
-            f"❌ Ваше задание отклонено.\nПричина: {reason}",
-        )
-    except Exception as e:
-        logger.error(f"Не удалось уведомить пользователя {user_id}: {e}")
+    await notify_user(bot, user_id, f"❌ Ваше задание отклонено.\nПричина: {reason}")
 
 
 # ==================== АДМИН-ПАНЕЛЬ: БАН / РАЗБАН / СПИСКИ / ВЫДАЧА ====================
@@ -505,10 +542,7 @@ async def admin_ban_duration(message: Message, state: FSMContext, bot: Bot) -> N
     if duration_part in ("навсегда", "forever", "нав"):
         await update_user(target_id, ban_until="forever", ban_reason=reason)
         await message.answer(f"🚫 Пользователь {target_id} забанен навсегда." + (f" Причина: {reason}" if reason else ""))
-        try:
-            await bot.send_message(target_id, "⛔ Вы забанены навсегда." + (f"\nПричина: {reason}" if reason else ""))
-        except Exception as e:
-            logger.error(f"Не удалось уведомить пользователя {target_id}: {e}")
+        await notify_user(bot, target_id, "⛔ Вы забанены навсегда." + (f"\nПричина: {reason}" if reason else ""))
     elif duration_part.isdigit():
         minutes = int(duration_part)
         ban_until = time.time() + minutes * 60
@@ -516,13 +550,9 @@ async def admin_ban_duration(message: Message, state: FSMContext, bot: Bot) -> N
         await message.answer(
             f"🚫 Пользователь {target_id} забанен на {minutes} мин." + (f" Причина: {reason}" if reason else "")
         )
-        try:
-            await bot.send_message(
-                target_id,
-                f"⛔ Вы забанены на {minutes} мин." + (f"\nПричина: {reason}" if reason else ""),
-            )
-        except Exception as e:
-            logger.error(f"Не удалось уведомить пользователя {target_id}: {e}")
+        await notify_user(
+            bot, target_id, f"⛔ Вы забанены на {minutes} мин." + (f"\nПричина: {reason}" if reason else "")
+        )
     else:
         await message.answer("⚠️ Введите число минут или слово 'навсегда'.")
         return
@@ -545,10 +575,7 @@ async def admin_unban_id(message: Message, state: FSMContext, bot: Bot) -> None:
     await update_user(target_id, ban_until=None, ban_reason=None)
     await state.clear()
     await message.answer(f"✅ Пользователь {target_id} разбанен.")
-    try:
-        await bot.send_message(target_id, "✅ Вы разбанены, можете продолжать пользоваться ботом.")
-    except Exception as e:
-        logger.error(f"Не удалось уведомить пользователя {target_id}: {e}")
+    await notify_user(bot, target_id, "✅ Вы разбанены, можете продолжать пользоваться ботом.")
 
 
 @router.message(F.from_user.id == ADMIN_ID, F.text == "📋 Забаненные")
@@ -580,10 +607,16 @@ async def admin_balances_list(message: Message) -> None:
 
     lines = []
     for uid, u in users.items():
+        if u.get("blocked"):
+            continue
         uname = f"@{u.get('username')}" if u.get("username") else "без username"
         lines.append(
             f"ID {uid} ({uname}) — 💎{u.get('balance', 0)}, заданий: {u.get('completed', 0)}"
         )
+
+    if not lines:
+        await message.answer("Нет активных пользователей (не заблокировавших бота).")
+        return
 
     # Разбиваем на части, если сообщение слишком длинное
     text = "📊 Балансы пользователей:\n" + "\n".join(lines)
@@ -621,13 +654,43 @@ async def admin_give_amount(message: Message, state: FSMContext, bot: Bot) -> No
     await state.clear()
 
     await message.answer(f"✅ Баланс пользователя {target_id} изменён на {amount}💎. Новый баланс: {new_balance}💎")
-    try:
-        if amount >= 0:
-            await bot.send_message(target_id, f"🎁 Вам начислено {amount}💎 администратором.\nВаш баланс: {new_balance}💎")
-        else:
-            await bot.send_message(target_id, f"⚠️ С вашего баланса списано {-amount}💎.\nВаш баланс: {new_balance}💎")
-    except Exception as e:
-        logger.error(f"Не удалось уведомить пользователя {target_id}: {e}")
+    if amount >= 0:
+        await notify_user(bot, target_id, f"🎁 Вам начислено {amount}💎 администратором.\nВаш баланс: {new_balance}💎")
+    else:
+        await notify_user(bot, target_id, f"⚠️ С вашего баланса списано {-amount}💎.\nВаш баланс: {new_balance}💎")
+
+
+# ==================== ГЛОБАЛЬНАЯ РАССЫЛКА ====================
+
+@router.message(F.from_user.id == ADMIN_ID, F.text == "📢 Рассылка")
+async def admin_broadcast_start(message: Message, state: FSMContext) -> None:
+    await state.set_state(AdminStates.waiting_broadcast)
+    await message.answer(
+        "Отправьте сообщение (текст, фото, видео и т.п.), которое нужно разослать всем пользователям."
+    )
+
+
+@router.message(StateFilter(AdminStates.waiting_broadcast), F.from_user.id == ADMIN_ID)
+async def admin_broadcast_send(message: Message, state: FSMContext, bot: Bot) -> None:
+    await state.clear()
+    users = await get_all_users()
+
+    sent, failed = 0, 0
+    for uid_str, u in users.items():
+        uid = int(uid_str)
+        if uid == ADMIN_ID:
+            continue
+        try:
+            await bot.copy_message(chat_id=uid, from_chat_id=message.chat.id, message_id=message.message_id)
+            sent += 1
+        except TelegramForbiddenError:
+            await update_user(uid, blocked=True)
+            failed += 1
+        except Exception as e:
+            logger.error(f"Не удалось отправить рассылку пользователю {uid}: {e}")
+            failed += 1
+
+    await message.answer(f"📢 Рассылка завершена.\n✅ Доставлено: {sent}\n❌ Не доставлено: {failed}")
 
 
 # ==================== ОТВЕТ АДМИНА ПОЛЬЗОВАТЕЛЮ (classic reply) ====================
@@ -649,6 +712,9 @@ async def admin_reply_handler(message: Message, bot: Bot) -> None:
             from_chat_id=message.chat.id,
             message_id=message.message_id,
         )
+    except TelegramForbiddenError:
+        await update_user(user_id, blocked=True)
+        await message.reply("❌ Пользователь заблокировал бота, ответ не доставлен.")
     except Exception as e:
         logger.error(f"Не удалось отправить ответ пользователю {user_id}: {e}")
         await message.reply(f"❌ Не удалось отправить ответ: {e}")
