@@ -255,6 +255,13 @@ class AdminStates(StatesGroup):
     waiting_give_id = State()       # ввод id для ручной выдачи 💎
     waiting_give_amount = State()   # ввод суммы для ручной выдачи 💎
     waiting_broadcast = State()     # ввод текста глобальной рассылки
+    waiting_add_completed_id = State()      # ввод id для ручного добавления к счётчику заданий
+    waiting_add_completed_amount = State()  # ввод количества для добавления к счётчику заданий
+
+
+class SuggestTaskStates(StatesGroup):
+    waiting_description = State()  # пользователь вводит описание предлагаемого задания
+    waiting_media = State()        # пользователь присылает медиа выполнения этого задания
 
 
 # ==================== КЛАВИАТУРЫ ====================
@@ -263,6 +270,7 @@ def user_main_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🛒 Магазин")],
+            [KeyboardButton(text="💡 Предложить задание")],
         ],
         resize_keyboard=True,
     )
@@ -274,6 +282,7 @@ def admin_main_keyboard() -> ReplyKeyboardMarkup:
             [KeyboardButton(text="🚫 Забанить"), KeyboardButton(text="✅ Разбанить")],
             [KeyboardButton(text="📋 Забаненные"), KeyboardButton(text="📊 Балансы")],
             [KeyboardButton(text="💎 Выдать 💎"), KeyboardButton(text="📢 Рассылка")],
+            [KeyboardButton(text="➕ Добавить заданий")],
         ],
         resize_keyboard=True,
     )
@@ -285,6 +294,17 @@ def task_decision_keyboard(user_id: int) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(text="💎 Выдать 💎", callback_data=f"task_ok:{user_id}"),
                 InlineKeyboardButton(text="❌ Отказать", callback_data=f"task_no:{user_id}"),
+            ]
+        ]
+    )
+
+
+def suggested_task_decision_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Принять", callback_data=f"suggest_ok:{user_id}"),
+                InlineKeyboardButton(text="❌ Не принять", callback_data=f"suggest_no:{user_id}"),
             ]
         ]
     )
@@ -505,6 +525,114 @@ async def process_task_reason(message: Message, state: FSMContext, bot: Bot) -> 
     await notify_user(bot, user_id, f"❌ Ваше задание отклонено.\nПричина: {reason}")
 
 
+# ==================== ПРЕДЛОЖИТЬ ЗАДАНИЕ (от пользователя) ====================
+
+SUGGEST_TASK_RULES_TEXT = (
+    "💡 Предложение задания\n\n"
+    "1. Опишите задание, которое вы предлагаете.\n"
+    "2. Затем выполните его сами и пришлите медиа-отчёт (фото/видео/кружок/гс) выполнения.\n"
+    "3. Заявка уйдёт администратору на проверку.\n\n"
+    "🎁 Если ваше задание примут и другие пользователи будут его выполнять, "
+    "вы будете получать 10% роялти в 💎 с каждого начисления за выполнение вашего задания."
+)
+
+
+@router.message(F.from_user.id != ADMIN_ID, F.text == "💡 Предложить задание")
+async def suggest_task_start(message: Message, state: FSMContext) -> None:
+    user_data = await get_user(message.from_user.id, message.from_user.username, message.from_user.full_name)
+    banned, status_text = ban_status(user_data)
+    if banned:
+        await message.answer(f"⛔ Вы забанены. Статус: {status_text}")
+        return
+
+    if user_data.get("completed", 0) < 1:
+        await message.answer(
+            "⚠️ Сначала нужно выполнить хотя бы одно задание самому, "
+            "прежде чем предлагать своё."
+        )
+        return
+
+    await state.set_state(SuggestTaskStates.waiting_description)
+    await message.answer(SUGGEST_TASK_RULES_TEXT + "\n\n✏️ Напишите описание задания:")
+
+
+@router.message(StateFilter(SuggestTaskStates.waiting_description), F.from_user.id != ADMIN_ID)
+async def suggest_task_description(message: Message, state: FSMContext) -> None:
+    if not message.text:
+        await message.answer("⚠️ Пришлите текстовое описание задания.")
+        return
+    await state.update_data(suggested_description=message.text)
+    await state.set_state(SuggestTaskStates.waiting_media)
+    await message.answer(
+        "✅ Описание сохранено.\n"
+        "Теперь выполните это задание сами и пришлите медиа-отчёт (фото/видео/кружок/гс)."
+    )
+
+
+@router.message(
+    StateFilter(SuggestTaskStates.waiting_media),
+    F.from_user.id != ADMIN_ID,
+    F.content_type.in_({"photo", "video", "video_note", "voice"}),
+)
+async def suggest_task_media(message: Message, state: FSMContext, bot: Bot) -> None:
+    data = await state.get_data()
+    description = data.get("suggested_description", "")
+    user = message.from_user
+
+    header = (
+        f"💡 Новое предложенное задание\n"
+        f"От: {user.full_name} (@{user.username or 'без username'})\n"
+        f"ID: {user.id}\n\n"
+        f"Описание задания:\n{description}\n"
+    )
+
+    try:
+        new_caption = header if message.content_type != "video_note" else None
+        await bot.copy_message(
+            chat_id=ADMIN_ID,
+            from_chat_id=message.chat.id,
+            message_id=message.message_id,
+            caption=new_caption,
+        )
+        if message.content_type == "video_note":
+            await bot.send_message(ADMIN_ID, header)
+
+        await bot.send_message(
+            ADMIN_ID,
+            "👆 Решение по предложенному заданию:",
+            reply_markup=suggested_task_decision_keyboard(user.id),
+        )
+        await message.answer("✅ Ваше предложение отправлено администратору на проверку. Ожидайте решения.")
+    except Exception as e:
+        logger.error(f"Ошибка при пересылке предложенного задания от {user.id}: {e}")
+        await message.answer("❌ Не удалось отправить предложение, попробуйте позже.")
+    finally:
+        await state.clear()
+
+
+@router.message(StateFilter(SuggestTaskStates.waiting_media), F.from_user.id != ADMIN_ID)
+async def suggest_task_media_wrong_type(message: Message) -> None:
+    await message.answer("⚠️ Пришлите, пожалуйста, фото, видео, кружок или голосовое сообщение с выполнением задания.")
+
+
+@router.callback_query(F.data.startswith("suggest_ok:"))
+async def handle_suggest_approve(callback: CallbackQuery, bot: Bot) -> None:
+    user_id = int(callback.data.split(":")[1])
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await notify_user(bot, user_id, "✅ Ваше задание принято!")
+    await callback.message.answer(f"✅ Задание пользователя {user_id} принято.")
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("suggest_no:"))
+async def handle_suggest_reject(callback: CallbackQuery, bot: Bot) -> None:
+    user_id = int(callback.data.split(":")[1])
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await notify_user(bot, user_id, "❌ Ваше задание отклонено.")
+    await callback.message.answer(f"❌ Задание пользователя {user_id} отклонено.")
+    await callback.answer()
+
+
 # ==================== АДМИН-ПАНЕЛЬ: БАН / РАЗБАН / СПИСКИ / ВЫДАЧА ====================
 
 @router.message(F.from_user.id == ADMIN_ID, F.text == "🚫 Забанить")
@@ -658,6 +786,58 @@ async def admin_give_amount(message: Message, state: FSMContext, bot: Bot) -> No
         await notify_user(bot, target_id, f"🎁 Вам начислено {amount}💎 администратором.\nВаш баланс: {new_balance}💎")
     else:
         await notify_user(bot, target_id, f"⚠️ С вашего баланса списано {-amount}💎.\nВаш баланс: {new_balance}💎")
+
+
+# ==================== РУЧНОЕ ДОБАВЛЕНИЕ К СЧЁТЧИКУ ВЫПОЛНЕННЫХ ЗАДАНИЙ ====================
+
+@router.message(F.from_user.id == ADMIN_ID, F.text == "➕ Добавить заданий")
+async def admin_add_completed_start(message: Message, state: FSMContext) -> None:
+    await state.set_state(AdminStates.waiting_add_completed_id)
+    await message.answer("Введите ID пользователя, которому нужно добавить выполненные задания:")
+
+
+@router.message(StateFilter(AdminStates.waiting_add_completed_id), F.from_user.id == ADMIN_ID)
+async def admin_add_completed_id(message: Message, state: FSMContext) -> None:
+    if not message.text or not message.text.strip().isdigit():
+        await message.answer("⚠️ Введите числовой ID.")
+        return
+    await state.update_data(add_completed_target_id=int(message.text.strip()))
+    await state.set_state(AdminStates.waiting_add_completed_amount)
+    await message.answer("Введите количество заданий, которое нужно добавить к счётчику (можно отрицательное):")
+
+
+@router.message(StateFilter(AdminStates.waiting_add_completed_amount), F.from_user.id == ADMIN_ID)
+async def admin_add_completed_amount(message: Message, state: FSMContext, bot: Bot) -> None:
+    data = await state.get_data()
+    target_id = data["add_completed_target_id"]
+
+    if not message.text or not message.text.strip().lstrip("-").isdigit():
+        await message.answer("⚠️ Введите число.")
+        return
+
+    amount = int(message.text.strip())
+    async with _data_lock:
+        stored = _load_data()
+        uid = str(target_id)
+        if uid not in stored["users"]:
+            stored["users"][uid] = {
+                "username": None,
+                "full_name": None,
+                "balance": 0,
+                "completed": 0,
+                "ban_until": None,
+                "ban_reason": None,
+                "blocked": False,
+            }
+        stored["users"][uid]["completed"] = stored["users"][uid].get("completed", 0) + amount
+        new_completed = stored["users"][uid]["completed"]
+        _save_data(stored)
+    await state.clear()
+
+    await message.answer(
+        f"✅ Счётчик заданий пользователя {target_id} изменён на {amount}. Новое значение: {new_completed}"
+    )
+    await notify_user(bot, target_id, f"ℹ️ Ваш счётчик выполненных заданий обновлён администратором. Текущее значение: {new_completed}")
 
 
 # ==================== ГЛОБАЛЬНАЯ РАССЫЛКА ====================
