@@ -99,10 +99,10 @@ WELCOME_TEXT = (
 )
 
 SHOP_ITEMS = [
-    {"stars": 50, "price": 25},
-    {"stars": 100, "price": 50},
-    {"stars": 200, "price": 100},
-    {"stars": 350, "price": 175},
+    {"stars": 15, "price": 30},
+    {"stars": 25, "price": 50},
+    {"stars": 50, "price": 100},
+    {"stars": 100, "price": 175},
 ]
 
 # ==================== ХРАНИЛИЩЕ ДАННЫХ (JSON-файл) ====================
@@ -498,6 +498,7 @@ async def handle_buy(callback: CallbackQuery, bot: Bot) -> None:
 # ==================== ЗАДАНИЯ: приём кружка/гс/видео/фото ====================
 
 @router.message(
+    StateFilter(None),
     F.from_user.id != ADMIN_ID,
     F.content_type.in_({"photo", "video", "video_note", "voice"}),
 )
@@ -598,6 +599,13 @@ SUGGEST_TASK_RULES_TEXT = (
 )
 
 
+def cancel_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="❌ Отменить предложение")]],
+        resize_keyboard=True,
+    )
+
+
 @router.message(F.from_user.id != ADMIN_ID, F.text == "💡 Предложить задание")
 async def suggest_task_start(message: Message, state: FSMContext) -> None:
     user_data = await get_user(message.from_user.id, message.from_user.username, message.from_user.full_name)
@@ -614,7 +622,16 @@ async def suggest_task_start(message: Message, state: FSMContext) -> None:
         return
 
     await state.set_state(SuggestTaskStates.waiting_description)
-    await message.answer(SUGGEST_TASK_RULES_TEXT + "\n\n✏️ Напишите описание задания:")
+    await message.answer(
+        SUGGEST_TASK_RULES_TEXT + "\n\n✏️ Напишите описание задания:",
+        reply_markup=cancel_keyboard(),
+    )
+
+
+@router.message(StateFilter(SuggestTaskStates.waiting_description, SuggestTaskStates.waiting_media), F.text == "❌ Отменить предложение")
+async def suggest_task_cancel(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer("🚫 Предложение задания отменено.", reply_markup=user_main_keyboard())
 
 
 @router.message(StateFilter(SuggestTaskStates.waiting_description), F.from_user.id != ADMIN_ID)
@@ -626,7 +643,8 @@ async def suggest_task_description(message: Message, state: FSMContext) -> None:
     await state.set_state(SuggestTaskStates.waiting_media)
     await message.answer(
         "✅ Описание сохранено.\n"
-        "Теперь выполните это задание сами и пришлите медиа-отчёт (фото/видео/кружок/гс)."
+        "Теперь выполните это задание сами и пришлите медиа-отчёт (фото/видео/кружок/гс).",
+        reply_markup=cancel_keyboard(),
     )
 
 
@@ -663,17 +681,23 @@ async def suggest_task_media(message: Message, state: FSMContext, bot: Bot) -> N
             "👆 Решение по предложенному заданию:",
             reply_markup=suggested_task_decision_keyboard(user.id),
         )
-        await message.answer("✅ Ваше предложение отправлено администратору на проверку. Ожидайте решения.")
+        await message.answer(
+            "✅ Ваше предложение отправлено администратору на проверку. Ожидайте решения.",
+            reply_markup=user_main_keyboard(),
+        )
     except Exception as e:
         logger.error(f"Ошибка при пересылке предложенного задания от {user.id}: {e}")
-        await message.answer("❌ Не удалось отправить предложение, попробуйте позже.")
+        await message.answer("❌ Не удалось отправить предложение, попробуйте позже.", reply_markup=user_main_keyboard())
     finally:
         await state.clear()
 
 
 @router.message(StateFilter(SuggestTaskStates.waiting_media), F.from_user.id != ADMIN_ID)
 async def suggest_task_media_wrong_type(message: Message) -> None:
-    await message.answer("⚠️ Пришлите, пожалуйста, фото, видео, кружок или голосовое сообщение с выполнением задания.")
+    await message.answer(
+        "⚠️ Пришлите, пожалуйста, фото, видео, кружок или голосовое сообщение с выполнением задания.",
+        reply_markup=cancel_keyboard(),
+    )
 
 
 @router.callback_query(F.data.startswith("suggest_ok:"))
