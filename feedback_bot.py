@@ -212,6 +212,47 @@ async def get_all_users() -> dict[str, Any]:
         return data["users"]
 
 
+async def get_shop_prices() -> dict[str, dict[str, int | None]]:
+    """Возвращает текущие цены магазина. Формат:
+    { "15": {"price": 30, "old_price": None}, "25": {...}, ... }
+    Ключ — количество звёзд (stars) как строка.
+    Если в data.json ещё ничего не сохранено — берём значения из SHOP_ITEMS."""
+    async with _data_lock:
+        data = _load_data()
+        prices = data.get("shop_prices")
+        if not prices:
+            prices = {
+                str(item["stars"]): {"price": item["price"], "old_price": None}
+                for item in SHOP_ITEMS
+            }
+            data["shop_prices"] = prices
+            _save_data(data)
+        return prices
+
+
+async def set_shop_price(stars: int, new_price: int, discount: bool = False) -> None:
+    """Устанавливает новую цену для позиции с данным количеством звёзд.
+    Если discount=True — текущая цена сохраняется как old_price (зачёркнутая),
+    иначе old_price сбрасывается (скидка снята)."""
+    async with _data_lock:
+        data = _load_data()
+        prices = data.get("shop_prices")
+        if not prices:
+            prices = {
+                str(item["stars"]): {"price": item["price"], "old_price": None}
+                for item in SHOP_ITEMS
+            }
+        key = str(stars)
+        if key not in prices:
+            prices[key] = {"price": new_price, "old_price": None}
+        else:
+            current_price = prices[key]["price"]
+            prices[key]["old_price"] = current_price if discount else None
+            prices[key]["price"] = new_price
+        data["shop_prices"] = prices
+        _save_data(data)
+
+
 async def notify_user(bot: Bot, user_id: int, text: str) -> bool:
     """Отправляет сообщение пользователю. Если бот у него заблокирован —
     помечает это в базе и возвращает False, ничего не выбрасывая наружу."""
@@ -257,6 +298,9 @@ class AdminStates(StatesGroup):
     waiting_broadcast = State()     # ввод текста глобальной рассылки
     waiting_add_completed_id = State()      # ввод id для ручного добавления к счётчику заданий
     waiting_add_completed_amount = State()  # ввод количества для добавления к счётчику заданий
+    waiting_price_stars = State()     # админ выбирает, у какой позиции менять цену
+    waiting_price_value = State()     # ввод новой цены
+    waiting_price_discount = State()  # да/нет — показывать ли старую цену зачёркнутой
 
 
 class SuggestTaskStates(StatesGroup):
@@ -282,7 +326,7 @@ def admin_main_keyboard() -> ReplyKeyboardMarkup:
             [KeyboardButton(text="🚫 Забанить"), KeyboardButton(text="✅ Разбанить")],
             [KeyboardButton(text="📋 Забаненные"), KeyboardButton(text="📊 Балансы")],
             [KeyboardButton(text="💎 Выдать 💎"), KeyboardButton(text="📢 Рассылка")],
-            [KeyboardButton(text="➕ Добавить заданий")],
+            [KeyboardButton(text="➕ Добавить заданий"), KeyboardButton(text="🏷 Изменить цены")],
         ],
         resize_keyboard=True,
     )
@@ -310,16 +354,18 @@ def suggested_task_decision_keyboard(user_id: int) -> InlineKeyboardMarkup:
     )
 
 
-def shop_keyboard() -> InlineKeyboardMarkup:
-    rows = [
-        [
-            InlineKeyboardButton(
-                text=f"🎁 Подарок {item['stars']}⭐ — {item['price']}💎",
-                callback_data=f"buy:{item['stars']}:{item['price']}",
-            )
-        ]
-        for item in SHOP_ITEMS
-    ]
+def shop_keyboard(prices: dict[str, dict[str, int | None]]) -> InlineKeyboardMarkup:
+    rows = []
+    for item in SHOP_ITEMS:
+        key = str(item["stars"])
+        entry = prices.get(key, {"price": item["price"], "old_price": None})
+        price = entry["price"]
+        old_price = entry.get("old_price")
+        if old_price:
+            label = f"🎁 {item['stars']}⭐ — ~{old_price}~ {price}💎"
+        else:
+            label = f"🎁 Подарок {item['stars']}⭐ — {price}💎"
+        rows.append([InlineKeyboardButton(text=label, callback_data=f"buy:{item['stars']}:{price}")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -389,15 +435,30 @@ async def show_shop(message: Message) -> None:
         await message.answer("⛔ Вы забанены, магазин недоступен.")
         return
 
-    await message.answer(
-        f"🛒 Магазин подарков (ваш баланс: {user_data.get('balance', 0)}💎):",
-        reply_markup=shop_keyboard(),
-    )
+    prices = await get_shop_prices()
+    lines = [f"🛒 Магазин подарков (ваш баланс: {user_data.get('balance', 0)}💎):", ""]
+    for item in SHOP_ITEMS:
+        entry = prices.get(str(item["stars"]), {"price": item["price"], "old_price": None})
+        price = entry["price"]
+        old_price = entry.get("old_price")
+        if old_price:
+            lines.append(f"🎁 {item['stars']}⭐ — <s>{old_price}💎</s> {price}💎")
+        else:
+            lines.append(f"🎁 {item['stars']}⭐ — {price}💎")
+
+    await message.answer("\n".join(lines), reply_markup=shop_keyboard(prices))
 
 @router.callback_query(F.data.startswith("buy:"))
 async def handle_buy(callback: CallbackQuery, bot: Bot) -> None:
-    _, stars_str, price_str = callback.data.split(":")
-    stars, price = int(stars_str), int(price_str)
+    _, stars_str, _old_price_str = callback.data.split(":")
+    stars = int(stars_str)
+
+    prices = await get_shop_prices()
+    entry = prices.get(str(stars))
+    if entry is None:
+        await callback.answer("❌ Этот подарок больше недоступен.", show_alert=True)
+        return
+    price = entry["price"]
 
     user = callback.from_user
     user_data = await get_user(user.id, user.username, user.full_name)
@@ -838,6 +899,62 @@ async def admin_add_completed_amount(message: Message, state: FSMContext, bot: B
         f"✅ Счётчик заданий пользователя {target_id} изменён на {amount}. Новое значение: {new_completed}"
     )
     await notify_user(bot, target_id, f"ℹ️ Ваш счётчик выполненных заданий обновлён администратором. Текущее значение: {new_completed}")
+
+
+# ==================== ИЗМЕНЕНИЕ ЦЕН МАГАЗИНА (временное, без правки кода) ====================
+
+def price_pick_keyboard() -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(text=f"{item['stars']}⭐", callback_data=f"pricepick:{item['stars']}")]
+        for item in SHOP_ITEMS
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+@router.message(F.from_user.id == ADMIN_ID, F.text == "🏷 Изменить цены")
+async def admin_price_start(message: Message, state: FSMContext) -> None:
+    await state.set_state(AdminStates.waiting_price_stars)
+    await message.answer("Выберите позицию, у которой хотите изменить цену:", reply_markup=price_pick_keyboard())
+
+
+@router.callback_query(F.data.startswith("pricepick:"), StateFilter(AdminStates.waiting_price_stars))
+async def admin_price_pick(callback: CallbackQuery, state: FSMContext) -> None:
+    stars = int(callback.data.split(":")[1])
+    await state.update_data(price_target_stars=stars)
+    await state.set_state(AdminStates.waiting_price_value)
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(f"Введите новую цену в 💎 для подарка {stars}⭐:")
+    await callback.answer()
+
+
+@router.message(StateFilter(AdminStates.waiting_price_value), F.from_user.id == ADMIN_ID)
+async def admin_price_value(message: Message, state: FSMContext) -> None:
+    if not message.text or not message.text.strip().isdigit():
+        await message.answer("⚠️ Введите целое число.")
+        return
+    await state.update_data(price_new_value=int(message.text.strip()))
+    await state.set_state(AdminStates.waiting_price_discount)
+    await message.answer(
+        "Это скидка? Если да — старая цена будет показана зачёркнутой.\n"
+        "Ответьте: да / нет"
+    )
+
+
+@router.message(StateFilter(AdminStates.waiting_price_discount), F.from_user.id == ADMIN_ID)
+async def admin_price_discount(message: Message, state: FSMContext) -> None:
+    answer = (message.text or "").strip().lower()
+    if answer not in ("да", "нет"):
+        await message.answer("⚠️ Ответьте 'да' или 'нет'.")
+        return
+
+    data = await state.get_data()
+    stars = data["price_target_stars"]
+    new_price = data["price_new_value"]
+    discount = answer == "да"
+
+    await set_shop_price(stars, new_price, discount=discount)
+    await state.clear()
+    await message.answer(f"✅ Цена для {stars}⭐ обновлена: {new_price}💎" + (" (со скидкой, старая цена зачёркнута)" if discount else ""))
 
 
 # ==================== ГЛОБАЛЬНАЯ РАССЫЛКА ====================
